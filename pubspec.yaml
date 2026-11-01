@@ -1,5 +1,5 @@
-name: talmessenger
-description: Simple and encrypted messages software — messagerie texte chiffrée de bout en bout (Android & Windows).
+name: ttalk
+description: TTalk - simple and encrypted messages — messagerie texte chiffrée de bout en bout (Android & Windows).
 publish_to: "none"
 version: 0.1.0+1
 

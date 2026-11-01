@@ -24,7 +24,7 @@ jobs:
         name: Compiler l'APK Android (arm64 + armeabi-v7a + x86_64)
       - uses: actions/upload-artifact@v4
         with:
-          name: talmessenger-android-apk
+          name: ttalk-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
       - name: Publier l'APK en release (sur tag v*)
         if: startsWith(github.ref, 'refs/tags/v')
@@ -46,11 +46,11 @@ jobs:
         name: Compiler l'exécutable Windows x64
       - uses: actions/upload-artifact@v4
         with:
-          name: talmessenger-windows-x64
+          name: ttalk-windows-x64
           path: build/windows/x64/runner/Release/
       - name: Publier le ZIP Windows en release (sur tag v*)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/windows/x64/runner/Release/talmessenger.exe
+            build/windows/x64/runner/Release/ttalk.exe

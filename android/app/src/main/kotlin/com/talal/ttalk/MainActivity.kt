@@ -1,4 +1,4 @@
-package com.talal.talmessenger
+package com.talal.ttalk
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

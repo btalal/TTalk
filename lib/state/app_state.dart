@@ -553,7 +553,7 @@ class AppState extends ChangeNotifier {
     final clear = await decryptFile(fileKey, Uint8List.fromList(encData));
     final dir = await getApplicationDocumentsDirectory();
     final safeName = (meta['fileName'] as String).replaceAll(RegExp(r'[^\w.\-]'), '_');
-    final outPath = '${dir.path}/talmessenger_files/$safeName';
+    final outPath = '${dir.path}/ttalk_files/$safeName';
     await File(outPath).parent.create(recursive: true);
     await File(outPath).writeAsBytes(clear);
     m.filePath = outPath;

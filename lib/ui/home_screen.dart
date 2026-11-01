@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       listenable: app,
       builder: (context, _) => Scaffold(
         appBar: AppBar(
-          title: const Text('TalMessenger'),
+          title: const Text('TTalk'),
           bottom: TabBar(
             controller: _tabController,
             tabs: [

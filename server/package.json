@@ -1,7 +1,7 @@
 {
-  "name": "talmessenger-relay",
+  "name": "ttalk-relay",
   "version": "0.1.0",
-  "description": "Relais minimal pour TalMessenger — ne voit que des paquets chiffrés.",
+  "description": "Relais minimal pour TTalk — ne voit que des paquets chiffrés.",
   "private": true,
   "type": "module",
   "scripts": {

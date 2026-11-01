@@ -1,4 +1,4 @@
-# TalMessenger
+# TTalk
 
 Messagerie texte **chiffrée de bout en bout**, simple, pour **Android** et **Windows**.
 
@@ -88,15 +88,15 @@ si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, j
   **AES-256-GCM** avec une clé aléatoire par fichier ; cette clé est incluse
   dans le message, lui-même chiffré de bout en bout.
 - À la réception, le fichier est déchiffré et enregistré dans le dossier
-  documents de l'app (`talmessenger_files/`) ; un appui l'ouvre.
+  documents de l'app (`ttalk_files/`) ; un appui l'ouvre.
 - Le relais ne voit jamais ni le nom ni le contenu du fichier en clair.
 
 ## Binaires
 
 | Plateforme | Comment obtenir le binaire |
 |---|---|
-| **Android (APK)** | [Release GitHub](https://github.com/btalal/Talmessenger/releases) (asset `talmessenger-*-signed.apk`, arm64), ou `flutter build apk --release` |
-| **Windows x64 (EXE)** | artefact `talmessenger-windows-x64` produit par la [CI GitHub Actions](.github/workflows/release.yml) (`flutter build windows --release` sur `windows-latest`), ou localement sur Windows : `flutter build windows --release` |
+| **Android (APK)** | [Release GitHub](https://github.com/btalal/Talmessenger/releases) (asset `ttalk-*-signed.apk`, arm64), ou `flutter build apk --release` |
+| **Windows x64 (EXE)** | artefact `ttalk-windows-x64` produit par la [CI GitHub Actions](.github/workflows/release.yml) (`flutter build windows --release` sur `windows-latest`), ou localement sur Windows : `flutter build windows --release` |
 
 > Un exécutable Windows x64 nécessite impérativement le toolchain MSVC d'une machine
 > Windows — c'est pourquoi la CI `windows-latest` le produit. L'APK arm64 signé est
