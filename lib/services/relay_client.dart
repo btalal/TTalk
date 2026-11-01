@@ -18,8 +18,8 @@ class RelayClient {
   String? _myId;
   String? _myPairingCode;
 
-  final void Function(Map<String, dynamic> message)? onInbound;
-  final void Function(RelayState state)? onStateChange;
+  void Function(Map<String, dynamic> message)? onInbound;
+  void Function(RelayState state)? onStateChange;
 
   RelayState get state => _state;
   String? get myId => _myId;
@@ -78,11 +78,22 @@ class RelayClient {
     _send({'type': 'pair_answer', 'code': code});
   }
 
-  void sendCipher(String to, Uint8List payload, String messageId) {
+  void sendCipher(String to, Uint8List payload, String messageId, {String? groupId}) {
     _send({
       'type': 'cipher',
       'to': to,
       'messageId': messageId,
+      if (groupId != null) 'groupId': groupId,
+      'payload': base64Encode(payload),
+    });
+  }
+
+  void sendCipherToMany(List<String> tos, Uint8List payload, String messageId, {required String groupId}) {
+    _send({
+      'type': 'cipher',
+      'to': tos,
+      'messageId': messageId,
+      'groupId': groupId,
       'payload': base64Encode(payload),
     });
   }
@@ -92,6 +103,14 @@ class RelayClient {
       'type': 'read',
       'to': to,
       'messageId': messageId,
+    });
+  }
+
+  void sendGroupInvite(String to, Uint8List payload) {
+    _send({
+      'type': 'group_invite',
+      'to': to,
+      'payload': base64Encode(payload),
     });
   }
 }

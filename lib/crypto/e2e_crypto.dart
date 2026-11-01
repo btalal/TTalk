@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:convert/convert.dart';
-import 'package:crypto/crypto.dart';
+import 'package:convert/convert.dart' as convert;
+import 'package:crypto/crypto.dart' as crypto_pkg;
 import 'package:cryptography/cryptography.dart';
 
 const int aesKeyLength = 32;
@@ -59,7 +59,6 @@ Future<String> decryptMessage(SecretKey sessionKey, Uint8List payload) async {
   if (payload.length < gcmNonceLength + 16) {
     throw const FormatException('Paquet chiffré trop court');
   }
-  final nonce = payload.sublist(0, gcmNonceLength);
   final box = SecretBox.fromConcatenation(
     payload.sublist(gcmNonceLength),
     nonceLength: gcmNonceLength,
@@ -95,7 +94,6 @@ Future<Uint8List> encryptLocal(SecretKey pinKey, Uint8List plaintext) async {
 }
 
 Future<Uint8List> decryptLocal(SecretKey pinKey, Uint8List payload) async {
-  final nonce = payload.sublist(0, gcmNonceLength);
   final box = SecretBox.fromConcatenation(
     payload.sublist(gcmNonceLength),
     nonceLength: gcmNonceLength,
@@ -106,6 +104,43 @@ Future<Uint8List> decryptLocal(SecretKey pinKey, Uint8List payload) async {
   );
 }
 
+Future<Uint8List> generateFileKey() async {
+  return randomBytes(aesKeyLength);
+}
+
+Future<Uint8List> encryptFile(SecretKey fileKey, Uint8List fileBytes) async {
+  final nonce = randomBytes(gcmNonceLength);
+  final box = await AesGcm.with256bits().encrypt(
+    fileBytes,
+    secretKey: fileKey,
+    nonce: nonce,
+  );
+  final out = BytesBuilder(copy: false);
+  out.add(nonce);
+  out.add(box.concatenation());
+  return out.toBytes();
+}
+
+Future<Uint8List> decryptFile(SecretKey fileKey, Uint8List payload) async {
+  final box = SecretBox.fromConcatenation(
+    payload.sublist(gcmNonceLength),
+    nonceLength: gcmNonceLength,
+    macLength: 16,
+  );
+  return Uint8List.fromList(
+    await AesGcm.with256bits().decrypt(box, secretKey: fileKey),
+  );
+}
+
+String formatFileSize(int bytes) {
+  if (bytes < 1024) return '$bytes o';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} Ko';
+  if (bytes < 1024 * 1024 * 1024) {
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+  }
+  return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} Go';
+}
+
 String safetyFingerprint(Uint8List myPublicKey, Uint8List peerPublicKey) {
   final keys = [myPublicKey, peerPublicKey]..sort((a, b) {
     for (var i = 0; i < a.length; i++) {
@@ -113,8 +148,8 @@ String safetyFingerprint(Uint8List myPublicKey, Uint8List peerPublicKey) {
     }
     return 0;
   });
-  final digest = sha256.convert(keys.expand((k) => k).toList());
-  final hexStr = hex.encode(digest.bytes);
+  final digest = crypto_pkg.sha256.convert(keys.expand((k) => k).toList());
+  final hexStr = convert.hex.encode(digest.bytes);
   final groups = <String>[];
   for (var i = 0; i < hexStr.length; i += 4) {
     groups.add(hexStr.substring(i, i + 4 > hexStr.length ? hexStr.length : i + 4));

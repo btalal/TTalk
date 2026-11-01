@@ -1,0 +1,56 @@
+name: Release (APK Android + EXE Windows x64)
+
+on:
+  push:
+    branches: [main, vibe/**]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+      - run: flutter pub get
+      - run: flutter test
+      - run: flutter build apk --release
+        name: Compiler l'APK Android (arm64 + armeabi-v7a + x86_64)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: talmessenger-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Publier l'APK en release (sur tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+
+  build-windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+      - run: flutter pub get
+      - run: flutter test
+      - run: flutter build windows --release
+        name: Compiler l'exécutable Windows x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: talmessenger-windows-x64
+          path: build/windows/x64/runner/Release/
+      - name: Publier le ZIP Windows en release (sur tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/windows/x64/runner/Release/talmessenger.exe

@@ -63,23 +63,41 @@ wss.on('connection', (ws) => {
         break;
       }
       case 'cipher': {
-        const target = clients.get(String(msg.to));
-        if (!target) return;
-        send(target, {
-          type: 'cipher',
-          from: ws._id,
-          messageId: msg.messageId,
-          payload: msg.payload,
-        });
+        const targets = Array.isArray(msg.to) ? msg.to : [msg.to];
+        for (const t of targets) {
+          const target = clients.get(String(t));
+          if (!target) continue;
+          send(target, {
+            type: 'cipher',
+            from: ws._id,
+            messageId: msg.messageId,
+            groupId: msg.groupId || null,
+            payload: msg.payload,
+          });
+        }
         break;
       }
       case 'read': {
+        const targets = Array.isArray(msg.to) ? msg.to : [msg.to];
+        for (const t of targets) {
+          const target = clients.get(String(t));
+          if (!target) continue;
+          send(target, {
+            type: 'read',
+            from: ws._id,
+            messageId: msg.messageId,
+          });
+        }
+        break;
+      }
+      case 'group_invite': {
         const target = clients.get(String(msg.to));
         if (!target) return;
         send(target, {
-          type: 'read',
+          type: 'group_invite',
           from: ws._id,
-          messageId: msg.messageId,
+          fromName: ws._name,
+          payload: msg.payload,
         });
         break;
       }
