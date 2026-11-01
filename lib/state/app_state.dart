@@ -155,6 +155,15 @@ class AppState extends ChangeNotifier {
           final gk = _groupKeys[groupId];
           if (gk == null) break;
           final plain = await decryptMessage(gk, payload);
+          if (plain.startsWith('{"kind":"control"')) {
+            try {
+              final ctrl = GroupControl.fromJsonString(
+                (jsonDecode(plain) as Map<String, dynamic>)['data'] as String,
+              );
+              await _applyControl(ctrl);
+            } catch (_) {}
+            break;
+          }
           final m = ChatMessage(
             id: msg['messageId'] as String,
             conversationId: groupId,
@@ -268,13 +277,16 @@ class AppState extends ChangeNotifier {
     final groupId = _uuid.v4();
     final keyBytes = await generateFileKey();
     _groupKeys[groupId] = SecretKey(keyBytes);
-    final members = [...memberPeerIds, if (myId != null) myId!];
+    final me = myId ?? 'moi';
+    final members = [...memberPeerIds, me];
     groups.add(Group(
       id: groupId,
       name: name,
       memberIds: members,
-      createdBy: myId ?? 'moi',
+      createdBy: me,
       createdAt: DateTime.now(),
+      adminIds: [me],
+      epoch: 1,
     ));
     for (final peerId in memberPeerIds) {
       final key = _sessionKeys[peerId];
@@ -284,7 +296,9 @@ class AppState extends ChangeNotifier {
         name: name,
         groupKeyB64: base64Encode(keyBytes),
         memberIds: members,
-        fromId: myId ?? 'moi',
+        adminIds: [me],
+        epoch: 1,
+        fromId: me,
         fromName: _myName ?? 'Moi',
       );
       final cipher = await encryptMessage(key, invite.toJsonString());
@@ -298,16 +312,165 @@ class AppState extends ChangeNotifier {
   Future<void> acceptInvite(GroupInvite invite) async {
     final keyBytes = base64Decode(invite.groupKeyB64);
     _groupKeys[invite.groupId] = SecretKey(keyBytes);
-    if (!groups.any((g) => g.id == invite.groupId)) {
+    final existing = groups.where((g) => g.id == invite.groupId).toList();
+    if (existing.isEmpty) {
       groups.add(Group(
         id: invite.groupId,
         name: invite.name,
         memberIds: invite.memberIds,
         createdBy: invite.fromId,
         createdAt: DateTime.now(),
+        adminIds: invite.adminIds,
+        epoch: invite.epoch,
       ));
+    } else {
+      final g = existing.first;
+      groups[groups.indexOf(g)] = Group(
+        id: g.id,
+        name: invite.name,
+        memberIds: invite.memberIds,
+        createdBy: g.createdBy,
+        createdAt: g.createdAt,
+        adminIds: invite.adminIds,
+        epoch: invite.epoch,
+      );
     }
     _pendingInvites.removeWhere((i) => i.groupId == invite.groupId);
+    await _persist();
+    notifyListeners();
+  }
+
+  bool amAdmin(String groupId) {
+    final me = myId;
+    if (me == null) return false;
+    final g = groups.where((e) => e.id == groupId).toList();
+    if (g.isEmpty) return false;
+    return g.first.isAdmin(me);
+  }
+
+  Future<void> leaveGroup(String groupId) async {
+    final g = groups.firstWhere((e) => e.id == groupId);
+    final me = myId;
+    if (me == null) return;
+    final remaining = g.memberIds.where((id) => id != me).toList();
+    final admins = g.adminIds.where((id) => id != me).toList();
+    if (g.isAdmin(me) && admins.isEmpty && remaining.isNotEmpty) {
+      admins.add(remaining.first);
+    }
+    await _broadcastControl(groupId, GroupControl(
+      kind: 'leave',
+      groupId: groupId,
+      memberIds: remaining,
+      adminIds: admins,
+      epoch: g.epoch,
+      removedId: me,
+    ));
+    groups.removeWhere((e) => e.id == groupId);
+    _groupKeys.remove(groupId);
+    messagesByConv.remove(groupId);
+    await _persist();
+    notifyListeners();
+  }
+
+  Future<void> reInviteMember(String groupId, String peerId) async {
+    final g = groups.firstWhere((e) => e.id == groupId);
+    if (!amAdmin(groupId)) return;
+    final key = _sessionKeys[peerId];
+    if (key == null) return;
+    final members = g.memberIds.contains(peerId) ? g.memberIds : [...g.memberIds, peerId];
+    final invite = GroupInvite(
+      groupId: groupId,
+      name: g.name,
+      groupKeyB64: base64Encode(await _groupKeys[groupId]!.extractBytes()),
+      memberIds: members,
+      adminIds: g.adminIds,
+      epoch: g.epoch,
+      fromId: myId ?? 'moi',
+      fromName: _myName ?? 'Moi',
+    );
+    final cipher = await encryptMessage(key, invite.toJsonString());
+    relay.sendGroupInvite(peerId, cipher);
+    if (!g.memberIds.contains(peerId)) {
+      groups[groups.indexOf(g)] = Group(
+        id: g.id,
+        name: g.name,
+        memberIds: members,
+        createdBy: g.createdBy,
+        createdAt: g.createdAt,
+        adminIds: g.adminIds,
+        epoch: g.epoch,
+      );
+      await _persist();
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeMember(String groupId, String peerId) async {
+    final g = groups.firstWhere((e) => e.id == groupId);
+    if (!amAdmin(groupId) || peerId == myId) return;
+    final newKeyBytes = await generateFileKey();
+    final remaining = g.memberIds.where((id) => id != peerId).toList();
+    final admins = g.adminIds.where((id) => id != peerId).toList();
+    final control = GroupControl(
+      kind: 'remove',
+      groupId: groupId,
+      memberIds: remaining,
+      adminIds: admins,
+      epoch: g.epoch + 1,
+      newGroupKeyB64: base64Encode(newKeyBytes),
+      removedId: peerId,
+    );
+    _groupKeys[groupId] = SecretKey(newKeyBytes);
+    groups[groups.indexOf(g)] = Group(
+      id: g.id,
+      name: g.name,
+      memberIds: remaining,
+      createdBy: g.createdBy,
+      createdAt: g.createdAt,
+      adminIds: admins,
+      epoch: g.epoch + 1,
+    );
+    await _broadcastControl(groupId, control, toExcluded: peerId);
+    await _persist();
+    notifyListeners();
+  }
+
+  Future<void> _broadcastControl(String groupId, GroupControl control, {String? toExcluded}) async {
+    final g = groups.firstWhere((e) => e.id == groupId);
+    final key = _groupKeys[groupId];
+    if (key == null) return;
+    final cipher = await encryptMessage(key, jsonEncode({'kind': 'control', 'data': control.toJsonString()}));
+    final targets = g.memberIds.where((id) => id != myId && id != toExcluded).toList();
+    if (targets.isNotEmpty) {
+      relay.sendCipherToMany(targets, cipher, _uuid.v4(), groupId: groupId);
+    }
+  }
+
+  Future<void> _applyControl(GroupControl c) async {
+    if (c.kind == 'remove' && c.removedId == myId) {
+      groups.removeWhere((e) => e.id == c.groupId);
+      _groupKeys.remove(c.groupId);
+      messagesByConv.remove(c.groupId);
+      await _persist();
+      notifyListeners();
+      return;
+    }
+    final existing = groups.where((e) => e.id == c.groupId).toList();
+    if (existing.isEmpty) return;
+    final g = existing.first;
+    if (c.epoch <= g.epoch && c.kind != 'remove') return;
+    if (c.newGroupKeyB64 != null) {
+      _groupKeys[c.groupId] = SecretKey(Uint8List.fromList(base64Decode(c.newGroupKeyB64!)));
+    }
+    groups[groups.indexOf(g)] = Group(
+      id: g.id,
+      name: g.name,
+      memberIds: c.memberIds,
+      createdBy: g.createdBy,
+      createdAt: g.createdAt,
+      adminIds: c.adminIds,
+      epoch: c.epoch > g.epoch ? c.epoch : g.epoch,
+    );
     await _persist();
     notifyListeners();
   }
@@ -318,6 +481,8 @@ class AppState extends ChangeNotifier {
   }
 
   SecretKey? groupKey(String groupId) => _groupKeys[groupId];
+
+  String peerNameOf(String peerId) => _peerNames[peerId] ?? peerId.substring(0, 8);
 
   Future<void> sendGroupMessage(String groupId, String text) async {
     final g = groups.firstWhere((e) => e.id == groupId);

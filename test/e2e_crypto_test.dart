@@ -143,12 +143,14 @@ void main() {
   });
 
   group('Groupes (modèle)', () {
-    test('GroupInvite sérialise/désérialise la clé de groupe', () {
+    test('GroupInvite sérialise/désérialise la clé de groupe + admins + époque', () {
       final invite = GroupInvite(
         groupId: 'g1',
         name: 'Famille',
         groupKeyB64: base64Encode(List.generate(32, (i) => i)),
         memberIds: const ['a', 'b'],
+        adminIds: const ['a'],
+        epoch: 3,
         fromId: 'a',
         fromName: 'Alice',
       );
@@ -157,6 +159,52 @@ void main() {
       expect(back.name, 'Famille');
       expect(base64Decode(back.groupKeyB64), List.generate(32, (i) => i));
       expect(back.memberIds, ['a', 'b']);
+      expect(back.adminIds, ['a']);
+      expect(back.epoch, 3);
+    });
+
+    test('Group: isAdmin reflète adminIds', () {
+      final g = Group(
+        id: 'g1',
+        name: 'Test',
+        memberIds: const ['a', 'b'],
+        createdBy: 'a',
+        createdAt: DateTime(2025, 1, 1),
+        adminIds: const ['a'],
+      );
+      expect(g.isAdmin('a'), isTrue);
+      expect(g.isAdmin('b'), isFalse);
+    });
+
+    test('GroupControl: remove avec nouvelle clé pivotée', () {
+      final c = GroupControl(
+        kind: 'remove',
+        groupId: 'g1',
+        memberIds: const ['a'],
+        adminIds: const ['a'],
+        epoch: 2,
+        newGroupKeyB64: base64Encode(List.generate(32, (i) => 255 - i)),
+        removedId: 'b',
+      );
+      final back = GroupControl.fromJsonString(c.toJsonString());
+      expect(back.kind, 'remove');
+      expect(back.removedId, 'b');
+      expect(back.epoch, 2);
+      expect(base64Decode(back.newGroupKeyB64!), List.generate(32, (i) => 255 - i));
+    });
+
+    test('GroupControl: leave sans nouvelle clé', () {
+      final c = GroupControl(
+        kind: 'leave',
+        groupId: 'g1',
+        memberIds: const ['a'],
+        adminIds: const ['a'],
+        epoch: 1,
+        removedId: 'c',
+      );
+      final back = GroupControl.fromJsonString(c.toJsonString());
+      expect(back.newGroupKeyB64, isNull);
+      expect(back.kind, 'leave');
     });
   });
 
