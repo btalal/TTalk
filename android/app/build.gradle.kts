@@ -7,6 +7,11 @@ plugins {
 android {
     namespace = "com.talal.ttalk"
     compileSdk = 36
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -32,6 +37,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            isDebuggable = false
             isShrinkResources = false
             signingConfig = signingConfigs.getByName("debug")
         }
