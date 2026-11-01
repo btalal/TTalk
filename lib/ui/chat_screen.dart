@@ -19,7 +19,21 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scroll = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.app.markConversationRead(widget.conversation.id);
+    });
+    widget.app.addListener(_onAppChanged);
+  }
+
+  void _onAppChanged() {
+    widget.app.markConversationRead(widget.conversation.id);
+  }
+
+  @override
   void dispose() {
+    widget.app.removeListener(_onAppChanged);
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
@@ -39,6 +53,13 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final app = widget.app;
     final msgs = app.messagesByConv[widget.conversation.id] ?? [];
+    return ListenableBuilder(
+      listenable: app,
+      builder: (context, _) => _build(context, app, msgs),
+    );
+  }
+
+  Widget _build(BuildContext context, AppState app, List<ChatMessage> msgs) {
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -88,9 +109,24 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Text(m.plaintext ?? '🔒 message chiffré'),
                         const SizedBox(height: 2),
-                        Text(
-                          DateFormat.Hm().format(m.timestamp),
-                          style: Theme.of(context).textTheme.labelSmall,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              DateFormat.Hm().format(m.timestamp),
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                            if (mine) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.done_all,
+                                size: 14,
+                                color: m.read
+                                    ? Colors.blueAccent
+                                    : Theme.of(context).textTheme.labelSmall?.color,
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),

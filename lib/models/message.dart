@@ -8,6 +8,7 @@ class ChatMessage {
     required this.ciphertext,
     required this.timestamp,
     this.plaintext,
+    this.read = false,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class ChatMessage {
   final List<int> ciphertext;
   final DateTime timestamp;
   String? plaintext;
+  bool read;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -23,6 +25,7 @@ class ChatMessage {
         'fromMe': fromMe,
         'ciphertext': base64Encode(ciphertext),
         'timestamp': timestamp.toIso8601String(),
+        'read': read,
         if (plaintext != null) 'plaintext': plaintext,
       };
 
@@ -33,6 +36,7 @@ class ChatMessage {
         ciphertext: base64Decode(json['ciphertext'] as String),
         timestamp: DateTime.parse(json['timestamp'] as String),
         plaintext: json['plaintext'] as String?,
+        read: json['read'] as bool? ?? false,
       );
 }
 

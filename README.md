@@ -61,8 +61,15 @@ L'URL du relais se règle à la compilation :
 flutter run -d android --dart-define=RELAY_URL=wss://relais.example.com
 ```
 
-## Limites connues (v0.1)
+## Accusés de lecture
+
+Comme sur WhatsApp, chaque message envoyé affiche une coche double dans la bulle :
+**✓✓ gris** = arrivé chez le destinataire, **✓✓ bleu** = lu. L'accusé est envoyé
+automatiquement quand la conversation est ouverte (et à la réception d'un message
+si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, jamais son contenu.
+
+## Limites connues (v0.2)
 
 - Appairage manuel par code (pas de découverte automatique).
-- Pas de pièces jointes ni d'appels — texte uniquement, comme demandé.
+- Pas de pièces jointes ni d'appels — texte uniquement.
 - Une seule conversation par contact ; pas de groupes.

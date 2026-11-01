@@ -87,4 +87,11 @@ class RelayClient {
     });
   }
 
+  void sendRead(String to, String messageId) {
+    _send({
+      'type': 'read',
+      'to': to,
+      'messageId': messageId,
+    });
+  }
 }
