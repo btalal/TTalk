@@ -30,6 +30,10 @@ class SecureStore {
   }) async {
     final prefs = preferences ?? await SharedPreferences.getInstance();
     const secure = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.unlocked_this_device,
+      ),
       wOptions: WindowsOptions(useBackwardCompatibility: false),
     );
     final store = SecureStore._(prefs, secure);

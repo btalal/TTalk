@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'services/relay_client.dart';
 import 'services/secure_store.dart';
@@ -18,19 +19,72 @@ void main() async {
   unawaited(app.connectSavedRelay());
 }
 
-class TTalkApp extends StatelessWidget {
+class TTalkApp extends StatefulWidget {
   const TTalkApp({super.key, required this.app});
 
   final AppState app;
 
   @override
+  State<TTalkApp> createState() => _TTalkAppState();
+}
+
+class _TTalkAppState extends State<TTalkApp> with WidgetsBindingObserver {
+  bool _privacyCover = false;
+  bool get _mobile =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_mobile) return;
+    setState(() => _privacyCover = state != AppLifecycleState.resumed);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      widget.app.relay.disconnect();
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(widget.app.connectSavedRelay());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final app = widget.app;
     return AnimatedBuilder(
       animation: app,
       builder: (context, _) {
         return MaterialApp(
           title: 'TTalk',
           debugShowCheckedModeBanner: false,
+          builder: (context, child) => Stack(
+            fit: StackFit.expand,
+            children: [
+              if (child != null) child,
+              if (_privacyCover)
+                ColoredBox(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/branding/ttalk.png',
+                      width: 120,
+                      height: 120,
+                      semanticLabel: 'TTalk',
+                    ),
+                  ),
+                ),
+            ],
+          ),
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xFF4338CA),

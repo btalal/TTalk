@@ -73,34 +73,77 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ),
-          actions: [
-            IconButton(
-              tooltip: 'Configurer le serveur',
-              icon: const Icon(Icons.dns_outlined),
-              onPressed: () => _showRelaySettings(context, app),
-            ),
-            IconButton(
-              tooltip: 'Mon nom',
-              icon: const Icon(Icons.account_circle_outlined),
-              onPressed: () => _showProfile(context, app),
-            ),
-            if (_tab == 1)
-              IconButton(
-                tooltip: 'Nouveau groupe',
-                icon: const Icon(Icons.group_add),
-                onPressed: () => _showNewGroupDialog(context, app),
-              ),
-            IconButton(
-              tooltip: 'Mon code d\'appairage',
-              icon: const Icon(Icons.qr_code),
-              onPressed: () => _showMyCode(context, app),
-            ),
-            IconButton(
-              tooltip: 'Appairer avec un code',
-              icon: const Icon(Icons.person_add),
-              onPressed: () => _showPairDialog(context, app),
-            ),
-          ],
+          actions: MediaQuery.sizeOf(context).width < 600
+              ? [
+                  PopupMenuButton<String>(
+                    tooltip: 'Menu TTalk',
+                    onSelected: (action) {
+                      switch (action) {
+                        case 'server':
+                          _showRelaySettings(context, app);
+                        case 'profile':
+                          _showProfile(context, app);
+                        case 'group':
+                          _showNewGroupDialog(context, app);
+                        case 'code':
+                          _showMyCode(context, app);
+                        case 'pair':
+                          _showPairDialog(context, app);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'server',
+                        child: Text('Configurer le serveur'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'profile',
+                        child: Text('Mon nom'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'code',
+                        child: Text("Mon code d’appairage"),
+                      ),
+                      const PopupMenuItem(
+                        value: 'pair',
+                        child: Text('Appairer un contact'),
+                      ),
+                      if (_tab == 1)
+                        const PopupMenuItem(
+                          value: 'group',
+                          child: Text('Nouveau groupe'),
+                        ),
+                    ],
+                  ),
+                ]
+              : [
+                  IconButton(
+                    tooltip: 'Configurer le serveur',
+                    icon: const Icon(Icons.dns_outlined),
+                    onPressed: () => _showRelaySettings(context, app),
+                  ),
+                  IconButton(
+                    tooltip: 'Mon nom',
+                    icon: const Icon(Icons.account_circle_outlined),
+                    onPressed: () => _showProfile(context, app),
+                  ),
+                  if (_tab == 1)
+                    IconButton(
+                      tooltip: 'Nouveau groupe',
+                      icon: const Icon(Icons.group_add),
+                      onPressed: () => _showNewGroupDialog(context, app),
+                    ),
+                  IconButton(
+                    tooltip: 'Mon code d\'appairage',
+                    icon: const Icon(Icons.qr_code),
+                    onPressed: () => _showMyCode(context, app),
+                  ),
+                  IconButton(
+                    tooltip: 'Appairer avec un code',
+                    icon: const Icon(Icons.person_add),
+                    onPressed: () => _showPairDialog(context, app),
+                  ),
+                ],
         ),
         body: Column(
           children: [
@@ -516,13 +559,14 @@ class _RelayBanner extends StatelessWidget {
     final configured = app.relayUrl.isNotEmpty;
     final pending = app.pendingCount;
     final text = !configured
-        ? 'Configure le serveur pour communiquer entre deux PC.'
+        ? 'Configure le serveur pour communiquer entre tes appareils.'
         : connected
         ? (app.error ?? 'Connecté — messages chiffrés de bout en bout.')
         : (app.error ??
               'Connexion en cours. Les envois restent dans le coffre.');
     return MaterialBanner(
-      backgroundColor: connected ? Colors.green.shade50 : Colors.orange.shade50,
+      forceActionsBelow: MediaQuery.sizeOf(context).width < 600,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       content: Text(
         '$text${pending > 0 ? ' $pending envoi(s) en attente.' : ''}',
       ),
