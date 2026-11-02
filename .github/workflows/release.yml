@@ -3,58 +3,92 @@ name: Release packages (APK Android + EXE Windows)
 on:
   push:
     tags:
-      - 'v*'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release-android:
-    name: Android - APK
+  test:
+    name: Flutter tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.7"
+          flutter-version: "3.44.0"
           channel: stable
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - run: flutter test
+
+  release-android:
+    name: Android - APK
+    needs: test
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.0"
+          channel: stable
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build apk --release --target-platform android-arm64
       - name: Create Android Release (idempotent)
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          VERSION_TAG: ${{ github.ref_name }}
+          RELEASE_COMMIT: ${{ github.sha }}
         run: |
-          TAG="${{ github.ref_name }}-android"
-          gh release view "$TAG" --repo btalal/Talmessenger >/dev/null 2>&1 \
-            || gh release create "$TAG" --repo btalal/Talmessenger \
-                 --title "TTalk ${{ github.ref_name }} - Android (APK arm64)" \
+          set -euo pipefail
+          TAG="$VERSION_TAG-android"
+          gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$GH_REPO" --target "$RELEASE_COMMIT" \
+                 --title "TTalk $VERSION_TAG - Android (APK arm64)" \
                  --notes "APK release arm64 (com.talal.ttalk). Autoriser sources inconnues puis ouvrir l'APK."
           gh release upload "$TAG" build/app/outputs/flutter-apk/app-release.apk \
-            --repo btalal/Talmessenger --clobber
+            --repo "$GH_REPO" --clobber
 
   release-windows:
     name: Windows - EXE x64
+    needs: test
+    permissions:
+      contents: write
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.7"
+          flutter-version: "3.44.0"
           channel: stable
-      - run: flutter pub get
-      - run: flutter test
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build windows --release
       - name: Zip le dossier Release Windows
         shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath ttalk-windows-x64.zip
+        run: |
+          $releasePath = "build/windows/x64/runner/Release"
+          if (-not (Test-Path "$releasePath/ttalk.exe" -PathType Leaf)) {
+            $releasePath = "build/windows/runner/Release"
+          }
+          if (-not (Test-Path "$releasePath/ttalk.exe" -PathType Leaf)) {
+            throw "Binaire ttalk.exe introuvable dans les dossiers Release attendus"
+          }
+          Compress-Archive -Path "$releasePath/*" -DestinationPath ttalk-windows-x64.zip -Force
       - name: Create Windows Release (idempotent)
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          VERSION_TAG: ${{ github.ref_name }}
+          RELEASE_COMMIT: ${{ github.sha }}
         run: |
-          TAG="${{ github.ref_name }}-windows"
-          gh release view "$TAG" --repo btalal/Talmessenger >/dev/null 2>&1 \
-            || gh release create "$TAG" --repo btalal/Talmessenger \
-                 --title "TTalk ${{ github.ref_name }} - Windows x64 (EXE)" \
+          set -euo pipefail
+          TAG="$VERSION_TAG-windows"
+          gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$GH_REPO" --target "$RELEASE_COMMIT" \
+                 --title "TTalk $VERSION_TAG - Windows x64 (EXE)" \
                  --notes "ttalk.exe + DLLs dans ttalk-windows-x64.zip. Extraire et lancer ttalk.exe."
-          gh release upload "$TAG" ttalk-windows-x64.zip --repo btalal/Talmessenger --clobber
+          gh release upload "$TAG" ttalk-windows-x64.zip --repo "$GH_REPO" --clobber
