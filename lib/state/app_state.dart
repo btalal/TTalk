@@ -32,8 +32,7 @@ class AppState extends ChangeNotifier {
   bool unlocked = false;
   String? error;
   String? get myId => relay.myId;
-  String? get myName => _myName;
-  String? _myName;
+  String? get myName => relay.displayName;
 
   Future<void> init({String? pin}) async {
     identity = await store.loadOrCreateIdentity();
@@ -54,7 +53,8 @@ class AppState extends ChangeNotifier {
       for (final c in conversations) {
         _peerKeys[c.peerId] = Uint8List.fromList(c.peerPublicKey);
         _peerNames[c.peerId] = c.peerName;
-        _sessionKeys[c.peerId] = await identity!.deriveSessionKey(Uint8List.fromList(c.peerPublicKey));
+        _sessionKeys[c.peerId] = await identity!
+            .deriveSessionKey(Uint8List.fromList(c.peerPublicKey));
       }
       await _restoreGroups();
     }
@@ -75,7 +75,8 @@ class AppState extends ChangeNotifier {
       for (final c in conversations) {
         _peerKeys[c.peerId] = Uint8List.fromList(c.peerPublicKey);
         _peerNames[c.peerId] = c.peerName;
-        _sessionKeys[c.peerId] = await identity!.deriveSessionKey(Uint8List.fromList(c.peerPublicKey));
+        _sessionKeys[c.peerId] = await identity!
+            .deriveSessionKey(Uint8List.fromList(c.peerPublicKey));
       }
       await _restoreGroups();
     }
@@ -150,9 +151,15 @@ class AppState extends ChangeNotifier {
       case 'cipher':
         final from = msg['from'] as String;
         final groupId = msg['groupId'] as String?;
-        final payload = Uint8List.fromList(base64Decode(msg['payload'] as String));
+        final payload =
+            Uint8List.fromList(base64Decode(msg['payload'] as String));
         if (groupId != null) {
-          final gk = _groupKeys[groupId];
+          final pending =
+              _pendingInvites.where((i) => i.groupId == groupId).firstOrNull;
+          final gk = _groupKeys[groupId] ??
+              (pending == null
+                  ? null
+                  : SecretKey(base64Decode(pending.groupKeyB64)));
           if (gk == null) break;
           final plain = await decryptMessage(gk, payload);
           if (plain.startsWith('{"kind":"control"')) {
@@ -160,10 +167,17 @@ class AppState extends ChangeNotifier {
               final ctrl = GroupControl.fromJsonString(
                 (jsonDecode(plain) as Map<String, dynamic>)['data'] as String,
               );
-              await _applyControl(ctrl);
+              if (ctrl.groupId == groupId) {
+                if (_groupKeys.containsKey(groupId)) {
+                  await _applyControl(ctrl, from);
+                } else if (pending != null) {
+                  _applyPendingControl(pending, ctrl, from);
+                }
+              }
             } catch (_) {}
             break;
           }
+          if (!_groupKeys.containsKey(groupId)) break;
           final m = ChatMessage(
             id: msg['messageId'] as String,
             conversationId: groupId,
@@ -212,11 +226,13 @@ class AppState extends ChangeNotifier {
       case 'group_invite':
         final fromId = msg['from'] as String;
         final fromName = (msg['fromName'] as String?) ?? 'Un contact';
-        final payload = Uint8List.fromList(base64Decode(msg['payload'] as String));
+        final payload =
+            Uint8List.fromList(base64Decode(msg['payload'] as String));
         final key = _sessionKeys[fromId];
         if (key == null) break;
         final plain = await decryptMessage(key, payload);
-        final invite = GroupInvite.fromJsonString(plain, fromId: fromId, fromName: fromName);
+        final invite = GroupInvite.fromJsonString(plain,
+            fromId: fromId, fromName: fromName);
         _pendingInvites.add(invite);
         notifyListeners();
         break;
@@ -284,6 +300,8 @@ class AppState extends ChangeNotifier {
       name: name,
       memberIds: members,
       createdBy: me,
+      ownerId: me,
+      joinedMemberIds: [me],
       createdAt: DateTime.now(),
       adminIds: [me],
       epoch: 1,
@@ -297,9 +315,11 @@ class AppState extends ChangeNotifier {
         groupKeyB64: base64Encode(keyBytes),
         memberIds: members,
         adminIds: [me],
+        ownerId: me,
+        joinedMemberIds: [me],
         epoch: 1,
         fromId: me,
-        fromName: _myName ?? 'Moi',
+        fromName: myName ?? 'Moi',
       );
       final cipher = await encryptMessage(key, invite.toJsonString());
       relay.sendGroupInvite(peerId, cipher);
@@ -309,35 +329,104 @@ class AppState extends ChangeNotifier {
     return groupId;
   }
 
-  Future<void> acceptInvite(GroupInvite invite) async {
-    final keyBytes = base64Decode(invite.groupKeyB64);
-    _groupKeys[invite.groupId] = SecretKey(keyBytes);
-    final existing = groups.where((g) => g.id == invite.groupId).toList();
-    if (existing.isEmpty) {
-      groups.add(Group(
-        id: invite.groupId,
-        name: invite.name,
-        memberIds: invite.memberIds,
-        createdBy: invite.fromId,
-        createdAt: DateTime.now(),
-        adminIds: invite.adminIds,
-        epoch: invite.epoch,
-      ));
+  void _applyPendingControl(
+      GroupInvite invite, GroupControl control, String senderId) {
+    final group = Group(
+      id: invite.groupId,
+      name: invite.name,
+      memberIds: invite.memberIds,
+      createdBy: invite.fromId,
+      ownerId: invite.ownerId ?? invite.fromId,
+      joinedMemberIds: invite.joinedMemberIds ?? [invite.fromId],
+      createdAt: DateTime.now(),
+      adminIds: invite.adminIds,
+      epoch: invite.epoch,
+    );
+    final updated = group.applyControl(control, senderId: senderId);
+    if (updated == null) return;
+    final index = _pendingInvites.indexOf(invite);
+    if (!updated.memberIds.contains(myId)) {
+      _pendingInvites.removeAt(index);
     } else {
-      final g = existing.first;
-      groups[groups.indexOf(g)] = Group(
-        id: g.id,
-        name: invite.name,
-        memberIds: invite.memberIds,
-        createdBy: g.createdBy,
-        createdAt: g.createdAt,
-        adminIds: invite.adminIds,
-        epoch: invite.epoch,
+      _pendingInvites[index] = GroupInvite(
+        groupId: updated.id,
+        name: updated.name,
+        groupKeyB64: control.kind == 'remove'
+            ? control.newGroupKeyB64!
+            : invite.groupKeyB64,
+        memberIds: updated.memberIds,
+        adminIds: updated.adminIds,
+        ownerId: updated.ownerId,
+        joinedMemberIds: updated.joinedMemberIds,
+        epoch: updated.epoch,
+        fromId: invite.fromId,
+        fromName: invite.fromName,
       );
     }
-    _pendingInvites.removeWhere((i) => i.groupId == invite.groupId);
-    await _persist();
     notifyListeners();
+  }
+
+  Future<void> acceptInvite(GroupInvite invite) async {
+    invite =
+        _pendingInvites.where((i) => i.groupId == invite.groupId).firstOrNull ??
+            invite;
+    final me = myId;
+    if (me == null || !invite.memberIds.contains(me)) return;
+    final existing = groups.where((g) => g.id == invite.groupId).toList();
+    // Replayed invitations must not roll back a key, owner or membership state.
+    if (existing.isNotEmpty) {
+      _pendingInvites.removeWhere((i) => i.groupId == invite.groupId);
+      notifyListeners();
+      return;
+    }
+    final keyBytes = base64Decode(invite.groupKeyB64);
+    _groupKeys[invite.groupId] = SecretKey(keyBytes);
+    final group = Group(
+      id: invite.groupId,
+      name: invite.name,
+      memberIds: invite.memberIds,
+      createdBy: invite.fromId,
+      ownerId: invite.ownerId ?? invite.fromId,
+      joinedMemberIds: (invite.joinedMemberIds ?? [invite.fromId])
+          .where((id) => id != me)
+          .toList(),
+      createdAt: DateTime.now(),
+      adminIds: invite.adminIds,
+      epoch: invite.epoch,
+    );
+    groups.add(group);
+    _pendingInvites.removeWhere((i) => i.groupId == invite.groupId);
+    final control = GroupControl(
+      kind: 'join',
+      groupId: group.id,
+      memberIds: group.memberIds,
+      adminIds: group.adminIds,
+      epoch: group.epoch,
+      memberId: me,
+      memberName: myName ?? 'Un membre',
+    );
+    await _broadcastControl(group.id, control);
+    await _applyControl(control, me);
+  }
+
+  Future<void> transferGroupOwnership(String groupId, String newOwnerId) async {
+    final group = groups.firstWhere((g) => g.id == groupId);
+    final me = myId;
+    if (me == null) throw StateError('Non connecté au relais');
+    final control = GroupControl(
+      kind: 'transfer',
+      groupId: groupId,
+      memberIds: group.memberIds,
+      adminIds: group.adminIds,
+      epoch: group.epoch,
+      ownerId: newOwnerId,
+    );
+    if (group.applyControl(control, senderId: me) == null) {
+      throw StateError(
+          'Seul le propriétaire peut transférer le groupe à un membre actif.');
+    }
+    await _broadcastControl(groupId, control);
+    await _applyControl(control, me);
   }
 
   bool amAdmin(String groupId) {
@@ -357,14 +446,16 @@ class AppState extends ChangeNotifier {
     if (g.isAdmin(me) && admins.isEmpty && remaining.isNotEmpty) {
       admins.add(remaining.first);
     }
-    await _broadcastControl(groupId, GroupControl(
-      kind: 'leave',
-      groupId: groupId,
-      memberIds: remaining,
-      adminIds: admins,
-      epoch: g.epoch,
-      removedId: me,
-    ));
+    await _broadcastControl(
+        groupId,
+        GroupControl(
+          kind: 'leave',
+          groupId: groupId,
+          memberIds: remaining,
+          adminIds: admins,
+          epoch: g.epoch,
+          removedId: me,
+        ));
     groups.removeWhere((e) => e.id == groupId);
     _groupKeys.remove(groupId);
     messagesByConv.remove(groupId);
@@ -377,32 +468,33 @@ class AppState extends ChangeNotifier {
     if (!amAdmin(groupId)) return;
     final key = _sessionKeys[peerId];
     if (key == null) return;
-    final members = g.memberIds.contains(peerId) ? g.memberIds : [...g.memberIds, peerId];
+    final members =
+        g.memberIds.contains(peerId) ? g.memberIds : [...g.memberIds, peerId];
     final invite = GroupInvite(
       groupId: groupId,
       name: g.name,
       groupKeyB64: base64Encode(await _groupKeys[groupId]!.extractBytes()),
       memberIds: members,
       adminIds: g.adminIds,
+      ownerId: g.ownerId,
+      joinedMemberIds: g.joinedMemberIds,
       epoch: g.epoch,
       fromId: myId ?? 'moi',
-      fromName: _myName ?? 'Moi',
+      fromName: myName ?? 'Moi',
     );
-    final cipher = await encryptMessage(key, invite.toJsonString());
-    relay.sendGroupInvite(peerId, cipher);
     if (!g.memberIds.contains(peerId)) {
-      groups[groups.indexOf(g)] = Group(
-        id: g.id,
-        name: g.name,
+      final control = GroupControl(
+        kind: 'members',
+        groupId: groupId,
         memberIds: members,
-        createdBy: g.createdBy,
-        createdAt: g.createdAt,
         adminIds: g.adminIds,
         epoch: g.epoch,
       );
-      await _persist();
-      notifyListeners();
+      await _broadcastControl(groupId, control);
+      await _applyControl(control, myId!);
     }
+    final cipher = await encryptMessage(key, invite.toJsonString());
+    relay.sendGroupInvite(peerId, cipher);
   }
 
   Future<void> removeMember(String groupId, String peerId) async {
@@ -420,59 +512,78 @@ class AppState extends ChangeNotifier {
       newGroupKeyB64: base64Encode(newKeyBytes),
       removedId: peerId,
     );
-    _groupKeys[groupId] = SecretKey(newKeyBytes);
-    groups[groups.indexOf(g)] = Group(
-      id: g.id,
-      name: g.name,
-      memberIds: remaining,
-      createdBy: g.createdBy,
-      createdAt: g.createdAt,
-      adminIds: admins,
-      epoch: g.epoch + 1,
-    );
+    if (g.applyControl(control, senderId: myId!) == null) return;
     await _broadcastControl(groupId, control, toExcluded: peerId);
-    await _persist();
-    notifyListeners();
+    await _applyControl(control, myId!);
   }
 
-  Future<void> _broadcastControl(String groupId, GroupControl control, {String? toExcluded}) async {
+  Future<void> _broadcastControl(String groupId, GroupControl control,
+      {String? toExcluded}) async {
     final g = groups.firstWhere((e) => e.id == groupId);
     final key = _groupKeys[groupId];
     if (key == null) return;
-    final cipher = await encryptMessage(key, jsonEncode({'kind': 'control', 'data': control.toJsonString()}));
-    final targets = g.memberIds.where((id) => id != myId && id != toExcluded).toList();
+    final cipher = await encryptMessage(
+        key, jsonEncode({'kind': 'control', 'data': control.toJsonString()}));
+    final targets =
+        g.memberIds.where((id) => id != myId && id != toExcluded).toList();
     if (targets.isNotEmpty) {
       relay.sendCipherToMany(targets, cipher, _uuid.v4(), groupId: groupId);
     }
   }
 
-  Future<void> _applyControl(GroupControl c) async {
-    if (c.kind == 'remove' && c.removedId == myId) {
-      groups.removeWhere((e) => e.id == c.groupId);
-      _groupKeys.remove(c.groupId);
-      messagesByConv.remove(c.groupId);
-      await _persist();
-      notifyListeners();
-      return;
-    }
-    final existing = groups.where((e) => e.id == c.groupId).toList();
+  Future<void> _applyControl(GroupControl control, String senderId) async {
+    final existing = groups.where((g) => g.id == control.groupId).toList();
     if (existing.isEmpty) return;
-    final g = existing.first;
-    if (c.epoch <= g.epoch && c.kind != 'remove') return;
-    if (c.newGroupKeyB64 != null) {
-      _groupKeys[c.groupId] = SecretKey(Uint8List.fromList(base64Decode(c.newGroupKeyB64!)));
+    final group = existing.first;
+    final updated = group.applyControl(control, senderId: senderId);
+    if (updated == null) return;
+    if (control.newGroupKeyB64 != null && control.kind == 'remove') {
+      _groupKeys[group.id] = SecretKey(base64Decode(control.newGroupKeyB64!));
     }
-    groups[groups.indexOf(g)] = Group(
-      id: g.id,
-      name: g.name,
-      memberIds: c.memberIds,
-      createdBy: g.createdBy,
-      createdAt: g.createdAt,
-      adminIds: c.adminIds,
-      epoch: c.epoch > g.epoch ? c.epoch : g.epoch,
-    );
+    groups[groups.indexOf(group)] = updated;
+    if (!updated.memberIds.contains(myId)) {
+      groups.remove(updated);
+      _groupKeys.remove(group.id);
+      messagesByConv.remove(group.id);
+    } else if (control.kind == 'join') {
+      final name = _peerNames[senderId] ?? control.memberName ?? 'Un membre';
+      _peerNames[senderId] = name;
+      _addGroupEvent(group.id, '$name a rejoint le groupe.');
+      // Invitations may predate other members' acceptance. The owner supplies
+      // the accepted roster so a newcomer can validate later ownership changes.
+      if (updated.ownerId == myId && senderId != myId) {
+        final sync = GroupControl(
+          kind: 'sync',
+          groupId: updated.id,
+          memberIds: updated.memberIds,
+          adminIds: updated.adminIds,
+          epoch: updated.epoch,
+          joinedMemberIds: updated.joinedMemberIds,
+        );
+        final payload = await encryptMessage(_groupKeys[group.id]!,
+            jsonEncode({'kind': 'control', 'data': sync.toJsonString()}));
+        relay.sendCipher(senderId, payload, _uuid.v4(), groupId: group.id);
+      }
+    } else if (control.kind == 'transfer') {
+      _addGroupEvent(group.id,
+          '${peerNameOf(updated.ownerId)} est maintenant propriétaire du groupe.');
+    }
     await _persist();
     notifyListeners();
+  }
+
+  void _addGroupEvent(String groupId, String text) {
+    messagesByConv.putIfAbsent(groupId, () => []).add(ChatMessage(
+          id: _uuid.v4(),
+          conversationId: groupId,
+          fromMe: false,
+          ciphertext: const [],
+          timestamp: DateTime.now(),
+          plaintext: text,
+          isGroup: true,
+          kind: 'system',
+          read: true,
+        ));
   }
 
   void declineInvite(GroupInvite invite) {
@@ -482,7 +593,10 @@ class AppState extends ChangeNotifier {
 
   SecretKey? groupKey(String groupId) => _groupKeys[groupId];
 
-  String peerNameOf(String peerId) => _peerNames[peerId] ?? peerId.substring(0, 8);
+  String peerNameOf(String peerId) => peerId == myId
+      ? (myName ?? 'Moi')
+      : (_peerNames[peerId] ??
+          peerId.substring(0, peerId.length < 8 ? peerId.length : 8));
 
   Future<void> sendGroupMessage(String groupId, String text) async {
     final g = groups.firstWhere((e) => e.id == groupId);
@@ -497,7 +611,7 @@ class AppState extends ChangeNotifier {
       timestamp: DateTime.now(),
       plaintext: text,
       isGroup: true,
-      senderName: _myName ?? 'Moi',
+      senderName: myName ?? 'Moi',
     );
     final targets = g.memberIds.where((id) => id != myId).toList();
     relay.sendCipherToMany(targets, cipher, m.id, groupId: groupId);
@@ -506,13 +620,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<ChatMessage> sendFile(String conversationId, String filePath, String fileName, int fileSize, {bool isGroup = false}) async {
+  Future<ChatMessage> sendFile(
+      String conversationId, String filePath, String fileName, int fileSize,
+      {bool isGroup = false}) async {
     final bytes = await File(filePath).readAsBytes();
     final fileKey = SecretKey(await generateFileKey());
     final encFile = await encryptFile(fileKey, bytes);
     final sessionKey = isGroup
         ? _groupKeys[conversationId]!
-        : _sessionKeys[conversations.firstWhere((c) => c.id == conversationId).peerId]!;
+        : _sessionKeys[
+            conversations.firstWhere((c) => c.id == conversationId).peerId]!;
     final meta = jsonEncode({
       'kind': 'file',
       'fileName': fileName,
@@ -531,7 +648,7 @@ class AppState extends ChangeNotifier {
       kind: 'file',
       fileName: fileName,
       fileSize: fileSize,
-      senderName: _myName ?? 'Moi',
+      senderName: myName ?? 'Moi',
     );
     if (isGroup) {
       final g = groups.firstWhere((e) => e.id == conversationId);
@@ -547,12 +664,15 @@ class AppState extends ChangeNotifier {
     return m;
   }
 
-  Future<void> handleInboundFile(ChatMessage m, Map<String, dynamic> meta) async {
-    final fileKey = SecretKey(Uint8List.fromList(base64Decode(meta['fileKey'] as String)));
+  Future<void> handleInboundFile(
+      ChatMessage m, Map<String, dynamic> meta) async {
+    final fileKey =
+        SecretKey(Uint8List.fromList(base64Decode(meta['fileKey'] as String)));
     final encData = base64Decode(meta['data'] as String);
     final clear = await decryptFile(fileKey, Uint8List.fromList(encData));
     final dir = await getApplicationDocumentsDirectory();
-    final safeName = (meta['fileName'] as String).replaceAll(RegExp(r'[^\w.\-]'), '_');
+    final safeName =
+        (meta['fileName'] as String).replaceAll(RegExp(r'[^\w.\-]'), '_');
     final outPath = '${dir.path}/ttalk_files/$safeName';
     await File(outPath).parent.create(recursive: true);
     await File(outPath).writeAsBytes(clear);
@@ -591,6 +711,7 @@ class AppState extends ChangeNotifier {
 
   String safetyNumberFor(String conversationId) {
     final conv = conversations.firstWhere((c) => c.id == conversationId);
-    return safetyFingerprint(identity!.publicKey, Uint8List.fromList(conv.peerPublicKey));
+    return safetyFingerprint(
+        identity!.publicKey, Uint8List.fromList(conv.peerPublicKey));
   }
 }

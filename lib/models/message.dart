@@ -33,6 +33,8 @@ class ChatMessage {
   String? filePath;
   List<String> readBy;
 
+  bool get isSystem => kind == 'system';
+
   bool get isFile => kind == 'file';
 
   Map<String, dynamic> toJson() => {
@@ -66,7 +68,8 @@ class ChatMessage {
         fileName: json['fileName'] as String?,
         fileSize: json['fileSize'] as int?,
         filePath: json['filePath'] as String?,
-        readBy: (json['readBy'] as List?)?.map((e) => e as String).toList() ?? const [],
+        readBy: (json['readBy'] as List?)?.map((e) => e as String).toList() ??
+            const [],
       );
 }
 

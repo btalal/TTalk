@@ -16,9 +16,10 @@ class RelayClient {
   StreamSubscription? _sub;
   RelayState _state = RelayState.disconnected;
   String? _myId;
+  String? displayName;
   String? _myPairingCode;
 
-  void Function(Map<String, dynamic> message)? onInbound;
+  FutureOr<void> Function(Map<String, dynamic> message)? onInbound;
   void Function(RelayState state)? onStateChange;
 
   RelayState get state => _state;
@@ -35,11 +36,12 @@ class RelayClient {
     _channel = WebSocketChannel.connect(Uri.parse(url));
     await _channel!.ready;
     _setState(RelayState.connected);
-    _sub = _channel!.stream.listen(
-      (data) {
-        final msg = jsonDecode(data as String) as Map<String, dynamic>;
-        onInbound?.call(msg);
-      },
+    _sub = _channel!.stream.asyncMap((data) async {
+      final msg = jsonDecode(data as String) as Map<String, dynamic>;
+      if (msg['type'] == 'registered') _myId = msg['id'] as String;
+      await onInbound?.call(msg);
+    }).listen(
+      (_) {},
       onDone: () => _setState(RelayState.disconnected),
       onError: (_) => _setState(RelayState.disconnected),
     );
@@ -57,6 +59,7 @@ class RelayClient {
   }
 
   void register({required String name, required Uint8List publicKey}) {
+    displayName = name;
     _send({
       'type': 'register',
       'name': name,
@@ -68,7 +71,8 @@ class RelayClient {
     final rng = Random.secure();
     final code = String.fromCharCodes(List.generate(
       6,
-      (_) => pairingCodeAlphabet.codeUnitAt(rng.nextInt(pairingCodeAlphabet.length)),
+      (_) => pairingCodeAlphabet
+          .codeUnitAt(rng.nextInt(pairingCodeAlphabet.length)),
     ));
     _myPairingCode = code;
     _send({'type': 'pair_request', 'code': code});
@@ -78,7 +82,8 @@ class RelayClient {
     _send({'type': 'pair_answer', 'code': code});
   }
 
-  void sendCipher(String to, Uint8List payload, String messageId, {String? groupId}) {
+  void sendCipher(String to, Uint8List payload, String messageId,
+      {String? groupId}) {
     _send({
       'type': 'cipher',
       'to': to,
@@ -88,7 +93,8 @@ class RelayClient {
     });
   }
 
-  void sendCipherToMany(List<String> tos, Uint8List payload, String messageId, {required String groupId}) {
+  void sendCipherToMany(List<String> tos, Uint8List payload, String messageId,
+      {required String groupId}) {
     _send({
       'type': 'cipher',
       'to': tos,

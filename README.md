@@ -48,7 +48,7 @@ npm start          # écoute sur ws://127.0.0.1:8080 (PORT=<port> pour changer)
 
 Prérequis sur une machine **Windows 10/11 x64** :
 
-- Flutter **3.44.0** (version utilisée par la CI).
+- Flutter **3.47.9** (version utilisée par la CI).
 - Visual Studio 2022 avec la charge de travail **Développement Desktop en C++**
   et le SDK Windows.
 - Mode développeur Windows activé pour les liens symboliques des plugins.
@@ -96,6 +96,17 @@ si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, j
   - tout membre peut **quitter** le groupe ; si le dernier admin part, le premier
     membre restant devient admin.
 
+Le propriétaire peut **transférer la propriété** à un membre ayant accepté
+l’invitation depuis la liste des membres (bouton « Transférer la propriété »).
+Après confirmation, le destinataire devient propriétaire et administrateur ;
+l’ancien propriétaire reste membre sans droits d’administration.
+
+À l’acceptation d’une invitation, une notification **« X a rejoint le groupe »**
+apparaît dans la conversation des membres connectés. Elle est transmise chiffrée
+et conservée dans l’historique local. Une invitation en attente ne déclenche pas
+cette notification. Le relais actuel ne met pas les événements hors ligne en attente.
+Les participants doivent utiliser une version de TTalk prenant en charge ces événements.
+
 ## Pièces jointes chiffrées
 
 - Bouton 📎 dans une conversation : le fichier est chiffré localement en
@@ -120,5 +131,4 @@ La compilation de l'EXE nécessite Windows et MSVC.
 ## Limites connues (v0.3)
 
 - Appairage manuel par code (pas de découverte automatique).
-- Groupes : pas de transfert de propriété du groupe, pas de notification « X a rejoint ».
 - Pas d'appels audio/vidéo.

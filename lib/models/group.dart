@@ -9,23 +9,129 @@ class Group {
     required this.createdAt,
     this.adminIds = const [],
     this.epoch = 1,
-  });
+    String? ownerId,
+    List<String>? joinedMemberIds,
+  })  : ownerId = ownerId ??
+            (adminIds.contains(createdBy) || adminIds.isEmpty
+                ? createdBy
+                : adminIds.first),
+        joinedMemberIds = joinedMemberIds ?? List.of(memberIds);
 
   final String id;
   final String name;
   final List<String> memberIds;
   final String createdBy;
   final DateTime createdAt;
+  final String ownerId;
+  final List<String> joinedMemberIds;
   List<String> adminIds;
   int epoch;
 
+  bool isOwner(String peerId) => ownerId == peerId;
+
   bool isAdmin(String peerId) => adminIds.contains(peerId);
+
+  /// Returns null for stale, unauthorized or duplicate control messages.
+  Group? applyControl(GroupControl control, {required String senderId}) {
+    if (control.groupId != id ||
+        !memberIds.contains(senderId) ||
+        control.epoch < epoch) {
+      return null;
+    }
+    var members = List<String>.of(memberIds);
+    var admins = List<String>.of(adminIds);
+    var joined = List<String>.of(joinedMemberIds);
+    var owner = ownerId;
+    switch (control.kind) {
+      case 'join':
+        if (control.epoch != epoch ||
+            control.memberId != senderId ||
+            joined.contains(senderId)) {
+          return null;
+        }
+        joined.add(senderId);
+        break;
+      case 'transfer':
+        final next = control.ownerId;
+        if (control.epoch != epoch ||
+            !isOwner(senderId) ||
+            next == null ||
+            next == ownerId ||
+            !members.contains(next) ||
+            !joined.contains(next)) {
+          return null;
+        }
+        owner = next;
+        admins = {...admins.where((id) => id != senderId), next}.toList();
+        break;
+      case 'members':
+        if (control.epoch != epoch ||
+            !isAdmin(senderId) ||
+            !control.memberIds.toSet().containsAll(members)) {
+          return null;
+        }
+        members = control.memberIds.toSet().toList();
+        break;
+      case 'sync':
+        if (control.epoch != epoch ||
+            !isOwner(senderId) ||
+            control.joinedMemberIds == null ||
+            !control.memberIds.toSet().containsAll(members) ||
+            !control.memberIds.toSet().containsAll(control.joinedMemberIds!)) {
+          return null;
+        }
+        members = control.memberIds.toSet().toList();
+        joined = {...joined, ...control.joinedMemberIds!}.toList();
+        break;
+      case 'remove':
+        if (!isAdmin(senderId) ||
+            control.epoch != epoch + 1 ||
+            control.newGroupKeyB64 == null ||
+            control.removedId == ownerId ||
+            !members.contains(control.removedId)) {
+          return null;
+        }
+        members.remove(control.removedId);
+        admins.remove(control.removedId);
+        joined.remove(control.removedId);
+        break;
+      case 'leave':
+        if (control.epoch != epoch || control.removedId != senderId) {
+          return null;
+        }
+        members.remove(senderId);
+        admins.remove(senderId);
+        joined.remove(senderId);
+        if (members.isNotEmpty) {
+          if (admins.isEmpty) {
+            admins.add(joined.isNotEmpty ? joined.first : members.first);
+          }
+          if (owner == senderId) owner = admins.first;
+        }
+        break;
+      default:
+        return null;
+    }
+    return Group(
+      id: id,
+      name: name,
+      memberIds: members,
+      createdBy: createdBy,
+      createdAt: createdAt,
+      adminIds: admins,
+      epoch: control.epoch,
+      ownerId: owner,
+      joinedMemberIds: joined,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'memberIds': memberIds,
         'createdBy': createdBy,
+        'ownerId': ownerId,
+        'joinedMemberIds': joinedMemberIds,
         'createdAt': createdAt.toIso8601String(),
         'adminIds': adminIds,
         'epoch': epoch,
@@ -36,8 +142,12 @@ class Group {
         name: json['name'] as String,
         memberIds: (json['memberIds'] as List).map((e) => e as String).toList(),
         createdBy: json['createdBy'] as String,
+        ownerId: json['ownerId'] as String?,
+        joinedMemberIds: (json['joinedMemberIds'] as List?)?.cast<String>(),
         createdAt: DateTime.parse(json['createdAt'] as String),
-        adminIds: ((json['adminIds'] as List?) ?? []).map((e) => e as String).toList(),
+        adminIds: ((json['adminIds'] as List?) ?? [])
+            .map((e) => e as String)
+            .toList(),
         epoch: json['epoch'] as int? ?? 1,
       );
 }
@@ -52,6 +162,8 @@ class GroupInvite {
     required this.fromName,
     this.adminIds = const [],
     this.epoch = 1,
+    this.ownerId,
+    this.joinedMemberIds,
   });
 
   final String groupId;
@@ -62,6 +174,8 @@ class GroupInvite {
   final String fromName;
   final List<String> adminIds;
   final int epoch;
+  final String? ownerId;
+  final List<String>? joinedMemberIds;
 
   String toJsonString() => jsonEncode({
         'groupId': groupId,
@@ -70,19 +184,25 @@ class GroupInvite {
         'memberIds': memberIds,
         'adminIds': adminIds,
         'epoch': epoch,
+        if (ownerId != null) 'ownerId': ownerId,
+        if (joinedMemberIds != null) 'joinedMemberIds': joinedMemberIds,
         'fromId': fromId,
         'fromName': fromName,
       });
 
-  factory GroupInvite.fromJsonString(String s, {required String fromId, required String fromName}) {
+  factory GroupInvite.fromJsonString(String s,
+      {required String fromId, required String fromName}) {
     final j = jsonDecode(s) as Map<String, dynamic>;
     return GroupInvite(
       groupId: j['groupId'] as String,
       name: j['name'] as String,
       groupKeyB64: j['groupKeyB64'] as String,
       memberIds: (j['memberIds'] as List).map((e) => e as String).toList(),
-      adminIds: ((j['adminIds'] as List?) ?? []).map((e) => e as String).toList(),
+      adminIds:
+          ((j['adminIds'] as List?) ?? []).map((e) => e as String).toList(),
       epoch: j['epoch'] as int? ?? 1,
+      ownerId: j['ownerId'] as String?,
+      joinedMemberIds: (j['joinedMemberIds'] as List?)?.cast<String>(),
       fromId: fromId,
       fromName: fromName,
     );
@@ -98,6 +218,10 @@ class GroupControl {
     required this.epoch,
     this.newGroupKeyB64,
     this.removedId,
+    this.ownerId,
+    this.memberId,
+    this.memberName,
+    this.joinedMemberIds,
   });
 
   final String kind;
@@ -107,6 +231,10 @@ class GroupControl {
   final int epoch;
   final String? newGroupKeyB64;
   final String? removedId;
+  final String? ownerId;
+  final String? memberId;
+  final String? memberName;
+  final List<String>? joinedMemberIds;
 
   String toJsonString() => jsonEncode({
         'kind': kind,
@@ -116,6 +244,10 @@ class GroupControl {
         'epoch': epoch,
         if (newGroupKeyB64 != null) 'newGroupKeyB64': newGroupKeyB64,
         if (removedId != null) 'removedId': removedId,
+        if (ownerId != null) 'ownerId': ownerId,
+        if (memberId != null) 'memberId': memberId,
+        if (memberName != null) 'memberName': memberName,
+        if (joinedMemberIds != null) 'joinedMemberIds': joinedMemberIds,
       });
 
   factory GroupControl.fromJsonString(String s) {
@@ -124,10 +256,15 @@ class GroupControl {
       kind: j['kind'] as String,
       groupId: j['groupId'] as String,
       memberIds: (j['memberIds'] as List).map((e) => e as String).toList(),
-      adminIds: ((j['adminIds'] as List?) ?? []).map((e) => e as String).toList(),
+      adminIds:
+          ((j['adminIds'] as List?) ?? []).map((e) => e as String).toList(),
       epoch: j['epoch'] as int? ?? 1,
       newGroupKeyB64: j['newGroupKeyB64'] as String?,
       removedId: j['removedId'] as String?,
+      ownerId: j['ownerId'] as String?,
+      memberId: j['memberId'] as String?,
+      memberName: j['memberName'] as String?,
+      joinedMemberIds: (j['joinedMemberIds'] as List?)?.cast<String>(),
     );
   }
 }
