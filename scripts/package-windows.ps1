@@ -55,6 +55,7 @@ $hash = (Get-FileHash $OutputPath -Algorithm SHA256).Hash.ToLowerInvariant()
 # Validate the archive itself and launch the extracted app without a relay.
 $extracted = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
 $process = $null
+$second = $null
 try {
     Expand-Archive -Path $OutputPath -DestinationPath $extracted
     foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'data/app.so', 'data/icudtl.dat')) {
@@ -73,6 +74,20 @@ try {
     if ($second.ExitCode -ne 0) { throw 'Le contrôle de seconde instance a échoué' }
     Write-Host "Package x64 vérifié ; fenêtre ouverte hors ligne. SHA256 : $hash"
 } finally {
-    if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id -Force }
-    if (Test-Path $extracted) { Remove-Item $extracted -Recurse -Force }
+    foreach ($owned in @($second, $process)) {
+        if ($null -eq $owned) { continue }
+        if (-not $owned.HasExited) { Stop-Process -Id $owned.Id -Force }
+        if (-not $owned.WaitForExit(10000)) { throw 'Le processus de test ne se ferme pas' }
+        $owned.Dispose()
+    }
+    # Windows can release executable mappings shortly after TerminateProcess.
+    for ($attempt = 0; $attempt -lt 5; $attempt++) {
+        try {
+            if (Test-Path $extracted) { Remove-Item $extracted -Recurse -Force }
+            break
+        } catch {
+            if ($attempt -eq 4) { throw }
+            Start-Sleep -Milliseconds 250
+        }
+    }
 }
