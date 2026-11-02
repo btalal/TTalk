@@ -10,7 +10,7 @@ Messagerie texte **chiffrée de bout en bout**, simple, au format **EXE** pour *
   (et toute personne interceptant le réseau) ne voit que des octets illisibles.
 - Le stockage local (conversations, messages) est chiffré par un **code PIN**
   (PBKDF2-SHA256, 210 000 itérations, sel aléatoire) via le stockage sécurisé
-  de Windows (Gestionnaire d’identifiants / Credential Manager).
+  de Windows.
 - Un **numéro de sécurité** (empreinte SHA-256 des deux clés publiques, ordonnées)
   permet de vérifier hors-bande qu'aucun tiers n'a substitué les clés (anti-MITM).
 
@@ -26,7 +26,7 @@ Messagerie texte **chiffrée de bout en bout**, simple, au format **EXE** pour *
 ```
 lib/
   crypto/e2e_crypto.dart     # X25519, HKDF, AES-256-GCM, PBKDF2, empreinte
-  services/secure_store.dart # stockage chiffré par PIN (Credential Manager Windows)
+  services/secure_store.dart # stockage chiffré par PIN (stockage sécurisé Windows)
   services/relay_client.dart # client WebSocket du relais
   state/app_state.dart       # état applicatif
   ui/                        # écrans (déverrouillage, accueil, conversation)
@@ -34,49 +34,57 @@ server/relay.js              # relais Node.js (ne voit que du chiffré)
 test/e2e_crypto_test.dart    # tests unitaires crypto
 ```
 
-## Lancer le relais
+## Utiliser Windows 0.4 (version candidate)
 
-```bash
-cd server
-npm install
-npm start          # écoute sur ws://127.0.0.1:8080 (PORT=<port> pour changer)
-```
+1. Extraire tout le ZIP Windows x64, puis lancer `ttalk.exe`.
+2. Créer ou saisir son PIN. Les données existantes sont conservées.
+3. Ouvrir **Configurer le serveur** et saisir l’adresse HTTPS du relais hébergé.
+   Les deux PC doivent utiliser la même adresse. Aucune recompilation n’est nécessaire.
+4. Choisir **Mon nom**, puis échanger un code d’appairage et comparer les numéros
+   de sécurité par un autre canal.
 
-> En production, faites tourner le relais derrière **wss://** (TLS) sur un serveur à vous.
+L’adresse n’est pas encore préconfigurée : un hébergement reste à créer et à
+valider avant de considérer cette version comme finalisée. Le déploiement
+[Render prêt à configurer](server/README.md) évite de laisser un PC allumé.
+Les tarifs sont à vérifier avant toute commande chez l’hébergeur.
+
+Les identifiants sont désormais liés aux clés persistantes des appareils.
+Les contacts restent valables après redémarrage. Les envois sans réseau sont
+conservés dans le coffre chiffré ; le relais garde les paquets destinés aux
+appareils absents jusqu’à leur confirmation, pendant **7 jours maximum**.
+La reconnexion et les reprises d’envoi sont automatiques.
+
+Une horloge indique un envoi en attente d’acceptation par le serveur ; une coche
+indique son acceptation, deux coches son arrivée, et les coches bleues sa lecture.
+Une acceptation ne garantit pas une livraison après l’expiration du délai de 7 jours.
+
+### Migration depuis 0.3.6
+
+Le PIN, les clés, les conversations et l’historique sont conservés. Les anciens
+identifiants de contacts sont convertis à partir de leurs clés publiques.
+Les groupes utilisant les anciens IDs restent consultables en historique, mais
+**doivent être recréés**. Les applications 0.4 et le nouveau relais doivent être
+utilisés ensemble : le relais 0.3.6 n’est pas compatible avec cette version.
 
 ## Développer et compiler sous Windows
 
-Prérequis sur une machine **Windows 10/11 x64** :
-
-- Flutter **3.47.9** (version utilisée par la CI).
-- Visual Studio 2022 avec la charge de travail **Développement Desktop en C++**
-  et le SDK Windows.
-- Mode développeur Windows activé pour les liens symboliques des plugins.
-- Node.js et npm pour exécuter le relais local.
-
-Depuis la racine du dépôt :
+Prérequis : Flutter **3.47.9**, Visual Studio 2022 avec « Développement Desktop en
+C++ » et le SDK Windows, mode développeur activé. Node.js **24** est nécessaire
+pour développer et tester le relais, pas pour exécuter l’application avec un relais hébergé.
 
 ```powershell
 flutter doctor -v
 flutter pub get --enforce-lockfile
-flutter test
+flutter analyze --no-pub
+flutter test --no-pub
 flutter run -d windows
 flutter build windows --release
 ```
 
-L'URL du relais se règle à la compilation :
-
-```powershell
-flutter build windows --release --dart-define=RELAY_URL=wss://relais.example.com
-```
-
-L’application s’ouvre même si le relais est indisponible. Après déverrouillage,
-elle enregistre ton profil ; le bouton « Mon nom » permet de le personnaliser.
-
-Par défaut, l'application utilise `ws://localhost:8080` : lancez le relais avant
-l'application. Pour communiquer entre deux PC, utilisez un relais commun accessible
-via `wss://`. Le serveur Node.js écoute uniquement sur l'interface locale ; exposez-le
-avec un reverse proxy TLS sur la machine qui l'héberge.
+Le runner Windows x64, CMake et le contrôle des fichiers PE garantissent la cible
+x64. Le [relais](server/README.md) se lance avec `npm ci` puis `npm start` depuis
+`server`. Pour un test local, saisir `http://localhost:8080` dans l’application.
+Une adresse distante doit utiliser HTTPS/WSS.
 
 ## Accusés de lecture
 
@@ -95,7 +103,7 @@ si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, j
 - **Gestion des membres** (icône 👥 dans le groupe) :
   - 👑 le créateur est **admin** ; il peut **réinviter/ajouter** un contact et
     **retirer** un membre (la clé de groupe est alors **pivotée** — `epoch+1` —
-    pour que le membre retiré ne puisse plus lire les nouveaux messages) ;
+    pour envoyer les nouveaux messages uniquement aux membres restants) ;
   - tout membre peut **quitter** le groupe ; si le dernier admin part, le premier
     membre restant devient admin.
 
@@ -141,7 +149,7 @@ La compilation de l'EXE nécessite Windows et MSVC.
 
 - Appairage manuel par code (pas de découverte automatique).
 - Pas d'appels audio/vidéo.
-- Les identifiants du relais sont liés à la session : un redémarrage exige un
-  nouvel appairage et peut nécessiter de recréer les groupes.
-- Les accusés de réception/lecture sont des indications du relais, pas des preuves
-  cryptographiques de lecture.
+- L’hébergement réel et les échanges entre deux PC distants restent à valider
+  avant de promouvoir la version candidate en version finale.
+- Un accusé chiffré signale l’ouverture de la conversation par l’application ;
+  il ne prouve pas qu’une personne a effectivement lu le texte.

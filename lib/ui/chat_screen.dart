@@ -9,8 +9,12 @@ import '../models/message.dart';
 import '../state/app_state.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen(
-      {super.key, required this.app, this.conversation, this.group});
+  const ChatScreen({
+    super.key,
+    required this.app,
+    this.conversation,
+    this.group,
+  });
 
   final AppState app;
   final Conversation? conversation;
@@ -67,9 +71,13 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Envoi impossible. Vérifie la connexion au relais.'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Envoi non enregistré. Vérifie l’espace disponible dans la file d’envoi.',
+            ),
+          ),
+        );
       }
     }
   }
@@ -80,18 +88,16 @@ class _ChatScreenState extends State<ChatScreen> {
     final f = result.files.first;
     if (f.path == null) return;
     try {
-      await app.sendFile(
-        _chatId,
-        f.path!,
-        f.name,
-        f.size,
-        isGroup: _isGroup,
-      );
+      await app.sendFile(_chatId, f.path!, f.name, f.size, isGroup: _isGroup);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
             content: Text(
-                'Pièce jointe non envoyée. Vérifie la connexion et la limite de 5 Mo.')));
+              'Pièce jointe non envoyée. Vérifie la connexion et la limite de 5 Mo.',
+            ),
+          ),
+        );
       }
     }
   }
@@ -122,7 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
-          if (_isGroup)
+          if (_isGroup && !widget.group!.requiresRecreation)
             IconButton(
               tooltip: 'Membres du groupe',
               icon: const Icon(Icons.group),
@@ -157,12 +163,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
                 final mine = m.fromMe;
                 return Align(
-                  alignment:
-                      mine ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: mine
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.75,
                     ),
@@ -170,8 +179,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: mine
                           ? Theme.of(context).colorScheme.primaryContainer
                           : Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                                .colorScheme
+                                .surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -231,14 +240,18 @@ class _ChatScreenState extends State<ChatScreen> {
                             if (mine) ...[
                               const SizedBox(width: 4),
                               Icon(
-                                m.delivered ? Icons.done_all : Icons.check,
+                                m.pending
+                                    ? Icons.schedule
+                                    : m.delivered
+                                    ? Icons.done_all
+                                    : Icons.check,
                                 size: 14,
                                 color: m.read
                                     ? Colors.blueAccent
                                     : Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.color,
+                                          .textTheme
+                                          .labelSmall
+                                          ?.color,
                               ),
                             ],
                           ],
@@ -250,38 +263,46 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Pièce jointe chiffrée',
-                    onPressed: () => _pickFile(app),
-                    icon: const Icon(Icons.attach_file),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Message chiffré…',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(24)),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                      onSubmitted: (_) => _send(app),
+          if (_isGroup && widget.group!.requiresRecreation)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Ce groupe vient d’une ancienne version. Son historique est conservé ; recrée le groupe pour envoyer de nouveaux messages.',
+              ),
+            )
+          else
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Pièce jointe chiffrée',
+                      onPressed: () => _pickFile(app),
+                      icon: const Icon(Icons.attach_file),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: () => _send(app),
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: const InputDecoration(
+                          hintText: 'Message chiffré…',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(24)),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        onSubmitted: (_) => _send(app),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      onPressed: () => _send(app),
+                      icon: const Icon(Icons.send),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -319,8 +340,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: ListView(
                       shrinkWrap: true,
                       children: gg.memberIds.map((id) {
-                        final name =
-                            id == app.myId ? 'Moi' : (app.peerNameOf(id));
+                        final name = id == app.myId
+                            ? 'Moi'
+                            : (app.peerNameOf(id));
                         final isAdmin = gg.isAdmin(id);
                         final isMe = id == app.myId;
                         return ListTile(
@@ -328,14 +350,19 @@ class _ChatScreenState extends State<ChatScreen> {
                           leading: CircleAvatar(
                             radius: 16,
                             child: Text(
-                                name.isEmpty ? '?' : name[0].toUpperCase()),
+                              name.isEmpty ? '?' : name[0].toUpperCase(),
+                            ),
                           ),
                           title: Text(name + (isAdmin ? '  👑' : '')),
-                          subtitle: Text(gg.isOwner(id)
-                              ? 'Propriétaire'
-                              : (!gg.joinedMemberIds.contains(id)
-                                  ? 'Invitation en attente'
-                                  : (isAdmin ? 'Administrateur' : 'Membre'))),
+                          subtitle: Text(
+                            gg.isOwner(id)
+                                ? 'Propriétaire'
+                                : (!gg.joinedMemberIds.contains(id)
+                                      ? 'Invitation en attente'
+                                      : (isAdmin
+                                            ? 'Administrateur'
+                                            : 'Membre')),
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -346,13 +373,19 @@ class _ChatScreenState extends State<ChatScreen> {
                                   tooltip: 'Transférer la propriété',
                                   icon: const Icon(Icons.manage_accounts),
                                   onPressed: () => _confirmOwnershipTransfer(
-                                      ctx, app, gg.id, id),
+                                    ctx,
+                                    app,
+                                    gg.id,
+                                    id,
+                                  ),
                                 ),
                               if (admin && !isMe && !gg.isOwner(id))
                                 IconButton(
                                   tooltip: 'Retirer du groupe',
-                                  icon: const Icon(Icons.person_remove,
-                                      color: Colors.red),
+                                  icon: const Icon(
+                                    Icons.person_remove,
+                                    color: Colors.red,
+                                  ),
                                   onPressed: () => app.removeMember(gg.id, id),
                                 ),
                             ],
@@ -371,8 +404,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ListTile(
                     leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text('Quitter le groupe',
-                        style: TextStyle(color: Colors.red)),
+                    title: const Text(
+                      'Quitter le groupe',
+                      style: TextStyle(color: Colors.red),
+                    ),
                     onTap: () async {
                       Navigator.of(ctx).pop();
                       await app.leaveGroup(gg.id);
@@ -404,11 +439,13 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Transférer')),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Transférer'),
+          ),
         ],
       ),
     );
@@ -425,10 +462,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _showReinviteDialog(BuildContext ctx, AppState app, String groupId) {
     final candidates = app.conversations
-        .where((c) => !app.groups
-            .firstWhere((g) => g.id == groupId)
-            .memberIds
-            .contains(c.peerId))
+        .where(
+          (c) => !app.groups
+              .firstWhere((g) => g.id == groupId)
+              .memberIds
+              .contains(c.peerId),
+        )
         .toList();
     showDialog<void>(
       context: ctx,
@@ -441,22 +480,25 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: ListView(
                   shrinkWrap: true,
                   children: candidates
-                      .map((c) => ListTile(
-                            dense: true,
-                            title: Text(c.peerName),
-                            trailing: const Icon(Icons.add),
-                            onTap: () {
-                              app.reInviteMember(groupId, c.peerId);
-                              Navigator.of(dctx).pop();
-                            },
-                          ))
+                      .map(
+                        (c) => ListTile(
+                          dense: true,
+                          title: Text(c.peerName),
+                          trailing: const Icon(Icons.add),
+                          onTap: () {
+                            app.reInviteMember(groupId, c.peerId);
+                            Navigator.of(dctx).pop();
+                          },
+                        ),
+                      )
                       .toList(),
                 ),
               ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(dctx).pop(),
-              child: const Text('Fermer')),
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: const Text('Fermer'),
+          ),
         ],
       ),
     );
@@ -485,8 +527,9 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Fermer')),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Fermer'),
+          ),
         ],
       ),
     );

@@ -48,7 +48,9 @@ class _HomeScreenState extends State<HomeScreen>
             controller: _tabController,
             tabs: [
               const Tab(
-                  text: 'Conversations', icon: Icon(Icons.chat_bubble_outline)),
+                text: 'Conversations',
+                icon: Icon(Icons.chat_bubble_outline),
+              ),
               Tab(
                 text: 'Groupes',
                 icon: Badge(
@@ -60,6 +62,11 @@ class _HomeScreenState extends State<HomeScreen>
             ],
           ),
           actions: [
+            IconButton(
+              tooltip: 'Configurer le serveur',
+              icon: const Icon(Icons.dns_outlined),
+              onPressed: () => _showRelaySettings(context, app),
+            ),
             IconButton(
               tooltip: 'Mon nom',
               icon: const Icon(Icons.account_circle_outlined),
@@ -85,7 +92,10 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         body: Column(
           children: [
-            _RelayBanner(app: app),
+            _RelayBanner(
+              app: app,
+              configure: () => _showRelaySettings(context, app),
+            ),
             Expanded(
               child: _tab == 0
                   ? _buildConversations(context, app)
@@ -114,16 +124,16 @@ class _HomeScreenState extends State<HomeScreen>
         final last = msgs.isEmpty ? null : msgs.last;
         return ListTile(
           leading: CircleAvatar(
-              child:
-                  Text(c.peerName.isEmpty ? '?' : c.peerName[0].toUpperCase())),
+            child: Text(c.peerName.isEmpty ? '?' : c.peerName[0].toUpperCase()),
+          ),
           title: Text(c.peerName),
           subtitle: Text(
             last == null
                 ? 'Conversation chiffrée de bout en bout'
                 : (last.fromMe ? 'Moi : ' : '') +
-                    (last.isFile
-                        ? '📎 ${last.fileName}'
-                        : (last.plaintext ?? '•••')),
+                      (last.isFile
+                          ? '📎 ${last.fileName}'
+                          : (last.plaintext ?? '•••')),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -146,75 +156,164 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildGroups(BuildContext context, AppState app) {
     final children = <Widget>[];
     for (final inv in app.pendingInvites) {
-      children.add(ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.mail_outline)),
-        title: Text('Invitation au groupe « ${inv.name} »'),
-        subtitle: Text('de ${inv.fromName} — ${inv.memberIds.length} membres'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
+      children.add(
+        ListTile(
+          leading: const CircleAvatar(child: Icon(Icons.mail_outline)),
+          title: Text('Invitation au groupe « ${inv.name} »'),
+          subtitle: Text(
+            'de ${inv.fromName} — ${inv.memberIds.length} membres',
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
                 icon: const Icon(Icons.check, color: Colors.green),
-                onPressed: () => app.acceptInvite(inv)),
-            IconButton(
+                onPressed: () => app.acceptInvite(inv),
+              ),
+              IconButton(
                 icon: const Icon(Icons.close, color: Colors.red),
-                onPressed: () => app.declineInvite(inv)),
-          ],
+                onPressed: () => app.declineInvite(inv),
+              ),
+            ],
+          ),
         ),
-      ));
+      );
     }
     for (final g in app.groups) {
       final msgs = app.messagesByConv[g.id] ?? [];
       final last = msgs.isEmpty ? null : msgs.last;
-      children.add(ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.groups)),
-        title: Text(g.name),
-        subtitle: Text(
-          last == null
-              ? '${g.memberIds.length} membres — chiffré de bout en bout'
-              : last.isSystem
-                  ? (last.plaintext ?? '')
-                  : '${last.fromMe ? 'Moi' : (last.senderName ?? '?')} : ${last.isFile ? '📎 ${last.fileName}' : (last.plaintext ?? '•••')}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(app: app, group: g),
+      children.add(
+        ListTile(
+          leading: const CircleAvatar(child: Icon(Icons.groups)),
+          title: Text(g.name),
+          subtitle: Text(
+            last == null
+                ? '${g.memberIds.length} membres — chiffré de bout en bout'
+                : last.isSystem
+                ? (last.plaintext ?? '')
+                : '${last.fromMe ? 'Moi' : (last.senderName ?? '?')} : ${last.isFile ? '📎 ${last.fileName}' : (last.plaintext ?? '•••')}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ChatScreen(app: app, group: g),
+            ),
           ),
         ),
-      ));
+      );
     }
     if (children.isEmpty) {
       return const Center(
-        child: Text('Aucun groupe.\nCrée-en un avec l\'icône « groupe + ».',
-            textAlign: TextAlign.center),
+        child: Text(
+          'Aucun groupe.\nCrée-en un avec l\'icône « groupe + ».',
+          textAlign: TextAlign.center,
+        ),
       );
     }
     return ListView(children: children);
   }
 
+  Future<void> _showRelaySettings(BuildContext context, AppState app) async {
+    final controller = TextEditingController(text: app.relayUrl);
+    String? error;
+    bool busy = false;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, update) => AlertDialog(
+          title: const Text('Serveur de messagerie'),
+          content: SizedBox(
+            width: 440,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Les deux personnes doivent utiliser la même adresse. Le serveur peut rester allumé chez un hébergeur.',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.url,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Adresse du serveur',
+                    hintText: 'https://votre-relais.onrender.com',
+                    errorText: error,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: busy ? null : () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      update(() {
+                        busy = true;
+                        error = null;
+                      });
+                      try {
+                        await app.configureRelay(controller.text);
+                        if (ctx.mounted) Navigator.of(ctx).pop();
+                      } on FormatException catch (e) {
+                        if (ctx.mounted) {
+                          update(() {
+                            error = e.message;
+                            busy = false;
+                          });
+                        }
+                      } catch (_) {
+                        if (ctx.mounted) {
+                          update(() {
+                            error = 'Impossible d’enregistrer le serveur.';
+                            busy = false;
+                          });
+                        }
+                      }
+                    },
+              child: Text(busy ? 'Connexion…' : 'Enregistrer et connecter'),
+            ),
+          ],
+        ),
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    controller.dispose();
+  }
+
   Future<void> _showProfile(BuildContext context, AppState app) async {
-    final controller =
-        TextEditingController(text: app.myName ?? app.store.displayName);
+    final controller = TextEditingController(
+      text: app.myName ?? app.store.displayName,
+    );
     try {
       final name = await showDialog<String>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Mon nom'),
-          content:
-              TextField(controller: controller, maxLength: 40, autofocus: true),
+          content: TextField(
+            controller: controller,
+            maxLength: 40,
+            autofocus: true,
+          ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Annuler')),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
             FilledButton(
-                onPressed: () {
-                  if (controller.text.trim().isNotEmpty) {
-                    Navigator.of(ctx).pop(controller.text.trim());
-                  }
-                },
-                child: const Text('Enregistrer')),
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  Navigator.of(ctx).pop(controller.text.trim());
+                }
+              },
+              child: const Text('Enregistrer'),
+            ),
           ],
         ),
       );
@@ -242,7 +341,9 @@ class _HomeScreenState extends State<HomeScreen>
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(
-                      labelText: 'Nom du groupe', border: OutlineInputBorder()),
+                    labelText: 'Nom du groupe',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 if (app.conversations.isEmpty)
@@ -273,15 +374,18 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Annuler')),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
             FilledButton(
               onPressed: () async {
                 if (nameController.text.trim().isEmpty || selected.isEmpty) {
                   return;
                 }
                 await app.createGroup(
-                    nameController.text.trim(), selected.toList());
+                  nameController.text.trim(),
+                  selected.toList(),
+                );
                 if (ctx.mounted) Navigator.of(ctx).pop();
               },
               child: const Text('Créer'),
@@ -294,8 +398,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _showMyCode(BuildContext context, AppState app) {
     if (app.myId == null || app.relay.state != RelayState.connected) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Connecte-toi au relais pour t’appairer.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connecte-toi au relais pour t’appairer.'),
+        ),
+      );
       return;
     }
     app.relay.startPairing();
@@ -309,7 +416,10 @@ class _HomeScreenState extends State<HomeScreen>
             Text(
               app.relay.myPairingCode ?? 'Génération…',
               style: const TextStyle(
-                  fontSize: 32, letterSpacing: 6, fontWeight: FontWeight.bold),
+                fontSize: 32,
+                letterSpacing: 6,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -324,8 +434,10 @@ class _HomeScreenState extends State<HomeScreen>
                 Navigator.of(ctx).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text(
-                          'Code d\'appairage généré — partage-le à ton contact.')),
+                    content: Text(
+                      'Code d\'appairage généré — partage-le à ton contact.',
+                    ),
+                  ),
                 );
               },
               icon: const Icon(Icons.refresh),
@@ -335,8 +447,9 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Fermer')),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Fermer'),
+          ),
         ],
       ),
     );
@@ -359,12 +472,14 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Annuler'),
+          ),
           FilledButton(
             onPressed: () async {
-              final err =
-                  await app.pairWithCode(controller.text.trim().toUpperCase());
+              final err = await app.pairWithCode(
+                controller.text.trim().toUpperCase(),
+              );
               if (ctx.mounted) Navigator.of(ctx).pop();
               if (err != null && context.mounted) {
                 ScaffoldMessenger.of(context)
@@ -380,31 +495,34 @@ class _HomeScreenState extends State<HomeScreen>
 }
 
 class _RelayBanner extends StatelessWidget {
-  const _RelayBanner({required this.app});
-
+  const _RelayBanner({required this.app, required this.configure});
   final AppState app;
-
+  final VoidCallback configure;
   @override
   Widget build(BuildContext context) {
-    final connected = app.relay.state == RelayState.connected;
+    final connected = app.registered;
+    final configured = app.relayUrl.isNotEmpty;
+    final pending = app.pendingCount;
+    final text = !configured
+        ? 'Configure le serveur pour communiquer entre deux PC.'
+        : connected
+        ? (app.error ?? 'Connecté — messages chiffrés de bout en bout.')
+        : (app.error ??
+              'Connexion en cours. Les envois restent dans le coffre.');
     return MaterialBanner(
       backgroundColor: connected ? Colors.green.shade50 : Colors.orange.shade50,
       content: Text(
-        connected
-            ? 'Connecté au relais — les messages restent chiffrés de bout en bout.'
-            : (app.error ??
-                'Relais déconnecté — reconnecte-toi pour envoyer des messages.'),
+        '$text${pending > 0 ? ' $pending envoi(s) en attente.' : ''}',
       ),
       actions: [
-        TextButton(
-          onPressed: connected || app.relay.state == RelayState.connecting
-              ? null
-              : () => app.connectRelay(const String.fromEnvironment(
-                    'RELAY_URL',
-                    defaultValue: 'ws://localhost:8080',
-                  )),
-          child: const Text('Reconnecter'),
-        ),
+        TextButton(onPressed: configure, child: const Text('Serveur')),
+        if (configured && !connected)
+          TextButton(
+            onPressed: app.relay.state == RelayState.connecting
+                ? null
+                : app.connectSavedRelay,
+            child: const Text('Réessayer'),
+          ),
       ],
     );
   }

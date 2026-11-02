@@ -7,6 +7,21 @@
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  // A single instance owns the local encrypted vault in this Windows session.
+  HANDLE instance_mutex = ::CreateMutexW(nullptr, FALSE, L"Local\\com.talal.ttalk");
+  if (instance_mutex == nullptr) {
+    return EXIT_FAILURE;
+  }
+  if (::GetLastError() == ERROR_ALREADY_EXISTS) {
+    HWND existing = ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"TTalk");
+    if (existing != nullptr) {
+      ::ShowWindow(existing, SW_RESTORE);
+      ::SetForegroundWindow(existing);
+    }
+    ::CloseHandle(instance_mutex);
+    return EXIT_SUCCESS;
+  }
+
   // Attach to console when present (e.g., 'flutter run') or create a
   // new console when running with a debugger.
   if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
@@ -28,6 +43,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"TTalk", origin, size)) {
+    ::CoUninitialize();
+    ::CloseHandle(instance_mutex);
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
@@ -39,5 +56,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   }
 
   ::CoUninitialize();
+  ::CloseHandle(instance_mutex);
   return EXIT_SUCCESS;
 }

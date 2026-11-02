@@ -10,6 +10,7 @@ class ChatMessage {
     this.plaintext,
     this.read = false,
     this.delivered = false,
+    this.pending = false,
     this.senderId,
     this.isGroup = false,
     this.senderName,
@@ -28,6 +29,7 @@ class ChatMessage {
   String? plaintext;
   bool read;
   bool delivered;
+  bool pending;
   String? senderId;
   bool isGroup;
   String? senderName;
@@ -42,43 +44,45 @@ class ChatMessage {
   bool get isFile => kind == 'file';
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'conversationId': conversationId,
-        'fromMe': fromMe,
-        'ciphertext': base64Encode(ciphertext),
-        'timestamp': timestamp.toIso8601String(),
-        'read': read,
-        'delivered': delivered,
-        if (senderId != null) 'senderId': senderId,
-        'isGroup': isGroup,
-        'kind': kind,
-        'readBy': readBy,
-        if (plaintext != null) 'plaintext': plaintext,
-        if (senderName != null) 'senderName': senderName,
-        if (fileName != null) 'fileName': fileName,
-        if (fileSize != null) 'fileSize': fileSize,
-        if (filePath != null) 'filePath': filePath,
-      };
+    'id': id,
+    'conversationId': conversationId,
+    'fromMe': fromMe,
+    'ciphertext': base64Encode(ciphertext),
+    'timestamp': timestamp.toIso8601String(),
+    'read': read,
+    'delivered': delivered,
+    'pending': pending,
+    if (senderId != null) 'senderId': senderId,
+    'isGroup': isGroup,
+    'kind': kind,
+    'readBy': readBy,
+    if (plaintext != null) 'plaintext': plaintext,
+    if (senderName != null) 'senderName': senderName,
+    if (fileName != null) 'fileName': fileName,
+    if (fileSize != null) 'fileSize': fileSize,
+    if (filePath != null) 'filePath': filePath,
+  };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-        id: json['id'] as String,
-        conversationId: json['conversationId'] as String,
-        fromMe: json['fromMe'] as bool,
-        ciphertext: base64Decode(json['ciphertext'] as String),
-        timestamp: DateTime.parse(json['timestamp'] as String),
-        plaintext: json['plaintext'] as String?,
-        read: json['read'] as bool? ?? false,
-        delivered: json['delivered'] as bool? ?? false,
-        senderId: json['senderId'] as String?,
-        isGroup: json['isGroup'] as bool? ?? false,
-        senderName: json['senderName'] as String?,
-        kind: json['kind'] as String? ?? 'text',
-        fileName: json['fileName'] as String?,
-        fileSize: json['fileSize'] as int?,
-        filePath: json['filePath'] as String?,
-        readBy: (json['readBy'] as List?)?.map((e) => e as String).toList() ??
-            const [],
-      );
+    id: json['id'] as String,
+    conversationId: json['conversationId'] as String,
+    fromMe: json['fromMe'] as bool,
+    ciphertext: base64Decode(json['ciphertext'] as String),
+    timestamp: DateTime.parse(json['timestamp'] as String),
+    plaintext: json['plaintext'] as String?,
+    read: json['read'] as bool? ?? false,
+    delivered: json['delivered'] as bool? ?? false,
+    pending: json['pending'] as bool? ?? false,
+    senderId: json['senderId'] as String?,
+    isGroup: json['isGroup'] as bool? ?? false,
+    senderName: json['senderName'] as String?,
+    kind: json['kind'] as String? ?? 'text',
+    fileName: json['fileName'] as String?,
+    fileSize: json['fileSize'] as int?,
+    filePath: json['filePath'] as String?,
+    readBy:
+        (json['readBy'] as List?)?.map((e) => e as String).toList() ?? const [],
+  );
 }
 
 class Conversation {
@@ -99,23 +103,23 @@ class Conversation {
   DateTime? lastMessageAt;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'peerId': peerId,
-        'peerName': peerName,
-        'peerPublicKey': base64Encode(peerPublicKey),
-        'createdAt': createdAt.toIso8601String(),
-        if (lastMessageAt != null)
-          'lastMessageAt': lastMessageAt!.toIso8601String(),
-      };
+    'id': id,
+    'peerId': peerId,
+    'peerName': peerName,
+    'peerPublicKey': base64Encode(peerPublicKey),
+    'createdAt': createdAt.toIso8601String(),
+    if (lastMessageAt != null)
+      'lastMessageAt': lastMessageAt!.toIso8601String(),
+  };
 
   factory Conversation.fromJson(Map<String, dynamic> json) => Conversation(
-        id: json['id'] as String,
-        peerId: json['peerId'] as String,
-        peerName: json['peerName'] as String,
-        peerPublicKey: base64Decode(json['peerPublicKey'] as String),
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        lastMessageAt: json['lastMessageAt'] == null
-            ? null
-            : DateTime.parse(json['lastMessageAt'] as String),
-      );
+    id: json['id'] as String,
+    peerId: json['peerId'] as String,
+    peerName: json['peerName'] as String,
+    peerPublicKey: base64Decode(json['peerPublicKey'] as String),
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    lastMessageAt: json['lastMessageAt'] == null
+        ? null
+        : DateTime.parse(json['lastMessageAt'] as String),
+  );
 }

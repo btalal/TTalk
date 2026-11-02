@@ -1,20 +1,28 @@
-TTalk - Windows 10/11 x64
+TTalk Windows 0.4 — version candidate, Windows 10/11 x64
 
-1. Extraire TOUT le ZIP dans un dossier accessible en écriture.
-2. Lancer ttalk.exe. Garder les DLL et le dossier data à ses côtés.
-3. Créer un PIN (4 à 12 chiffres), puis choisir « Mon nom ».
-4. Un relais WebSocket est nécessaire pour communiquer. Le binaire standard
-   utilise ws://localhost:8080 : lancer le relais Node.js du dépôt sur ce PC.
-   Pour plusieurs PC, recompiler avec RELAY_URL=wss://votre-relais.example.com
-   et héberger le relais derrière un reverse proxy TLS.
-5. Générer un code d’appairage et le communiquer à l’autre contact.
-   Comparer les numéros de sécurité par un autre canal.
+Fermer les anciennes versions avant de lancer cette préversion. Ne pas utiliser
+0.3.6 et 0.4 sur le même profil en même temps.
 
-Les messages sont chiffrés. Les fichiers reçus sont enregistrés en clair dans
-le dossier Documents/ttalk_files après déchiffrement : protéger le compte Windows.
-Le relais actuel ne stocke pas les messages hors ligne. Les identifiants sont
-liés à la session du relais ; un redémarrage exige un nouvel appairage et peut
-nécessiter de recréer les groupes.
+1. Extraire TOUT le ZIP et lancer ttalk.exe. Garder les DLL et data à ses côtés.
+2. Créer ou saisir son PIN (4 à 12 chiffres).
+3. Ouvrir Configurer le serveur et saisir l’adresse HTTPS du relais hébergé.
+   Les deux PC doivent utiliser la même adresse. Aucune recompilation nécessaire.
+4. Choisir Mon nom, puis échanger un code d’appairage et comparer les numéros de sécurité.
 
-Ce package n’est pas signé avec un certificat de signature de code.
-La somme SHA256 jointe permet de vérifier l’intégrité du téléchargement.
+Un PC utilisateur n’a pas besoin de rester allumé : le relais est hébergé en
+permanence. Il reste à créer l’hébergement si vous n’en avez pas encore.
+Guide : https://github.com/btalal/TTalk/blob/vibe/talmessenger-e2e-5e4935/server/README.md
+Node.js n’est nécessaire sur le PC que pour les tests avec un relais local.
+
+Les contacts et les clés persistent après redémarrage. Les envois sans réseau
+restent dans le coffre. Le serveur conserve les messages chiffrés en attente
+pendant 7 jours maximum. Une horloge indique un envoi encore en attente.
+
+Migration : conserver les données Windows et le PIN. Les contacts sont convertis
+automatiquement. Les groupes de 0.3.6 restent consultables mais doivent être recréés.
+Les deux PC et le serveur doivent utiliser la nouvelle version.
+
+Les fichiers reçus sont enregistrés en clair dans Documents/ttalk_files après
+déchiffrement. Protéger le compte Windows. Ne pas effacer les clés de l’application.
+Le package n’est pas signé Authenticode ; une somme SHA256 accompagne le ZIP.
+Cette version candidate ne vaut pas validation d’un hébergement encore inexistant.

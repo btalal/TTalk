@@ -9,14 +9,19 @@ class Group {
     required this.createdAt,
     this.adminIds = const [],
     this.epoch = 1,
+    this.requiresRecreation = false,
+    this.ownershipVersion = 0,
     String? ownerId,
     List<String>? joinedMemberIds,
-  })  : ownerId = ownerId ??
-            (adminIds.contains(createdBy) || adminIds.isEmpty
-                ? createdBy
-                : adminIds.first),
-        joinedMemberIds = joinedMemberIds ?? List.of(memberIds);
+  }) : ownerId =
+           ownerId ??
+           (adminIds.contains(createdBy) || adminIds.isEmpty
+               ? createdBy
+               : adminIds.first),
+       joinedMemberIds = joinedMemberIds ?? List.of(memberIds);
 
+  final bool requiresRecreation;
+  final int ownershipVersion;
   final String id;
   final String name;
   final List<String> memberIds;
@@ -33,7 +38,8 @@ class Group {
 
   /// Returns null for stale, unauthorized or duplicate control messages.
   Group? applyControl(GroupControl control, {required String senderId}) {
-    if (control.groupId != id ||
+    if (requiresRecreation ||
+        control.groupId != id ||
         !memberIds.contains(senderId) ||
         control.epoch < epoch) {
       return null;
@@ -55,6 +61,7 @@ class Group {
         final next = control.ownerId;
         if (control.epoch != epoch ||
             !isOwner(senderId) ||
+            control.ownerVersion != ownershipVersion + 1 ||
             next == null ||
             next == ownerId ||
             !members.contains(next) ||
@@ -121,35 +128,42 @@ class Group {
       adminIds: admins,
       epoch: control.epoch,
       ownerId: owner,
+      ownershipVersion: control.kind == 'transfer'
+          ? control.ownerVersion!
+          : ownershipVersion,
       joinedMemberIds: joined,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'memberIds': memberIds,
-        'createdBy': createdBy,
-        'ownerId': ownerId,
-        'joinedMemberIds': joinedMemberIds,
-        'createdAt': createdAt.toIso8601String(),
-        'adminIds': adminIds,
-        'epoch': epoch,
-      };
+    'id': id,
+    'requiresRecreation': requiresRecreation,
+    'ownershipVersion': ownershipVersion,
+    'name': name,
+    'memberIds': memberIds,
+    'createdBy': createdBy,
+    'ownerId': ownerId,
+    'joinedMemberIds': joinedMemberIds,
+    'createdAt': createdAt.toIso8601String(),
+    'adminIds': adminIds,
+    'epoch': epoch,
+  };
 
   factory Group.fromJson(Map<String, dynamic> json) => Group(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        memberIds: (json['memberIds'] as List).map((e) => e as String).toList(),
-        createdBy: json['createdBy'] as String,
-        ownerId: json['ownerId'] as String?,
-        joinedMemberIds: (json['joinedMemberIds'] as List?)?.cast<String>(),
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        adminIds: ((json['adminIds'] as List?) ?? [])
-            .map((e) => e as String)
-            .toList(),
-        epoch: json['epoch'] as int? ?? 1,
-      );
+    id: json['id'] as String,
+    requiresRecreation: json['requiresRecreation'] as bool? ?? false,
+    ownershipVersion: json['ownershipVersion'] as int? ?? 0,
+    name: json['name'] as String,
+    memberIds: (json['memberIds'] as List).map((e) => e as String).toList(),
+    createdBy: json['createdBy'] as String,
+    ownerId: json['ownerId'] as String?,
+    joinedMemberIds: (json['joinedMemberIds'] as List?)?.cast<String>(),
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    adminIds: ((json['adminIds'] as List?) ?? [])
+        .map((e) => e as String)
+        .toList(),
+    epoch: json['epoch'] as int? ?? 1,
+  );
 }
 
 class GroupInvite {
@@ -163,6 +177,7 @@ class GroupInvite {
     this.adminIds = const [],
     this.epoch = 1,
     this.ownerId,
+    this.ownershipVersion = 0,
     this.joinedMemberIds,
   });
 
@@ -175,33 +190,40 @@ class GroupInvite {
   final List<String> adminIds;
   final int epoch;
   final String? ownerId;
+  final int ownershipVersion;
   final List<String>? joinedMemberIds;
 
   String toJsonString() => jsonEncode({
-        'groupId': groupId,
-        'name': name,
-        'groupKeyB64': groupKeyB64,
-        'memberIds': memberIds,
-        'adminIds': adminIds,
-        'epoch': epoch,
-        if (ownerId != null) 'ownerId': ownerId,
-        if (joinedMemberIds != null) 'joinedMemberIds': joinedMemberIds,
-        'fromId': fromId,
-        'fromName': fromName,
-      });
+    'groupId': groupId,
+    'name': name,
+    'groupKeyB64': groupKeyB64,
+    'memberIds': memberIds,
+    'adminIds': adminIds,
+    'epoch': epoch,
+    if (ownerId != null) 'ownerId': ownerId,
+    'ownershipVersion': ownershipVersion,
+    if (joinedMemberIds != null) 'joinedMemberIds': joinedMemberIds,
+    'fromId': fromId,
+    'fromName': fromName,
+  });
 
-  factory GroupInvite.fromJsonString(String s,
-      {required String fromId, required String fromName}) {
+  factory GroupInvite.fromJsonString(
+    String s, {
+    required String fromId,
+    required String fromName,
+  }) {
     final j = jsonDecode(s) as Map<String, dynamic>;
     return GroupInvite(
       groupId: j['groupId'] as String,
       name: j['name'] as String,
       groupKeyB64: j['groupKeyB64'] as String,
       memberIds: (j['memberIds'] as List).map((e) => e as String).toList(),
-      adminIds:
-          ((j['adminIds'] as List?) ?? []).map((e) => e as String).toList(),
+      adminIds: ((j['adminIds'] as List?) ?? [])
+          .map((e) => e as String)
+          .toList(),
       epoch: j['epoch'] as int? ?? 1,
       ownerId: j['ownerId'] as String?,
+      ownershipVersion: j['ownershipVersion'] as int? ?? 0,
       joinedMemberIds: (j['joinedMemberIds'] as List?)?.cast<String>(),
       fromId: fromId,
       fromName: fromName,
@@ -219,6 +241,7 @@ class GroupControl {
     this.newGroupKeyB64,
     this.removedId,
     this.ownerId,
+    this.ownerVersion,
     this.memberId,
     this.memberName,
     this.joinedMemberIds,
@@ -232,23 +255,25 @@ class GroupControl {
   final String? newGroupKeyB64;
   final String? removedId;
   final String? ownerId;
+  final int? ownerVersion;
   final String? memberId;
   final String? memberName;
   final List<String>? joinedMemberIds;
 
   String toJsonString() => jsonEncode({
-        'kind': kind,
-        'groupId': groupId,
-        'memberIds': memberIds,
-        'adminIds': adminIds,
-        'epoch': epoch,
-        if (newGroupKeyB64 != null) 'newGroupKeyB64': newGroupKeyB64,
-        if (removedId != null) 'removedId': removedId,
-        if (ownerId != null) 'ownerId': ownerId,
-        if (memberId != null) 'memberId': memberId,
-        if (memberName != null) 'memberName': memberName,
-        if (joinedMemberIds != null) 'joinedMemberIds': joinedMemberIds,
-      });
+    'kind': kind,
+    'groupId': groupId,
+    'memberIds': memberIds,
+    'adminIds': adminIds,
+    'epoch': epoch,
+    if (newGroupKeyB64 != null) 'newGroupKeyB64': newGroupKeyB64,
+    if (removedId != null) 'removedId': removedId,
+    if (ownerId != null) 'ownerId': ownerId,
+    if (ownerVersion != null) 'ownerVersion': ownerVersion,
+    if (memberId != null) 'memberId': memberId,
+    if (memberName != null) 'memberName': memberName,
+    if (joinedMemberIds != null) 'joinedMemberIds': joinedMemberIds,
+  });
 
   factory GroupControl.fromJsonString(String s) {
     final j = jsonDecode(s) as Map<String, dynamic>;
@@ -256,12 +281,14 @@ class GroupControl {
       kind: j['kind'] as String,
       groupId: j['groupId'] as String,
       memberIds: (j['memberIds'] as List).map((e) => e as String).toList(),
-      adminIds:
-          ((j['adminIds'] as List?) ?? []).map((e) => e as String).toList(),
+      adminIds: ((j['adminIds'] as List?) ?? [])
+          .map((e) => e as String)
+          .toList(),
       epoch: j['epoch'] as int? ?? 1,
       newGroupKeyB64: j['newGroupKeyB64'] as String?,
       removedId: j['removedId'] as String?,
       ownerId: j['ownerId'] as String?,
+      ownerVersion: j['ownerVersion'] as int?,
       memberId: j['memberId'] as String?,
       memberName: j['memberName'] as String?,
       joinedMemberIds: (j['joinedMemberIds'] as List?)?.cast<String>(),

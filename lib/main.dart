@@ -10,16 +10,12 @@ import 'ui/unlock_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const relayUrl = String.fromEnvironment(
-    'RELAY_URL',
-    defaultValue: 'ws://localhost:8080',
-  );
   final store = await SecureStore.create();
   final relay = RelayClient();
   final app = AppState(store: store, relay: relay);
   await app.init();
   runApp(TTalkApp(app: app));
-  unawaited(app.connectRelay(relayUrl));
+  unawaited(app.connectSavedRelay());
 }
 
 class TTalkApp extends StatelessWidget {

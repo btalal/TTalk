@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: ttalk-relay
+    runtime: node
+    repo: https://github.com/btalal/TTalk
+    branch: vibe/talmessenger-e2e-5e4935
+    plan: starter
+    region: frankfurt
+    numInstances: 1
+    autoDeploy: false
+    buildCommand: npm ci --prefix server
+    startCommand: npm start --prefix server
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 24.19.0
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: ttalk-messages
+      mountPath: /var/data
+      sizeGB: 1

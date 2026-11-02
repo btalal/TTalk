@@ -65,6 +65,12 @@ try {
     $process.Refresh()
     if ($process.HasExited) { throw "TTalk s’est arrêté au démarrage : $($process.ExitCode)" }
     if ($process.MainWindowHandle -eq 0) { throw "La fenêtre TTalk ne s’est pas ouverte" }
+    $second = Start-Process (Join-Path $extracted 'ttalk.exe') -WorkingDirectory $extracted -PassThru
+    if (-not $second.WaitForExit(5000)) {
+        Stop-Process -Id $second.Id -Force
+        throw 'Une deuxième instance peut accéder au même coffre'
+    }
+    if ($second.ExitCode -ne 0) { throw 'Le contrôle de seconde instance a échoué' }
     Write-Host "Package x64 vérifié ; fenêtre ouverte hors ligne. SHA256 : $hash"
 } finally {
     if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id -Force }

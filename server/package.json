@@ -1,7 +1,7 @@
 {
   "name": "ttalk-relay",
-  "version": "0.1.0",
-  "description": "Relais minimal pour TTalk \u2014 ne voit que des paquets chiffr\u00e9s.",
+  "version": "0.4.0",
+  "description": "Relais minimal pour TTalk — ne voit que des paquets chiffrés.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=24 <25"
   }
 }
