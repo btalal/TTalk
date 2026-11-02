@@ -21,15 +21,17 @@ jobs:
       - run: flutter pub get
       - run: flutter test
       - run: flutter build apk --release --target-platform android-arm64
-      - name: Create Android Release
+      - name: Create Android Release (idempotent)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}-android" \
-            build/app/outputs/flutter-apk/app-release.apk \
-            --repo btalal/Talmessenger \
-            --title "TTalk ${{ github.ref_name }} - Android (APK arm64)" \
-            --notes "APK release arm64 (com.talal.ttalk)."
+          TAG="${{ github.ref_name }}-android"
+          gh release view "$TAG" --repo btalal/Talmessenger >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo btalal/Talmessenger \
+                 --title "TTalk ${{ github.ref_name }} - Android (APK arm64)" \
+                 --notes "APK release arm64 (com.talal.ttalk). Autoriser sources inconnues puis ouvrir l'APK."
+          gh release upload "$TAG" build/app/outputs/flutter-apk/app-release.apk \
+            --repo btalal/Talmessenger --clobber
 
   release-windows:
     name: Windows - EXE x64
@@ -46,12 +48,13 @@ jobs:
       - name: Zip le dossier Release Windows
         shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath ttalk-windows-x64.zip
-      - name: Create Windows Release
+      - name: Create Windows Release (idempotent)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}-windows" \
-            ttalk-windows-x64.zip \
-            --repo btalal/Talmessenger \
-            --title "TTalk ${{ github.ref_name }} - Windows x64 (EXE)" \
-            --notes "ttalk.exe + DLLs dans ttalk-windows-x64.zip."
+          TAG="${{ github.ref_name }}-windows"
+          gh release view "$TAG" --repo btalal/Talmessenger >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo btalal/Talmessenger \
+                 --title "TTalk ${{ github.ref_name }} - Windows x64 (EXE)" \
+                 --notes "ttalk.exe + DLLs dans ttalk-windows-x64.zip. Extraire et lancer ttalk.exe."
+          gh release upload "$TAG" ttalk-windows-x64.zip --repo btalal/Talmessenger --clobber
