@@ -70,6 +70,9 @@ L'URL du relais se règle à la compilation :
 flutter build windows --release --target-platform windows-x64 --dart-define=RELAY_URL=wss://relais.example.com
 ```
 
+L’application s’ouvre même si le relais est indisponible. Après déverrouillage,
+elle enregistre ton profil ; le bouton « Mon nom » permet de le personnaliser.
+
 Par défaut, l'application utilise `ws://localhost:8080` : lancez le relais avant
 l'application. Pour communiquer entre deux PC, utilisez un relais commun accessible
 via `wss://`. Le serveur Node.js écoute uniquement sur l'interface locale ; exposez-le
@@ -115,6 +118,8 @@ Les participants doivent utiliser une version de TTalk prenant en charge ces év
 - À la réception, le fichier est déchiffré et enregistré dans le dossier
   documents de l'app (`ttalk_files/`) ; un appui l'ouvre.
 - Le relais ne voit jamais ni le nom ni le contenu du fichier en clair.
+- Les pièces jointes sont limitées à **5 Mo**. Les fichiers reçus sont déchiffrés
+  dans Documents et ne sont plus chiffrés une fois enregistrés sur disque.
 
 ## Télécharger et lancer TTalk
 
@@ -122,6 +127,10 @@ Les [releases GitHub](https://github.com/btalal/TTalk/releases) Windows contienn
 l'archive **`ttalk-windows-x64.zip`**. Extrayez **tout** son contenu, puis lancez
 **`ttalk.exe`**. Gardez les DLL et le dossier `data` à côté de l'exécutable :
 le fichier EXE seul ne suffit pas.
+
+Le package inclut les DLL du runtime MSVC x64. Une somme **SHA256** accompagne
+le ZIP. La CI contrôle son contenu et ouvre l’application extraite sans relais
+avant publication.
 
 Le [workflow de release](.github/workflows/release.yml) teste l'application sur
 Windows, compile uniquement la cible Windows x64, puis publie le ZIP sur un tag
@@ -132,3 +141,7 @@ La compilation de l'EXE nécessite Windows et MSVC.
 
 - Appairage manuel par code (pas de découverte automatique).
 - Pas d'appels audio/vidéo.
+- Les identifiants du relais sont liés à la session : un redémarrage exige un
+  nouvel appairage et peut nécessiter de recréer les groupes.
+- Les accusés de réception/lecture sont des indications du relais, pas des preuves
+  cryptographiques de lecture.

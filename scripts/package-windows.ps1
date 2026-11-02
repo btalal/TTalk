@@ -1,0 +1,69 @@
+param(
+    [string]$ReleasePath = 'build/windows/x64/runner/Release',
+    [string]$OutputPath = 'ttalk-windows-x64.zip'
+)
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+function Assert-X64([string]$Path) {
+    $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $Path))
+    if ($bytes.Length -lt 64 -or $bytes[0] -ne 0x4d -or $bytes[1] -ne 0x5a) {
+        throw "Fichier PE invalide : $Path"
+    }
+    $offset = [BitConverter]::ToInt32($bytes, 0x3c)
+    if ($offset -lt 0 -or $offset + 6 -gt $bytes.Length -or
+        [BitConverter]::ToUInt32($bytes, $offset) -ne 0x4550 -or
+        [BitConverter]::ToUInt16($bytes, $offset + 4) -ne 0x8664) {
+        throw "Binaire Windows x64 attendu : $Path"
+    }
+}
+
+foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'data/icudtl.dat', 'data/app.so')) {
+    if (-not (Test-Path (Join-Path $ReleasePath $file) -PathType Leaf)) {
+        throw "Fichier indispensable absent : $file"
+    }
+}
+if (-not (Test-Path (Join-Path $ReleasePath 'data/flutter_assets') -PathType Container)) {
+    throw 'Assets Flutter absents'
+}
+Assert-X64 (Join-Path $ReleasePath 'ttalk.exe')
+Assert-X64 (Join-Path $ReleasePath 'flutter_windows.dll')
+
+# Bundle the redistributable x64 CRT from the Visual Studio installation.
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+$vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+if ($LASTEXITCODE -ne 0 -or -not $vs) { throw 'Installation MSVC introuvable' }
+$runtime = Get-ChildItem (Join-Path $vs 'VC/Redist/MSVC') -Directory |
+    Sort-Object { [version]$_.Name } -Descending |
+    ForEach-Object { Join-Path $_.FullName 'x64/Microsoft.VC143.CRT' } |
+    Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $runtime) { throw 'Runtime Microsoft VC143 x64 introuvable' }
+foreach ($file in @('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')) {
+    Copy-Item (Join-Path $runtime $file) $ReleasePath -Force
+    Assert-X64 (Join-Path $ReleasePath $file)
+}
+Copy-Item 'docs/WINDOWS_PACKAGE.txt' (Join-Path $ReleasePath 'LIRE-MOI.txt') -Force
+
+Compress-Archive -Path "$ReleasePath/*" -DestinationPath $OutputPath -Force
+$hash = (Get-FileHash $OutputPath -Algorithm SHA256).Hash.ToLowerInvariant()
+"$hash  $([System.IO.Path]::GetFileName($OutputPath))" |
+    Set-Content "$OutputPath.sha256" -Encoding ascii
+
+# Validate the archive itself and launch the extracted app without a relay.
+$extracted = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
+$process = $null
+try {
+    Expand-Archive -Path $OutputPath -DestinationPath $extracted
+    foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'data/app.so', 'data/icudtl.dat')) {
+        if (-not (Test-Path (Join-Path $extracted $file))) { throw "ZIP incomplet : $file" }
+    }
+    $process = Start-Process (Join-Path $extracted 'ttalk.exe') -WorkingDirectory $extracted -PassThru
+    Start-Sleep -Seconds 8
+    $process.Refresh()
+    if ($process.HasExited) { throw "TTalk s’est arrêté au démarrage : $($process.ExitCode)" }
+    if ($process.MainWindowHandle -eq 0) { throw 'La fenêtre TTalk ne s’est pas ouverte' }
+    Write-Host "Package x64 vérifié ; fenêtre ouverte hors ligne. SHA256 : $hash"
+} finally {
+    if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id -Force }
+    if (Test-Path $extracted) { Remove-Item $extracted -Recurse -Force }
+}

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'services/relay_client.dart';
@@ -16,8 +18,8 @@ void main() async {
   final relay = RelayClient();
   final app = AppState(store: store, relay: relay);
   await app.init();
-  await relay.connect(relayUrl);
   runApp(TTalkApp(app: app));
+  unawaited(app.connectRelay(relayUrl));
 }
 
 class TTalkApp extends StatelessWidget {
@@ -47,9 +49,7 @@ class TTalkApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
-          home: app.unlocked
-              ? HomeScreen(app: app)
-              : UnlockScreen(app: app),
+          home: app.unlocked ? HomeScreen(app: app) : UnlockScreen(app: app),
         );
       },
     );

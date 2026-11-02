@@ -1,0 +1,20 @@
+TTalk - Windows 10/11 x64
+
+1. Extraire TOUT le ZIP dans un dossier accessible en écriture.
+2. Lancer ttalk.exe. Garder les DLL et le dossier data à ses côtés.
+3. Créer un PIN (4 à 12 chiffres), puis choisir « Mon nom ».
+4. Un relais WebSocket est nécessaire pour communiquer. Le binaire standard
+   utilise ws://localhost:8080 : lancer le relais Node.js du dépôt sur ce PC.
+   Pour plusieurs PC, recompiler avec RELAY_URL=wss://votre-relais.example.com
+   et héberger le relais derrière un reverse proxy TLS.
+5. Générer un code d’appairage et le communiquer à l’autre contact.
+   Comparer les numéros de sécurité par un autre canal.
+
+Les messages sont chiffrés. Les fichiers reçus sont enregistrés en clair dans
+le dossier Documents/ttalk_files après déchiffrement : protéger le compte Windows.
+Le relais actuel ne stocke pas les messages hors ligne. Les identifiants sont
+liés à la session du relais ; un redémarrage exige un nouvel appairage et peut
+nécessiter de recréer les groupes.
+
+Ce package n’est pas signé avec un certificat de signature de code.
+La somme SHA256 jointe permet de vérifier l’intégrité du téléchargement.

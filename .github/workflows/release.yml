@@ -5,6 +5,10 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -12,23 +16,35 @@ jobs:
   release-windows:
     name: Windows - EXE x64
     runs-on: windows-2022
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.47.9"
           channel: stable
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci --prefix server
+      - run: npm test --prefix server
       - run: flutter pub get --enforce-lockfile
-      - run: flutter test
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub
       - run: flutter build windows --release --target-platform windows-x64
-      - name: Zip le dossier Release Windows
+      - name: Package and smoke-test Windows x64
         shell: pwsh
-        run: |
-          $releasePath = "build/windows/x64/runner/Release"
-          if (-not (Test-Path "$releasePath/ttalk.exe" -PathType Leaf)) {
-            throw "Binaire ttalk.exe introuvable dans $releasePath"
-          }
-          Compress-Archive -Path "$releasePath/*" -DestinationPath ttalk-windows-x64.zip -Force
+        run: ./scripts/package-windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ttalk-windows-x64-${{ github.ref_name }}
+          path: |
+            ttalk-windows-x64.zip
+            ttalk-windows-x64.zip.sha256
+          if-no-files-found: error
       - name: Create Windows Release (idempotent)
         shell: bash
         env:
@@ -39,7 +55,8 @@ jobs:
           set -euo pipefail
           TAG="$VERSION_TAG-windows"
           gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1 \
-            || gh release create "$TAG" --repo "$GH_REPO" --target "${{ github.sha }}" \
+            || gh release create "$TAG" --repo "$GH_REPO" --target "${{ github.sha }}" --draft \
                  --title "TTalk $VERSION_TAG - Windows x64 (EXE)" \
-                 --notes "ttalk.exe + DLLs dans ttalk-windows-x64.zip. Extraire le ZIP et lancer ttalk.exe."
-          gh release upload "$TAG" ttalk-windows-x64.zip --repo "$GH_REPO" --clobber
+                 --notes-file CHANGELOG.md
+          gh release upload "$TAG" ttalk-windows-x64.zip ttalk-windows-x64.zip.sha256 --repo "$GH_REPO" --clobber
+          gh release edit "$TAG" --repo "$GH_REPO" --draft=false --latest

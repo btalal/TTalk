@@ -1,11 +1,12 @@
 {
   "name": "ttalk-relay",
   "version": "0.1.0",
-  "description": "Relais minimal pour TTalk — ne voit que des paquets chiffrés.",
+  "description": "Relais minimal pour TTalk \u2014 ne voit que des paquets chiffr\u00e9s.",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node relay.js"
+    "start": "node relay.js",
+    "test": "node --test"
   },
   "dependencies": {
     "ws": "^8.18.0"

@@ -9,6 +9,8 @@ class ChatMessage {
     required this.timestamp,
     this.plaintext,
     this.read = false,
+    this.delivered = false,
+    this.senderId,
     this.isGroup = false,
     this.senderName,
     this.kind = 'text',
@@ -25,6 +27,8 @@ class ChatMessage {
   final DateTime timestamp;
   String? plaintext;
   bool read;
+  bool delivered;
+  String? senderId;
   bool isGroup;
   String? senderName;
   String kind;
@@ -44,6 +48,8 @@ class ChatMessage {
         'ciphertext': base64Encode(ciphertext),
         'timestamp': timestamp.toIso8601String(),
         'read': read,
+        'delivered': delivered,
+        if (senderId != null) 'senderId': senderId,
         'isGroup': isGroup,
         'kind': kind,
         'readBy': readBy,
@@ -62,6 +68,8 @@ class ChatMessage {
         timestamp: DateTime.parse(json['timestamp'] as String),
         plaintext: json['plaintext'] as String?,
         read: json['read'] as bool? ?? false,
+        delivered: json['delivered'] as bool? ?? false,
+        senderId: json['senderId'] as String?,
         isGroup: json['isGroup'] as bool? ?? false,
         senderName: json['senderName'] as String?,
         kind: json['kind'] as String? ?? 'text',

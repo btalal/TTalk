@@ -43,6 +43,31 @@ class MemoryRelay extends RelayClient {
   @override
   String get myId => id;
   @override
+  RelayState get state => RelayState.connected;
+  final List<Map<String, dynamic>> receipts = [];
+  @override
+  void sendRead(String to, String messageId, {String? groupId}) {
+    receipts.add({
+      'type': 'read',
+      'from': id,
+      'to': to,
+      'messageId': messageId,
+      'groupId': groupId
+    });
+  }
+
+  @override
+  void sendDelivered(String to, String messageId, {String? groupId}) {
+    receipts.add({
+      'type': 'delivered',
+      'from': id,
+      'to': to,
+      'messageId': messageId,
+      'groupId': groupId
+    });
+  }
+
+  @override
   void sendCipher(String to, Uint8List payload, String messageId,
       {String? groupId}) {
     sendCipherToMany([to], payload, messageId, groupId: groupId!);
