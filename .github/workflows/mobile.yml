@@ -23,8 +23,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh run list --workflow mobile.yml --limit 30 --json databaseId,headSha,status > runs.json
-          python3 -c 'import json,os; print("\n".join(str(r["databaseId"]) for r in json.load(open("runs.json")) if r["headSha"] != os.environ["GITHUB_SHA"] and r["status"] != "completed"))' > superseded.txt
+          gh run list --workflow mobile.yml --limit 30 --json databaseId,headSha,status,createdAt > runs.json
+          python3 -c 'import json,os,datetime; cutoff=datetime.datetime.now(datetime.timezone.utc)-datetime.timedelta(minutes=15); print("\n".join(str(r["databaseId"]) for r in json.load(open("runs.json")) if r["headSha"] != os.environ["GITHUB_SHA"] and r["databaseId"] < int(os.environ["GITHUB_RUN_ID"]) and r["status"] != "completed" and datetime.datetime.fromisoformat(r["createdAt"].replace("Z","+00:00")) < cutoff))' > superseded.txt
           while IFS= read -r RUN_ID; do
             if [ -n "$RUN_ID" ]; then gh run cancel "$RUN_ID" || true; fi
           done < superseded.txt
@@ -54,17 +54,14 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze --no-pub
       - run: flutter test --no-pub
-      - name: Build release APK for external signing
+      - name: Reserve space for native Android builds
         run: |
-          set +e
-          flutter build apk --release --no-pub 2>&1 | tee android-build.log
-          BUILD_STATUS=${PIPESTATUS[0]}
-          set -e
-          if [ "$BUILD_STATUS" -ne 0 ]; then
-            tail -80 android-build.log >> "$GITHUB_STEP_SUMMARY"
-            python3 -c 'from pathlib import Path; s="\n".join(Path("android-build.log").read_text().splitlines()[-100:]); print("::error::"+s.replace("%","%25").replace("\r","%0D").replace("\n","%0A"))'
-          fi
-          exit "$BUILD_STATUS"
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+          df -h .
+      - name: Install pinned Android native tools
+        run: python3 scripts/run-logged.py sdkmanager "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-36" "build-tools;36.0.0"
+      - name: Build release APK for external signing
+        run: python3 scripts/run-logged.py flutter build apk --release --no-pub
       - name: Stage unsigned Android package
         run: |
           mkdir -p dist
