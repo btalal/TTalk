@@ -33,14 +33,14 @@ class TTalkApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2E7D32),
+              seedColor: const Color(0xFF4338CA),
               brightness: Brightness.light,
             ),
             useMaterial3: true,
           ),
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2E7D32),
+              seedColor: const Color(0xFF4338CA),
               brightness: Brightness.dark,
             ),
             useMaterial3: true,

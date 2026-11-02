@@ -71,7 +71,12 @@ class _UnlockScreenState extends State<UnlockScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_outline, size: 64),
+                Image.asset(
+                  'assets/branding/ttalk.png',
+                  width: 112,
+                  height: 112,
+                  semanticLabel: 'TTalk, messagerie chiffrée',
+                ),
                 const SizedBox(height: 16),
                 Text(
                   creating ? 'Créer un code PIN' : 'Déverrouiller TTalk',
