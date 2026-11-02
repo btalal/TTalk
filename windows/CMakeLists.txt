@@ -1,5 +1,6 @@
 # Project-level configuration.
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
+cmake_policy(SET CMP0091 NEW)
 project(ttalk LANGUAGES CXX)
 
 # The application is distributed exclusively for Windows x64.
@@ -57,6 +58,8 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
+add_subdirectory("launcher")
+add_dependencies(${BINARY_NAME} ttalk_launcher)
 
 
 # Generated plugin build rules, which manage building the plugins and adding

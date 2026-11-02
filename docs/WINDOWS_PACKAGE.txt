@@ -3,7 +3,12 @@ TTalk Windows 0.4 — version candidate, Windows 10/11 x64
 Fermer les anciennes versions avant de lancer cette préversion. Ne pas utiliser
 0.3.6 et 0.4 sur le même profil en même temps.
 
-1. Extraire TOUT le ZIP et lancer ttalk.exe. Garder les DLL et data à ses côtés.
+1. Extraire TOUT le ZIP et double-cliquer sur TTalk.exe à la racine.
+   TTalk.exe       : lanceur de l’application, avec son icône.
+   LIRE-MOI.txt    : ces instructions.
+   app/           : fichiers techniques (application, DLL et données).
+   Garder le dossier app à côté du lanceur. Ne pas déplacer TTalk.exe seul.
+   Un raccourci vers TTalk.exe peut être placé sur le Bureau.
 2. Créer ou saisir son PIN (4 à 12 chiffres).
 3. Ouvrir Configurer le serveur et saisir l’adresse HTTPS du relais hébergé.
    Les deux PC doivent utiliser la même adresse. Aucune recompilation nécessaire.

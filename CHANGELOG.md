@@ -1,5 +1,18 @@
 # Versions
 
+## 0.4.0-rc.4 — Présentation Windows
+
+- Icône TTalk bleu nuit et violet dans Windows, l’application et le README.
+- Thèmes clair et sombre accordés à l’indigo.
+- ZIP organisé : lanceur TTalk.exe à la racine, fichiers techniques dans app/.
+- Lanceur natif x64 sans console, avec runtime statique et chemins indépendants
+  du dossier de travail ; les raccourcis Bureau sont pris en charge.
+- Vérification Windows du lancement depuis un chemin avec espaces, depuis un
+  autre dossier, et du refus d’une seconde instance via le lanceur.
+
+Cette préversion conserve les limites et la compatibilité de la version 0.4
+ci-dessous. L’hébergement réel et les échanges entre deux PC restent à valider.
+
 ## 0.4.0-rc.3 — Windows candidate
 
 - Refus d’écriture locale détecté même sans exception ; reprise sans confirmation prématurée.

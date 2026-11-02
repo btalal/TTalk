@@ -46,7 +46,7 @@ test/e2e_crypto_test.dart    # tests unitaires crypto
 
 ## Utiliser Windows 0.4 (version candidate)
 
-1. Extraire tout le ZIP Windows x64, puis lancer `ttalk.exe`.
+1. Extraire tout le ZIP Windows x64, puis lancer **`TTalk.exe`** à la racine.
 2. Créer ou saisir son PIN. Les données existantes sont conservées.
 3. Ouvrir **Configurer le serveur** et saisir l’adresse HTTPS du relais hébergé.
    Les deux PC doivent utiliser la même adresse. Aucune recompilation n’est nécessaire.
@@ -143,8 +143,17 @@ Les participants doivent utiliser une version de TTalk prenant en charge ces év
 
 Les [releases GitHub](https://github.com/btalal/TTalk/releases) Windows contiennent
 l'archive **`ttalk-windows-x64.zip`**. Extrayez **tout** son contenu, puis lancez
-**`ttalk.exe`**. Gardez les DLL et le dossier `data` à côté de l'exécutable :
-le fichier EXE seul ne suffit pas.
+**`TTalk.exe`**, visible à la racine :
+
+```text
+TTalk.exe       ← double-cliquer pour démarrer (icône TTalk)
+LIRE-MOI.txt    ← instructions
+app/           ← application, DLL et données techniques
+```
+
+Conservez le dossier `app` à côté de `TTalk.exe`. Vous pouvez créer un raccourci
+vers `TTalk.exe` sur le Bureau ; il fonctionne quel que soit le dossier de départ.
+Le lanceur n’affiche pas de console et ne nécessite pas d’installation.
 
 Le package inclut les DLL du runtime MSVC x64. Une somme **SHA256** accompagne
 le ZIP. La CI contrôle son contenu et ouvre l’application extraite sans relais
