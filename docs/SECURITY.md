@@ -5,7 +5,7 @@
 | Menace | Protection |
 |---|---|
 | Écoute du réseau / compromission du relais | AES-256-GCM, clés dérivées par ECDH X25519 + HKDF |
-| Vol de l'appareil verrouillé | Données chiffrées par PBKDF2(PIN), clés privées dans le Keystore |
+| Vol de l'appareil verrouillé | Données chiffrées par PBKDF2(PIN), clés privées dans le Gestionnaire d’identifiants Windows |
 | Substitution de clé (MITM) au moment de l'appairage | Numéro de sécurité à comparer hors-bande |
 | Rejeu / modification de messages | Tag d'authentification GCM (16 octets) vérifié au déchiffrement |
 

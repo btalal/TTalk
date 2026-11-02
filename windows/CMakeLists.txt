@@ -2,6 +2,12 @@
 cmake_minimum_required(VERSION 3.14)
 project(ttalk LANGUAGES CXX)
 
+# The application is distributed exclusively for Windows x64.
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8 OR
+   (CMAKE_GENERATOR_PLATFORM AND NOT CMAKE_GENERATOR_PLATFORM STREQUAL "x64"))
+  message(FATAL_ERROR "TTalk requires a Windows x64 toolchain.")
+endif()
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "ttalk")
