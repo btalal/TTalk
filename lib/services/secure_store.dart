@@ -24,8 +24,11 @@ class SecureStore {
   SecretKey? _pinKey;
   Future<void> _saveQueue = Future.value();
 
-  static Future<SecureStore> create({String? pin}) async {
-    final prefs = await SharedPreferences.getInstance();
+  static Future<SecureStore> create({
+    String? pin,
+    SharedPreferences? preferences,
+  }) async {
+    final prefs = preferences ?? await SharedPreferences.getInstance();
     const secure = FlutterSecureStorage(
       wOptions: WindowsOptions(useBackwardCompatibility: false),
     );
@@ -38,13 +41,13 @@ class SecureStore {
       _prefs.getString('relay_url') ??
       const String.fromEnvironment('RELAY_URL');
   Future<void> setRelayUrl(String url) async {
-    await _prefs.setString('relay_url', url);
+    await _writePreference('relay_url', url);
   }
 
   String get displayName => _prefs.getString('display_name') ?? 'Utilisateur';
 
   Future<void> setDisplayName(String name) async {
-    await _prefs.setString('display_name', name);
+    await _writePreference('display_name', name);
   }
 
   bool get isUnlocked => _pinKey != null;
@@ -54,8 +57,8 @@ class SecureStore {
     final salt = randomBytes(saltLength);
     final key = await derivePinKey(pin, salt);
     final verifier = await encryptLocal(key, utf8.encode('ttalk-pin-verifier'));
-    await _prefs.setString(_pinSaltKey, base64Encode(salt));
-    await _prefs.setString(_pinVerifierKey, base64Encode(verifier));
+    await _writePreference(_pinSaltKey, base64Encode(salt));
+    await _writePreference(_pinVerifierKey, base64Encode(verifier));
     _pinKey = key;
   }
 
@@ -125,6 +128,12 @@ class SecureStore {
     return (await loadIdentity()) ?? await IdentityKeys.generate();
   }
 
+  Future<void> _writePreference(String key, String value) async {
+    if (!await _prefs.setString(key, value)) {
+      throw StateError('Impossible d’enregistrer les données locales.');
+    }
+  }
+
   Future<void> saveData({
     required List<Conversation> conversations,
     required List<ChatMessage> messages,
@@ -174,7 +183,7 @@ class SecureStore {
       }),
     );
     final blob = await encryptLocal(key, Uint8List.fromList(payload));
-    await _prefs.setString(_dataBlobKey, base64Encode(blob));
+    await _writePreference(_dataBlobKey, base64Encode(blob));
   }
 
   Future<
