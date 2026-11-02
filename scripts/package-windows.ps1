@@ -102,7 +102,13 @@ try {
 } finally {
     foreach ($owned in @($second, $process, $launcher)) {
         if ($null -eq $owned) { continue }
-        if (-not $owned.HasExited) { Stop-Process -Id $owned.Id -Force }
+        if (-not $owned.HasExited) {
+            # The launcher may exit naturally as soon as its child is stopped.
+            # Kill through the owned process handle and tolerate that exact race.
+            try { $owned.Kill() } catch {
+                if (-not $owned.HasExited) { throw }
+            }
+        }
         if (-not $owned.WaitForExit(10000)) { throw 'Le processus de test ne se ferme pas' }
         $owned.Dispose()
     }
