@@ -20,6 +20,7 @@ function clearPair(ws) {
 
 const heartbeat = setInterval(() => {
   for (const ws of wss.clients) {
+    if (ws.readyState !== ws.OPEN) continue;
     if (ws._alive === false) { ws.terminate(); continue; }
     ws._alive = false;
     ws.ping();
