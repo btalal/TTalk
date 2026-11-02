@@ -1,8 +1,8 @@
 # Versions
 
-## 0.5.0-preview.2 — Premiers clients Android et iPhone
+## 0.5.0-preview.3 — Premiers clients Android et iPhone
 
-- Projets Android 6.0+ et iOS 15+ avec la même identité visuelle et le protocole 2
+- Projets Android 7.0+ et iOS 15+ avec la même identité visuelle et le protocole 2
   du relais Windows 0.4 ; chaque appareil dispose de ses propres clés.
 - Stockage sécurisé Android Keystore et Trousseau iOS, sauvegarde Android désactivée.
 - Menu adapté aux petits écrans, PIN défilant avec le clavier, confidentialité

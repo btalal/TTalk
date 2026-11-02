@@ -2,7 +2,6 @@ name: Mobile Android and iOS preview
 
 on:
   push:
-    branches: ['vibe/talmessenger-e2e-5e4935']
     tags: ['mobile-v*']
   workflow_dispatch:
 
@@ -39,7 +38,18 @@ jobs:
       - run: flutter analyze --no-pub
       - run: flutter test --no-pub
       - name: Build release APK for external signing
-        run: flutter build apk --release --no-pub
+        run: |
+          set +e
+          flutter build apk --release --no-pub 2>&1 | tee android-build.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          set -e
+          if [ "$BUILD_STATUS" -ne 0 ]; then
+            tail -80 android-build.log >> "$GITHUB_STEP_SUMMARY"
+            tail -35 android-build.log | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+          fi
+          exit "$BUILD_STATUS"
       - name: Stage unsigned Android package
         run: |
           mkdir -p dist
