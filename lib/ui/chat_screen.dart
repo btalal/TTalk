@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 
@@ -7,6 +8,7 @@ import '../crypto/e2e_crypto.dart';
 import '../models/group.dart';
 import '../models/message.dart';
 import '../state/app_state.dart';
+import 'chat_actions.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
@@ -27,10 +29,14 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scroll = ScrollController();
+  bool _sending = false;
 
   String get _chatId => widget.group?.id ?? widget.conversation!.id;
   bool get _isGroup => widget.group != null;
-  String get _title => widget.group?.name ?? widget.conversation!.peerName;
+  String get _title => widget.app.chatName(
+    _chatId,
+    fallback: widget.group?.displayName ?? widget.conversation!.displayName,
+  );
 
   @override
   void initState() {
@@ -67,8 +73,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _send(AppState app) async {
-    final text = _controller.text.trim();
+    if (_sending) return;
+    final draft = _controller.text;
+    final text = draft.trim();
     if (text.isEmpty) return;
+    setState(() => _sending = true);
     try {
       if (_isGroup) {
         await app.sendGroupMessage(_chatId, text);
@@ -76,9 +85,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         await app.sendMessage(_chatId, text);
       }
       if (!mounted) return;
-      _controller.clear();
+      if (_controller.text == draft) _controller.clear();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scroll.hasClients) {
+        if (mounted && _scroll.hasClients) {
           _scroll.jumpTo(_scroll.position.maxScrollExtent);
         }
       });
@@ -89,6 +98,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             content: Text(
               'Envoi non enregistré. Vérifie l’espace disponible dans la file d’envoi.',
             ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _messageAction(ChatMessage message, String action) async {
+    if (action == 'copy') {
+      await Clipboard.setData(ClipboardData(text: message.plaintext ?? ''));
+      return;
+    }
+    final confirmed = await confirmChatDeletion(
+      context,
+      'Supprimer ce message ?',
+      'Le message sera supprimé uniquement sur cet appareil. Les copies des autres participants et les fichiers déjà enregistrés seront conservés. Un envoi déjà transmis au relais peut encore être livré.',
+    );
+    if (!confirmed || !mounted) return;
+    try {
+      await widget.app.deleteMessage(_chatId, message.id);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de supprimer ce message. Réessaie.'),
           ),
         );
       }
@@ -128,17 +163,33 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Widget _build(BuildContext context, AppState app, List<ChatMessage> msgs) {
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(_title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            Text(
-              _isGroup
-                  ? '${app.groups.where((g) => g.id == _chatId).firstOrNull?.memberIds.length ?? 0} membres — chiffré de bout en bout'
-                  : 'Chiffré de bout en bout',
-              style: Theme.of(context).textTheme.bodySmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: ChatAvatar(
+                name: _title,
+                symbol: app.chatIcon(_chatId),
+                isGroup: _isGroup,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    _isGroup
+                        ? '${app.groups.where((g) => g.id == _chatId).firstOrNull?.memberIds.length ?? 0} membres — chiffré de bout en bout'
+                        : 'Chiffré de bout en bout',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -149,12 +200,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               icon: const Icon(Icons.group),
               onPressed: () => _showMembersSheet(context, app),
             )
-          else
+          else if (!_isGroup)
             IconButton(
               tooltip: 'Numéro de sécurité',
               icon: const Icon(Icons.verified_user_outlined),
               onPressed: () => _showSafetyNumber(context, app),
             ),
+          ChatActionsMenu(
+            app: app,
+            chatId: _chatId,
+            isGroup: _isGroup,
+            onRemoved: () {
+              if (mounted) Navigator.of(context).pop();
+            },
+          ),
         ],
       ),
       body: Column(
@@ -203,7 +262,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       children: [
                         if (m.isGroup && !mine)
                           Text(
-                            m.senderName ?? '?',
+                            app.conversations
+                                    .where((c) => c.peerId == m.senderId)
+                                    .firstOrNull
+                                    ?.displayName ??
+                                m.senderName ??
+                                '?',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
@@ -231,7 +295,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
-                                        '${formatFileSize(m.fileSize ?? 0)} — chiffré',
+                                        '${formatFileSize(m.fileSize ?? 0)} — transfert chiffré',
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelSmall,
@@ -251,6 +315,24 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             Text(
                               DateFormat.Hm().format(m.timestamp),
                               style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                            PopupMenuButton<String>(
+                              tooltip: 'Actions du message',
+                              iconSize: 16,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 160),
+                              onSelected: (action) => _messageAction(m, action),
+                              itemBuilder: (_) => [
+                                if (!m.isFile)
+                                  const PopupMenuItem(
+                                    value: 'copy',
+                                    child: Text('Copier le texte'),
+                                  ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Supprimer pour moi'),
+                                ),
+                              ],
                             ),
                             if (mine) ...[
                               const SizedBox(width: 4),
@@ -311,7 +393,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     ),
                     const SizedBox(width: 8),
                     IconButton.filled(
-                      onPressed: () => _send(app),
+                      tooltip: 'Envoyer le message',
+                      onPressed: _sending ? null : () => _send(app),
                       icon: const Icon(Icons.send),
                     ),
                   ],
@@ -347,7 +430,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(gg.name, style: Theme.of(ctx).textTheme.titleLarge),
+                  Text(
+                    gg.displayName,
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 4),
                   Text('${gg.memberIds.length} membres — époque ${gg.epoch}'),
                   const Divider(),
@@ -424,9 +510,27 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       style: TextStyle(color: Colors.red),
                     ),
                     onTap: () async {
-                      Navigator.of(ctx).pop();
-                      await app.leaveGroup(gg.id);
-                      if (context.mounted) Navigator.of(context).pop();
+                      final confirmed = await confirmChatDeletion(
+                        ctx,
+                        'Quitter le groupe ?',
+                        'Le groupe et son historique seront supprimés de cet appareil. Les autres membres conserveront leurs messages.',
+                      );
+                      if (!confirmed || !ctx.mounted) return;
+                      try {
+                        await app.deleteGroup(gg.id);
+                        if (ctx.mounted) Navigator.of(ctx).pop();
+                        if (context.mounted) Navigator.of(context).pop();
+                      } catch (_) {
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Impossible de quitter le groupe. Réessaie.',
+                              ),
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                 ],
@@ -498,7 +602,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       .map(
                         (c) => ListTile(
                           dense: true,
-                          title: Text(c.peerName),
+                          title: Text(c.displayName),
                           trailing: const Icon(Icons.add),
                           onTap: () {
                             app.reInviteMember(groupId, c.peerId);
@@ -535,7 +639,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             const SizedBox(height: 12),
             const Text(
               'Compare ce numéro avec celui affiché sur l\'appareil de ton contact. '
-              'S\'ils sont identiques, personne n\'intercepte vos messages.',
+              'Une comparaison par un canal fiable permet de vérifier les clés de votre contact.',
               textAlign: TextAlign.center,
             ),
           ],

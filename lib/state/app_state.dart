@@ -10,6 +10,7 @@ import 'package:uuid/uuid.dart';
 
 import '../crypto/e2e_crypto.dart';
 import '../models/group.dart';
+import '../models/chat_settings.dart';
 import '../models/outbound_packet.dart';
 import '../models/message.dart';
 import '../services/relay_client.dart';
@@ -90,6 +91,7 @@ class AppState extends ChangeNotifier {
             peerPublicKey: c.peerPublicKey,
             createdAt: c.createdAt,
             lastMessageAt: c.lastMessageAt,
+            localSettings: c.localSettings,
           ),
         )
         .toList();
@@ -180,7 +182,206 @@ class AppState extends ChangeNotifier {
       throw ArgumentError('Nom : 1 à 40 caractères');
     }
     await store.setDisplayName(value);
+    relay.displayName = value;
     _registerIfReady();
+    notifyListeners();
+  }
+
+  // Serialize management operations with inbound frames. In particular, a
+  // failed deletion must restore a contact before processing its next message.
+  Future<void> _changes = Future.value();
+  Future<void> _changeState(Future<void> Function() operation) {
+    final pending = _changes.then((_) => operation());
+    _changes = pending.catchError((Object _) {});
+    return pending;
+  }
+
+  List<Conversation> get visibleConversations =>
+      conversations.where((c) => !c.localSettings.hidden).toList();
+
+  String chatName(String id, {String fallback = ''}) =>
+      conversations.where((c) => c.id == id).firstOrNull?.displayName ??
+      groups.where((g) => g.id == id).firstOrNull?.displayName ??
+      fallback;
+
+  String? chatIcon(String id) =>
+      conversations.where((c) => c.id == id).firstOrNull?.localSettings.icon ??
+      groups.where((g) => g.id == id).firstOrNull?.localSettings.icon;
+
+  ChatSettings _settingsFor(String id) =>
+      conversations.where((c) => c.id == id).firstOrNull?.localSettings ??
+      groups.firstWhere((g) => g.id == id).localSettings;
+
+  Future<void> setChatAppearance(
+    String id, {
+    required String name,
+    String? icon,
+  }) => _changeState(() => _setChatAppearance(id, name: name, icon: icon));
+
+  Future<void> _setChatAppearance(
+    String id, {
+    required String name,
+    String? icon,
+  }) async {
+    final alias = name.trim();
+    if (alias.isEmpty || alias.length > 80) {
+      throw ArgumentError('Le nom doit contenir de 1 à 80 caractères.');
+    }
+    if (icon != null && !ChatSettings.icons.contains(icon)) {
+      throw ArgumentError('Icône inconnue.');
+    }
+    final settings = _settingsFor(id);
+    final oldAlias = settings.alias, oldIcon = settings.icon;
+    settings.alias = alias;
+    settings.icon = icon;
+    try {
+      await _persist();
+    } catch (_) {
+      settings.alias = oldAlias;
+      settings.icon = oldIcon;
+      rethrow;
+    }
+    notifyListeners();
+  }
+
+  void _restorePackets(List<OutboundPacket> packets) {
+    for (final packet in packets) {
+      if (!_outbox.any((p) => p.id == packet.id)) _outbox.add(packet);
+    }
+  }
+
+  void _removePackets(List<OutboundPacket> packets) {
+    final ids = packets.map((p) => p.id).toSet();
+    _outbox.removeWhere((p) => ids.contains(p.id));
+    _inFlight.removeWhere((key) => ids.any((id) => key.startsWith('$id:')));
+  }
+
+  Future<void> deleteMessage(String chatId, String messageId) =>
+      _changeState(() => _deleteMessage(chatId, messageId));
+
+  Future<void> _deleteMessage(String chatId, String messageId) async {
+    final list = messagesByConv[chatId];
+    final index = list?.indexWhere((m) => m.id == messageId) ?? -1;
+    if (list == null || index < 0) return;
+    final message = list[index];
+    final settings = _settingsFor(chatId);
+    final newMarker = settings.deletedMessageIds.add(messageId);
+    final packets = _outbox.where((p) => p.id == messageId).toList();
+    list.removeAt(index);
+    _removePackets(packets);
+    try {
+      await _persist();
+    } catch (_) {
+      if (newMarker) settings.deletedMessageIds.remove(messageId);
+      if (!list.any((m) => m.id == messageId)) {
+        list.insert(index > list.length ? list.length : index, message);
+      }
+      _restorePackets(packets);
+      rethrow;
+    }
+    notifyListeners();
+  }
+
+  Future<void> clearHistory(String chatId, {bool hideConversation = false}) =>
+      _changeState(
+        () => _clearHistory(chatId, hideConversation: hideConversation),
+      );
+
+  Future<void> _clearHistory(
+    String chatId, {
+    bool hideConversation = false,
+  }) async {
+    final settings = _settingsFor(chatId);
+    final history = List<ChatMessage>.of(messagesByConv[chatId] ?? []);
+    final oldHidden = settings.hidden;
+    final previousMarkers = Set<String>.of(settings.deletedMessageIds);
+    final messageIds = history
+        .where((m) => !m.isSystem)
+        .map((m) => m.id)
+        .toSet();
+    // Membership/ownership controls must survive history deletion.
+    final packets = _outbox.where((p) => messageIds.contains(p.id)).toList();
+    settings.deletedMessageIds.addAll(history.map((m) => m.id));
+    settings.deletedMessageIds.addAll(packets.map((p) => p.id));
+    settings.hidden = hideConversation;
+    messagesByConv[chatId] = [];
+    _removePackets(packets);
+    try {
+      await _persist();
+    } catch (_) {
+      settings.hidden = oldHidden;
+      settings.deletedMessageIds
+        ..clear()
+        ..addAll(previousMarkers);
+      messagesByConv[chatId] = [...history, ...?messagesByConv[chatId]];
+      _restorePackets(packets);
+      rethrow;
+    }
+    notifyListeners();
+  }
+
+  Future<void> deleteConversation(String id) =>
+      clearHistory(id, hideConversation: true);
+
+  Future<void> deleteContact(String id) =>
+      _changeState(() => _deleteContact(id));
+
+  Future<void> _deleteContact(String id) async {
+    final contact = conversations.firstWhere((c) => c.id == id);
+    final position = conversations.indexOf(contact);
+    final history = messagesByConv.remove(id);
+    final key = _sessionKeys.remove(contact.peerId);
+    final publicKey = _peerKeys.remove(contact.peerId);
+    final name = _peerNames.remove(contact.peerId);
+    final packets = _outbox
+        .where(
+          (p) =>
+              p.type == 'cipher' &&
+              p.groupId == null &&
+              p.recipients.contains(contact.peerId),
+        )
+        .toList();
+    conversations.remove(contact);
+    _removePackets(packets);
+    try {
+      await _persist();
+    } catch (_) {
+      if (!conversations.any((c) => c.id == id)) {
+        conversations.insert(
+          position > conversations.length ? conversations.length : position,
+          contact,
+        );
+      }
+      if (history != null) messagesByConv[id] = history;
+      if (key != null) _sessionKeys[contact.peerId] = key;
+      if (publicKey != null) _peerKeys[contact.peerId] = publicKey;
+      if (name != null) _peerNames[contact.peerId] = name;
+      _restorePackets(packets);
+      rethrow;
+    }
+    notifyListeners();
+  }
+
+  Future<void> deleteGroup(String id) => _changeState(() => _deleteGroup(id));
+
+  Future<void> _deleteGroup(String id) async {
+    final group = groups.firstWhere((g) => g.id == id);
+    if (!group.requiresRecreation) {
+      // Existing leave control informs members and hands ownership on as before.
+      await _leaveGroup(id);
+      return;
+    }
+    final history = messagesByConv.remove(id);
+    final key = _groupKeys.remove(id);
+    groups.remove(group);
+    try {
+      await _persist();
+    } catch (_) {
+      groups.add(group);
+      if (history != null) messagesByConv[id] = history;
+      if (key != null) _groupKeys[id] = key;
+      rethrow;
+    }
     notifyListeners();
   }
 
@@ -336,12 +537,21 @@ class AppState extends ChangeNotifier {
   }
 
   Future<String?> pairWithCode(String code) async {
-    if (relay.state != RelayState.connected) return 'Non connecté au relais';
-    relay.answerPairing(code);
+    final normalized = code.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z0-9]{6}$').hasMatch(normalized)) {
+      return 'Le code doit contenir 6 lettres ou chiffres.';
+    }
+    if (!registered || relay.state != RelayState.connected) {
+      return 'Non connecté au relais';
+    }
+    relay.answerPairing(normalized);
     return null;
   }
 
-  Future<void> _handleInbound(Map<String, dynamic> msg) async {
+  Future<void> _handleInbound(Map<String, dynamic> msg) =>
+      _changeState(() => _handleInboundFrame(msg));
+
+  Future<void> _handleInboundFrame(Map<String, dynamic> msg) async {
     switch (msg['type']) {
       case 'registered':
         error = null;
@@ -411,6 +621,7 @@ class AppState extends ChangeNotifier {
             peerPublicKey: peerPubBytes,
             createdAt: c.createdAt,
             lastMessageAt: c.lastMessageAt,
+            localSettings: c.localSettings,
           );
         }
         await _persist();
@@ -435,6 +646,10 @@ class AppState extends ChangeNotifier {
           if (gk == null) break;
           final group = groups.where((g) => g.id == groupId).firstOrNull;
           if (group != null && !group.memberIds.contains(from)) break;
+          if (group?.localSettings.deletedMessageIds.contains(messageId) ??
+              false) {
+            break;
+          }
           if (messagesByConv[groupId]?.any((m) => m.id == messageId) ?? false) {
             await _persist();
             break;
@@ -486,6 +701,9 @@ class AppState extends ChangeNotifier {
         } else {
           final conv = conversations.where((c) => c.peerId == from).toList();
           if (conv.isEmpty) break;
+          if (conv.first.localSettings.deletedMessageIds.contains(messageId)) {
+            break;
+          }
           if (messagesByConv[conv.first.id]?.any((m) => m.id == messageId) ??
               false) {
             await _persist();
@@ -511,6 +729,7 @@ class AppState extends ChangeNotifier {
             plaintext: plain,
           );
           if (opened.kind == 'file') await _applyInboundMeta(m, plain);
+          conv.first.localSettings.hidden = false;
           messagesByConv.putIfAbsent(conv.first.id, () => []).add(m);
           await _queueReceipt('delivered', from, m.id, groupId);
           final idx = conversations.indexOf(conv.first);
@@ -521,6 +740,7 @@ class AppState extends ChangeNotifier {
             peerPublicKey: conv.first.peerPublicKey,
             createdAt: conv.first.createdAt,
             lastMessageAt: m.timestamp,
+            localSettings: conv.first.localSettings,
           );
           await _persist();
           notifyListeners();
@@ -821,30 +1041,48 @@ class AppState extends ChangeNotifier {
     return g.first.isAdmin(me);
   }
 
-  Future<void> leaveGroup(String groupId) async {
+  Future<void> leaveGroup(String groupId) =>
+      _changeState(() => _leaveGroup(groupId));
+
+  Future<void> _leaveGroup(String groupId) async {
     final g = groups.firstWhere((e) => e.id == groupId);
     final me = myId;
-    if (me == null) return;
-    final remaining = g.memberIds.where((id) => id != me).toList();
-    final admins = g.adminIds.where((id) => id != me).toList();
-    if (g.isAdmin(me) && admins.isEmpty && remaining.isNotEmpty) {
-      admins.add(remaining.first);
+    if (me == null) throw StateError('Identité indisponible');
+    final history = messagesByConv[groupId];
+    final key = _groupKeys[groupId];
+    final messageIds = (history ?? <ChatMessage>[])
+        .where((m) => !m.isSystem)
+        .map((m) => m.id)
+        .toSet();
+    final packets = _outbox.where((p) => messageIds.contains(p.id)).toList();
+    _removePackets(packets);
+    String? leaveId;
+    try {
+      leaveId = await _broadcastControl(
+        groupId,
+        GroupControl(
+          kind: 'leave',
+          groupId: groupId,
+          memberIds: g.memberIds.where((id) => id != me).toList(),
+          adminIds: g.adminIds.where((id) => id != me).toList(),
+          epoch: g.epoch,
+          removedId: me,
+        ),
+      );
+      groups.removeWhere((e) => e.id == groupId);
+      _groupKeys.remove(groupId);
+      messagesByConv.remove(groupId);
+      await _persist();
+    } catch (_) {
+      if (!groups.any((group) => group.id == groupId)) groups.add(g);
+      if (key != null) _groupKeys[groupId] = key;
+      if (history != null) messagesByConv[groupId] = history;
+      if (leaveId != null) {
+        _removePackets(_outbox.where((p) => p.id == leaveId).toList());
+      }
+      _restorePackets(packets);
+      rethrow;
     }
-    await _broadcastControl(
-      groupId,
-      GroupControl(
-        kind: 'leave',
-        groupId: groupId,
-        memberIds: remaining,
-        adminIds: admins,
-        epoch: g.epoch,
-        removedId: me,
-      ),
-    );
-    groups.removeWhere((e) => e.id == groupId);
-    _groupKeys.remove(groupId);
-    messagesByConv.remove(groupId);
-    await _persist();
     notifyListeners();
   }
 
@@ -913,14 +1151,14 @@ class AppState extends ChangeNotifier {
     await _applyControl(control, myId!);
   }
 
-  Future<void> _broadcastControl(
+  Future<String?> _broadcastControl(
     String groupId,
     GroupControl control, {
     String? toExcluded,
   }) async {
     final g = groups.firstWhere((e) => e.id == groupId);
     final key = _groupKeys[groupId];
-    if (key == null) return;
+    if (key == null) return null;
     final id = _uuid.v4();
     final cipher = await _seal(
       key,
@@ -943,6 +1181,7 @@ class AppState extends ChangeNotifier {
         ),
       );
     }
+    return id;
   }
 
   Future<void> _applyControl(GroupControl control, String senderId) async {
@@ -1030,7 +1269,11 @@ class AppState extends ChangeNotifier {
 
   String peerNameOf(String peerId) => peerId == myId
       ? (myName ?? 'Moi')
-      : (_peerNames[peerId] ??
+      : (conversations
+                .where((c) => c.peerId == peerId)
+                .firstOrNull
+                ?.displayName ??
+            _peerNames[peerId] ??
             peerId.substring(0, peerId.length < 8 ? peerId.length : 8));
 
   static const maxAttachmentBytes = 5 * 1024 * 1024;
@@ -1148,6 +1391,13 @@ class AppState extends ChangeNotifier {
         ),
       );
     }
+    if (!isGroup) {
+      conversations
+              .firstWhere((c) => c.id == conversationId)
+              .localSettings
+              .hidden =
+          false;
+    }
     messagesByConv.putIfAbsent(conversationId, () => []).add(m);
     await _persist();
     notifyListeners();
@@ -1208,6 +1458,7 @@ class AppState extends ChangeNotifier {
       ),
     );
     messagesByConv.putIfAbsent(conversationId, () => []).add(m);
+    conv.localSettings.hidden = false;
     final idx = conversations.indexOf(conv);
     conversations[idx] = Conversation(
       id: conv.id,
@@ -1216,6 +1467,7 @@ class AppState extends ChangeNotifier {
       peerPublicKey: conv.peerPublicKey,
       createdAt: conv.createdAt,
       lastMessageAt: m.timestamp,
+      localSettings: conv.localSettings,
     );
     await _persist();
     notifyListeners();

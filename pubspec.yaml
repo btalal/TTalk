@@ -5,7 +5,7 @@ platforms:
   windows:
   android:
   ios:
-version: 0.5.0+24
+version: 0.5.1+25
 
 environment:
   sdk: ^3.13.0

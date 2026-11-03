@@ -1,4 +1,4 @@
-TTalk Windows 0.5.0 — version finale, Windows 10/11 x64
+TTalk Windows 0.5.1 — version finale, Windows 10/11 x64
 
 Fermer les anciennes versions avant de lancer cette version. Ne pas utiliser
 plusieurs versions sur le même profil en même temps.

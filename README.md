@@ -14,13 +14,13 @@ accompagne les versions pour ordinateur et téléphone.
 
 ## Windows 10/11 x64
 
-La version finale Windows **0.5.0** est une application de bureau
+La version finale Windows **0.5.1** est une application de bureau
 au format **EXE**, distribuée dans une archive ZIP. Son icône permet de repérer
 le lanceur `TTalk.exe` ; elle apparaît également sur l’écran de déverrouillage.
 Un code PIN protège le coffre local et les clés de l’appareil sont conservées
 dans le stockage sécurisé de Windows.
 
-## Android 7.0+ — version finale 0.5.0
+## Android 7.0+ — version finale 0.5.1
 
 La version Android propose une interface adaptée au téléphone. Chaque appareil
 possède sa propre identité, conservée dans le **Keystore Android**, et s’appaire
@@ -38,6 +38,18 @@ dans le **Trousseau iOS**. Chaque iPhone s’appaire séparément avec ses conta
 L’installation nécessite un **IPA signé avec un compte Apple**. Le
 [guide mobile](docs/MOBILE_INSTALL.md) présente notamment une solution de signature
 personnelle depuis Windows, sans Mac personnel.
+
+## Nouveautés Windows et Android 0.5.1
+
+Les menus **⋮** permettent de supprimer un message, une conversation ou un contact,
+d’effacer l’historique d’un groupe, ou de le quitter et le supprimer localement.
+L’onglet **Contacts** conserve les contacts après suppression de leur conversation.
+Les noms et vingt icônes intégrées sont personnalisables sur chaque appareil.
+Les suppressions demandent confirmation et conservent les copies des autres
+participants ainsi que les fichiers déjà enregistrés.
+
+Cette version corrige aussi plusieurs erreurs d’appairage, de profil, de formulaires
+et d’envoi. Consulter le [guide des nouveaux menus](docs/CHAT_MANAGEMENT.md).
 
 ## Compatibilité et limites mobiles
 
@@ -83,7 +95,7 @@ server/relay.js              # relais Node.js (ne voit que du chiffré)
 test/e2e_crypto_test.dart    # tests unitaires crypto
 ```
 
-## Utiliser Windows 0.5.0
+## Utiliser Windows 0.5.1
 
 1. Extraire tout le ZIP Windows x64, puis lancer **`TTalk.exe`** à la racine.
 2. Créer ou saisir son PIN. Les données existantes sont conservées.

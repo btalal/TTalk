@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'chat_settings.dart';
+
 class Group {
   Group({
     required this.id,
@@ -13,7 +15,9 @@ class Group {
     this.ownershipVersion = 0,
     String? ownerId,
     List<String>? joinedMemberIds,
-  }) : ownerId =
+    ChatSettings? localSettings,
+  }) : localSettings = localSettings ?? ChatSettings(),
+       ownerId =
            ownerId ??
            (adminIds.contains(createdBy) || adminIds.isEmpty
                ? createdBy
@@ -24,6 +28,8 @@ class Group {
   final int ownershipVersion;
   final String id;
   final String name;
+  final ChatSettings localSettings;
+  String get displayName => localSettings.alias ?? name;
   final List<String> memberIds;
   final String createdBy;
   final DateTime createdAt;
@@ -132,12 +138,14 @@ class Group {
           ? control.ownerVersion!
           : ownershipVersion,
       joinedMemberIds: joined,
+      localSettings: localSettings,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'requiresRecreation': requiresRecreation,
+    'localSettings': localSettings.toJson(),
     'ownershipVersion': ownershipVersion,
     'name': name,
     'memberIds': memberIds,
@@ -152,6 +160,9 @@ class Group {
   factory Group.fromJson(Map<String, dynamic> json) => Group(
     id: json['id'] as String,
     requiresRecreation: json['requiresRecreation'] as bool? ?? false,
+    localSettings: ChatSettings.fromJson(
+      json['localSettings'] as Map<String, dynamic>?,
+    ),
     ownershipVersion: json['ownershipVersion'] as int? ?? 0,
     name: json['name'] as String,
     memberIds: (json['memberIds'] as List).map((e) => e as String).toList(),

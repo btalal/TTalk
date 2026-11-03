@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'chat_settings.dart';
+
 class ChatMessage {
   ChatMessage({
     required this.id,
@@ -93,11 +95,14 @@ class Conversation {
     required this.peerPublicKey,
     required this.createdAt,
     this.lastMessageAt,
-  });
+    ChatSettings? localSettings,
+  }) : localSettings = localSettings ?? ChatSettings();
 
   final String id;
   final String peerId;
   final String peerName;
+  final ChatSettings localSettings;
+  String get displayName => localSettings.alias ?? peerName;
   final List<int> peerPublicKey;
   final DateTime createdAt;
   DateTime? lastMessageAt;
@@ -106,6 +111,7 @@ class Conversation {
     'id': id,
     'peerId': peerId,
     'peerName': peerName,
+    'localSettings': localSettings.toJson(),
     'peerPublicKey': base64Encode(peerPublicKey),
     'createdAt': createdAt.toIso8601String(),
     if (lastMessageAt != null)
@@ -116,6 +122,9 @@ class Conversation {
     id: json['id'] as String,
     peerId: json['peerId'] as String,
     peerName: json['peerName'] as String,
+    localSettings: ChatSettings.fromJson(
+      json['localSettings'] as Map<String, dynamic>?,
+    ),
     peerPublicKey: base64Decode(json['peerPublicKey'] as String),
     createdAt: DateTime.parse(json['createdAt'] as String),
     lastMessageAt: json['lastMessageAt'] == null
