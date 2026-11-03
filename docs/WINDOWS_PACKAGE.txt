@@ -1,7 +1,7 @@
-TTalk Windows 0.4 — version candidate, Windows 10/11 x64
+TTalk Windows 0.5 — préversion, Windows 10/11 x64
 
 Fermer les anciennes versions avant de lancer cette préversion. Ne pas utiliser
-0.3.6 et 0.4 sur le même profil en même temps.
+plusieurs versions sur le même profil en même temps.
 
 1. Extraire TOUT le ZIP et double-cliquer sur TTalk.exe à la racine.
    TTalk.exe       : lanceur de l’application, avec son icône.

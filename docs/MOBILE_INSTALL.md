@@ -13,10 +13,13 @@ navigateur ou l’application Fichiers, puis installer TTalk. Aucun accès aux c
 à la caméra ou à la localisation n’est demandé. Le sélecteur de documents sert
 aux pièces jointes. Les captures d’écran sont désactivées sur Android.
 
-**`ttalk-android-unsigned.apk` est un résultat de compilation, pas un APK
-installable directement.** Une signature avec une clé persistante est nécessaire.
-Les clés privées ne sont jamais publiées dans le dépôt ou les artefacts CI.
-La première livraison signée peut être fournie séparément du résultat CI.
+Télécharger **`ttalk-android.apk`**, le package signé prêt à installer, et son
+fichier `.sha256` depuis la release mobile. La signature est vérifiée avant
+publication ; la clé privée est conservée hors de GitHub.
+
+`ttalk-android-unsigned.apk` reste disponible comme résultat de compilation :
+**cette archive non signée ne s’installe pas directement**. Pour les mises à jour,
+utiliser le package signé `ttalk-android.apk`.
 
 Pour une mise à jour conservant le coffre, garder **le même identifiant Android
 et la même clé de signature**. Ne pas désinstaller l’application pour forcer une

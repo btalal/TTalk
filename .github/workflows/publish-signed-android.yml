@@ -1,0 +1,45 @@
+name: Publish offline-signed Android packages
+
+on:
+  push:
+    branches: ['vibe/talmessenger-e2e-5e4935']
+    paths:
+      - 'release-signatures/**'
+      - 'scripts/apply-android-signature.py'
+      - '.github/workflows/publish-signed-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-signed-android
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install standard binary patch utility
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends bsdiff
+      - name: Verify and publish signed APKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          for MANIFEST in release-signatures/android-*.json; do
+            python3 scripts/apply-android-signature.py "$MANIFEST" dist
+            "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/ttalk-android.apk > dist/signature-verification.txt
+            python3 -c 'import json,pathlib,sys; m=json.load(open(sys.argv[1])); p=pathlib.Path("dist/signature-verification.txt").read_text(); assert "Number of signers: 1" in p and "Verified using v2 scheme (APK Signature Scheme v2): true" in p and "certificate SHA-256 digest: "+m["certificate_sha256"] in p; print(p)' "$MANIFEST"
+            MOBILE_TAG=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["release_tag"])' "$MANIFEST")
+            gh release upload "$MOBILE_TAG" dist/ttalk-android.apk dist/ttalk-android.apk.sha256 --clobber
+            gh release edit "$MOBILE_TAG" --title "TTalk $MOBILE_TAG — Android signé et iPhone à signer" --notes-file docs/MOBILE_INSTALL.md --prerelease --latest=false
+          done
