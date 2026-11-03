@@ -6,6 +6,8 @@ on:
     paths:
       - 'release-signatures/**'
       - 'scripts/apply-android-signature.py'
+      - 'scripts/publish-signed-android.sh'
+      - 'scripts/run-logged.py'
       - '.github/workflows/publish-signed-android.yml'
   workflow_dispatch:
 
@@ -34,17 +36,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: |
-          for MANIFEST in release-signatures/android-*.json; do
-            python3 scripts/apply-android-signature.py "$MANIFEST" dist
-            "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/ttalk-android.apk > dist/signature-verification.txt
-            python3 -c 'import json,pathlib,sys; m=json.load(open(sys.argv[1])); p=pathlib.Path("dist/signature-verification.txt").read_text(); assert "Number of signers: 1" in p and "Verified using v2 scheme (APK Signature Scheme v2): true" in p and "certificate SHA-256 digest: "+m["certificate_sha256"] in p; print(p)' "$MANIFEST"
-            MOBILE_TAG=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["release_tag"])' "$MANIFEST")
-            gh release upload "$MOBILE_TAG" dist/ttalk-android.apk dist/ttalk-android.apk.sha256 --clobber
-            NOTES_FILE=$(python3 -c 'import json,sys; print("release-signatures/"+json.load(open(sys.argv[1]))["notes_file"])' "$MANIFEST")
-            if [[ "$MOBILE_TAG" == android-v* ]]; then
-              gh release edit "$MOBILE_TAG" --title "📱 Android — TTalk ${MOBILE_TAG#android-v} · Version stable" --notes-file "$NOTES_FILE" --prerelease=false --latest=false
-            else
-              gh release edit "$MOBILE_TAG" --title "TTalk $MOBILE_TAG — Android signé et iPhone à signer" --notes-file "$NOTES_FILE" --prerelease --latest=false
-            fi
-          done
+        run: python3 scripts/run-logged.py bash scripts/publish-signed-android.sh
