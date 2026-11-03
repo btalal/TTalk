@@ -14,19 +14,19 @@ accompagne les versions pour ordinateur et téléphone.
 
 ## Windows 10/11 x64
 
-La version Windows **0.5**, encore candidate, est une application de bureau
+La version finale Windows **0.5.0** est une application de bureau
 au format **EXE**, distribuée dans une archive ZIP. Son icône permet de repérer
 le lanceur `TTalk.exe` ; elle apparaît également sur l’écran de déverrouillage.
 Un code PIN protège le coffre local et les clés de l’appareil sont conservées
 dans le stockage sécurisé de Windows.
 
-## Android 7.0+ — préversion 0.5
+## Android 7.0+ — version finale 0.5.0
 
-La préversion Android propose une interface adaptée au téléphone. Chaque appareil
+La version Android propose une interface adaptée au téléphone. Chaque appareil
 possède sa propre identité, conservée dans le **Keystore Android**, et s’appaire
 séparément avec ses contacts.
 
-L’installation utilise **`ttalk-android.apk`**, le package signé de la release mobile.
+L’installation utilise **`ttalk-android.apk`**, le package signé de la release Android.
 Les modalités sont détaillées dans
 le [guide mobile](docs/MOBILE_INSTALL.md).
 
@@ -39,7 +39,7 @@ L’installation nécessite un **IPA signé avec un compte Apple**. Le
 [guide mobile](docs/MOBILE_INSTALL.md) présente notamment une solution de signature
 personnelle depuis Windows, sans Mac personnel.
 
-## Compatibilité et limites des préversions mobiles
+## Compatibilité et limites mobiles
 
 Android et iOS partagent le protocole chiffré de **Windows 0.4** et utilisent
 le **même relais** pour échanger entre les appareils.
@@ -47,7 +47,9 @@ le **même relais** pour échanger entre les appareils.
 Les archives de compilation non signées **ne s’installent pas directement**.
 Sur mobile, les notifications push et la réception permanente en arrière-plan
 ne sont pas encore intégrées : la réception reprend à l’ouverture de l’application.
-Les échanges sur appareils réels restent à valider.
+Les échanges Windows/Android ont été validés sur deux PC Windows x64 et un
+smartphone Android : messages, fichiers, redémarrage, réception différée, groupes
+et transfert de propriété. iPhone reste en préversion et à valider sur appareil réel.
 
 ## Comment ça marche
 
@@ -81,7 +83,7 @@ server/relay.js              # relais Node.js (ne voit que du chiffré)
 test/e2e_crypto_test.dart    # tests unitaires crypto
 ```
 
-## Utiliser Windows 0.5 (préversion)
+## Utiliser Windows 0.5.0
 
 1. Extraire tout le ZIP Windows x64, puis lancer **`TTalk.exe`** à la racine.
 2. Créer ou saisir son PIN. Les données existantes sont conservées.
@@ -90,8 +92,8 @@ test/e2e_crypto_test.dart    # tests unitaires crypto
 4. Choisir **Mon nom**, puis échanger un code d’appairage et comparer les numéros
    de sécurité par un autre canal.
 
-L’adresse n’est pas encore préconfigurée : un hébergement reste à créer et à
-valider avant de considérer cette version comme finalisée. Le déploiement
+L’adresse n’est pas préconfigurée : utilisez votre relais hébergé, ou créez-en
+un avant d’appairer vos appareils. Le déploiement
 [Render prêt à configurer](server/README.md) évite de laisser un PC allumé.
 Les tarifs sont à vérifier avant toute commande chez l’hébergeur.
 
@@ -201,11 +203,11 @@ Windows, compile uniquement la cible Windows x64, puis publie le ZIP sur un tag
 `vX.Y.Z-windows` après le push d'un tag de version `vX.Y.Z`.
 La compilation de l'EXE nécessite Windows et MSVC.
 
-## Limites connues (v0.3)
+## Limites connues
 
 - Appairage manuel par code (pas de découverte automatique).
 - Pas d'appels audio/vidéo.
-- L’hébergement réel et les échanges entre deux PC distants restent à valider
-  avant de promouvoir la version candidate en version finale.
+- Les notifications mobiles sont reportées ; la réception reprend à l’ouverture
+  de l’application.
 - Un accusé chiffré signale l’ouverture de la conversation par l’application ;
   il ne prouve pas qu’une personne a effectivement lu le texte.

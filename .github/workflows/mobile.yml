@@ -1,8 +1,8 @@
-name: Mobile Android and iOS preview
+name: Mobile Android and iOS packages
 
 on:
   push:
-    tags: ['mobile-v*']
+    tags: ['mobile-v*', 'android-v*']
   workflow_dispatch:
 
 permissions:
@@ -92,6 +92,7 @@ jobs:
           script: python3 scripts/run-mobile-test.py emulator-5554
 
   ios:
+    if: ${{ !startsWith(github.ref, 'refs/tags/android-v') }}
     needs: prepare
     runs-on: macos-15
     timeout-minutes: 45
@@ -134,7 +135,7 @@ jobs:
           python3 -c 'import json; s=json.load(open("build/ios/mobile-test-summary.json")); print(s); assert s.get("passedTests", 0) >= 1 and s.get("failedTests", 0) == 0, "Aucun test Dart natif réussi"'
 
   publish:
-    if: startsWith(github.ref, 'refs/tags/mobile-v')
+    if: ${{ always() && needs.android.result == 'success' && (startsWith(github.ref, 'refs/tags/android-v') || (startsWith(github.ref, 'refs/tags/mobile-v') && needs.ios.result == 'success')) }}
     needs: [android, ios]
     runs-on: ubuntu-24.04
     permissions:
@@ -152,4 +153,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
           MOBILE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$MOBILE_TAG" --prerelease --latest=false --title "TTalk mobile — $MOBILE_TAG — archives à signer" --notes-file docs/MOBILE_INSTALL.md dist/*
+          if [[ "$MOBILE_TAG" == android-v* ]]; then
+            gh release create "$MOBILE_TAG" --prerelease --latest=false --title "TTalk Android — $MOBILE_TAG — signature en cours" --notes-file docs/ANDROID_RELEASE.md dist/*
+          else
+            gh release create "$MOBILE_TAG" --prerelease --latest=false --title "TTalk mobile — $MOBILE_TAG — archives à signer" --notes-file docs/MOBILE_INSTALL.md dist/*
+          fi

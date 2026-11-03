@@ -18,8 +18,11 @@ def digest(path):
 manifest_path = Path(sys.argv[1]).resolve()
 manifest = json.loads(manifest_path.read_text())
 tag = manifest['release_tag']
-if not re.fullmatch(r'mobile-v\d+\.\d+\.\d+-preview\.\d+', tag):
+if not re.fullmatch(r'(?:mobile-v\d+\.\d+\.\d+-preview\.\d+|android-v\d+\.\d+\.\d+)', tag):
     raise ValueError('Unexpected mobile release tag')
+notes = (manifest_path.parent / manifest['notes_file']).resolve()
+if notes.parent != manifest_path.parent or notes.suffix != '.md' or not notes.is_file():
+    raise ValueError('Invalid release notes file')
 expected_url = f'https://github.com/btalal/TTalk/releases/download/{tag}/ttalk-android-unsigned.apk'
 if manifest['unsigned_url'] != expected_url:
     raise ValueError('Unexpected unsigned APK source')

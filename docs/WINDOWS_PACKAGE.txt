@@ -1,6 +1,6 @@
-TTalk Windows 0.5 — préversion, Windows 10/11 x64
+TTalk Windows 0.5.0 — version finale, Windows 10/11 x64
 
-Fermer les anciennes versions avant de lancer cette préversion. Ne pas utiliser
+Fermer les anciennes versions avant de lancer cette version. Ne pas utiliser
 plusieurs versions sur le même profil en même temps.
 
 1. Extraire TOUT le ZIP et double-cliquer sur TTalk.exe à la racine.
@@ -30,4 +30,5 @@ Les deux PC et le serveur doivent utiliser la nouvelle version.
 Les fichiers reçus sont enregistrés en clair dans Documents/ttalk_files après
 déchiffrement. Protéger le compte Windows. Ne pas effacer les clés de l’application.
 Le package n’est pas signé Authenticode ; une somme SHA256 accompagne le ZIP.
-Cette version candidate ne vaut pas validation d’un hébergement encore inexistant.
+Les échanges ont été validés sur deux PC Windows x64 et un smartphone Android.
+Les notifications mobiles sont reportées ; la réception reprend à l’ouverture de l’app.
