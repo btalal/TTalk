@@ -60,7 +60,8 @@ Cette installation reste à valider sur un véritable iPhone : ce n’est ni une
 publication App Store ni une livraison TestFlight.
 
 Une distribution TestFlight ou App Store nécessitera un abonnement Apple Developer,
-la configuration de la signature et une validation des règles Apple. Pour compiler
+la configuration de la signature et une validation des règles Apple. Le projet utilise CocoaPods pour ses plugins et XCTest pour ses tests natifs.
+Pour compiler
 sur son propre Mac : `flutter build ios --release --no-codesign`, puis ouvrir
 `ios/Runner.xcworkspace` dans Xcode et configurer sa signature personnelle.
 
