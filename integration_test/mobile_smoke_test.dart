@@ -11,13 +11,18 @@ import 'package:ttalk/services/secure_store.dart';
 import 'package:ttalk/state/app_state.dart';
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  // XCTest enables native accessibility asynchronously. Prime the platform
+  // handle before testWidgets records its baseline, and restore it afterward.
+  setUpAll(() => binding.platformDispatcher.semanticsEnabledTestValue = true);
+  tearDownAll(binding.platformDispatcher.clearSemanticsEnabledTestValue);
 
   testWidgets(
     'native identity survives reload; PIN, offline outbox and mobile menu',
     (tester) async {
       final store = await SecureStore.create();
       final app = AppState(store: store, relay: RelayClient());
+      addTearDown(app.dispose);
       await app.init();
       final id = app.identity!.stableId;
       final reopened = await SecureStore.create();
@@ -69,8 +74,10 @@ void main() {
       await store.setRelayUrl('wss://example.invalid/ws');
       expect((await SecureStore.create()).relayUrl, 'wss://example.invalid/ws');
       await store.setRelayUrl('');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
       await tester.pumpWidget(const SizedBox.shrink());
-      app.dispose();
+      await tester.pumpAndSettle();
     },
   );
 }
