@@ -129,7 +129,7 @@ jobs:
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -parallel-testing-enabled NO \
             -derivedDataPath build/ios/native-tests \
-            -resultBundlePath build/ios/mobile-tests.xcresult CODE_SIGNING_ALLOWED=NO
+            -resultBundlePath build/ios/mobile-tests.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=-
           xcrun xcresulttool get test-results summary --path build/ios/mobile-tests.xcresult > build/ios/mobile-test-summary.json
           python3 -c 'import json; s=json.load(open("build/ios/mobile-test-summary.json")); print(s); assert s.get("passedTests", 0) >= 1 and s.get("failedTests", 0) == 0, "Aucun test Dart natif réussi"'
 
