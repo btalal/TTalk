@@ -72,7 +72,7 @@ jobs:
             '```' >> $env:GITHUB_STEP_SUMMARY
             exit 1
           }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ttalk-windows-x64-${{ github.run_id }}
           path: |

@@ -73,7 +73,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk dist/ttalk-android-unsigned.apk
           cp docs/MOBILE_INSTALL.md dist/INSTALLATION.md
           (cd dist && sha256sum ttalk-android-unsigned.apk > ttalk-android-unsigned.apk.sha256)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: android-unsigned
           path: dist/*
@@ -113,7 +113,7 @@ jobs:
           /usr/bin/ditto -c -k --keepParent Payload dist/ttalk-ios-unsigned.ipa
           cp docs/MOBILE_INSTALL.md dist/INSTALLATION.md
           (cd dist && shasum -a 256 ttalk-ios-unsigned.ipa > ttalk-ios-unsigned.ipa.sha256)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ios-unsigned
           path: dist/*
