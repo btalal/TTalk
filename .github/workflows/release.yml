@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'main/ttalk'
-      - 'vibe/talmessenger-e2e-5e4935'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'

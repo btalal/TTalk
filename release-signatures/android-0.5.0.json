@@ -1,0 +1,10 @@
+{
+  "release_tag": "android-v0.5.0",
+  "unsigned_url": "https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android-unsigned.apk",
+  "unsigned_sha256": "95e860af385c3cd13dc6803cfe02636bd10b54b0da2518f98c908d01942c8a43",
+  "signed_sha256": "62c7272b24d675382c8276ae6dd6c62c2f29d114bf46ebe86df980f856635076",
+  "patch_file": "android-0.5.0.bsdiff",
+  "patch_sha256": "ed0d5963a568469bf5c2de613826c9217bc42d7d491bb7ae31d2e1e6c62d09f3",
+  "certificate_sha256": "36e670dd15277af14036eca6c8d9f35d88b4d7ced95b308f6465f40ea2232f27",
+  "notes_file": "android-0.5.0.md"
+}
