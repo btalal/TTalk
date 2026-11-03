@@ -3,7 +3,6 @@ services:
     name: ttalk-relay
     runtime: node
     repo: https://github.com/btalal/TTalk
-    branch: vibe/talmessenger-e2e-5e4935
     plan: starter
     region: frankfurt
     numInstances: 1
