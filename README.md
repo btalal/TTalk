@@ -5,24 +5,48 @@
 <h1 align="center">TTalk</h1>
 
 <p align="center">
-  Messagerie texte <strong>chiffrée de bout en bout</strong>, simple, pour <strong>Windows 10/11 x64</strong>, avec une première préversion <strong>Android et iPhone</strong>.
+  Une messagerie texte simple, <strong>chiffrée de bout en bout</strong>, pour vos conversations privées.
 </p>
 
 Deux bulles pour la conversation, un cadenas pour la confidentialité : l’identité
-visuelle de TTalk associe le bleu nuit, l’indigo et le violet. Cette même icône
-accompagne l’application Windows et son écran de déverrouillage.
+visuelle de TTalk associe le bleu nuit, l’indigo et le violet. Cette même identité
+accompagne les versions pour ordinateur et téléphone.
 
-## Préversion mobile 0.5
+## Windows 10/11 x64
 
-Les projets Android (7.0+) et iOS (15+) partagent le protocole chiffré de Windows
-0.4 et son relais. L’interface s’adapte au téléphone ; les identités sont stockées
-dans le Keystore Android ou le Trousseau iOS. Chaque appareil s’appaire séparément.
+La version Windows **0.4**, encore candidate, est une application de bureau
+au format **EXE**, distribuée dans une archive ZIP. Son icône permet de repérer
+le lanceur `TTalk.exe` ; elle apparaît également sur l’écran de déverrouillage.
+Un code PIN protège le coffre local et les clés de l’appareil sont conservées
+dans le stockage sécurisé de Windows.
 
-Le [guide mobile](docs/MOBILE_INSTALL.md) explique l’APK Android signé et la
-signature personnelle de l’IPA iPhone depuis Windows. Les archives CI non signées
-**ne s’installent pas directement**. Les notifications push et la réception
-permanente en arrière-plan ne sont pas encore intégrées ; la réception reprend
-à l’ouverture de l’application. Les échanges sur appareils réels restent à valider.
+## Android 7.0+ — préversion 0.5
+
+La préversion Android propose une interface adaptée au téléphone. Chaque appareil
+possède sa propre identité, conservée dans le **Keystore Android**, et s’appaire
+séparément avec ses contacts.
+
+L’installation nécessite un **APK signé**. Les modalités sont détaillées dans
+le [guide mobile](docs/MOBILE_INSTALL.md).
+
+## iPhone sous iOS 15+ — préversion 0.5
+
+La préversion iOS adapte TTalk à l’iPhone et conserve l’identité de l’appareil
+dans le **Trousseau iOS**. Chaque iPhone s’appaire séparément avec ses contacts.
+
+L’installation nécessite un **IPA signé avec un compte Apple**. Le
+[guide mobile](docs/MOBILE_INSTALL.md) présente notamment une solution de signature
+personnelle depuis Windows, sans Mac personnel.
+
+## Compatibilité et limites des préversions mobiles
+
+Android et iOS partagent le protocole chiffré de **Windows 0.4** et utilisent
+le **même relais** pour échanger entre les appareils.
+
+Les archives de compilation non signées **ne s’installent pas directement**.
+Sur mobile, les notifications push et la réception permanente en arrière-plan
+ne sont pas encore intégrées : la réception reprend à l’ouverture de l’application.
+Les échanges sur appareils réels restent à valider.
 
 ## Comment ça marche
 
