@@ -1,4 +1,4 @@
-# Finalisation Windows — 0.4.0-rc.2
+# Finalisation Windows — 0.4.0-rc.3
 
 Windows est prioritaire. Android puis iOS seront développés après validation de
 l’application et du service Windows en conditions réelles.

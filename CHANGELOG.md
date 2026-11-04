@@ -1,6 +1,6 @@
 # Versions
 
-## 0.4.0-rc.2 — Windows candidate
+## 0.4.0-rc.3 — Windows candidate
 
 - Refus d’écriture locale détecté même sans exception ; reprise sans confirmation prématurée.
 - Serveur HTTPS/WSS configurable dans l’interface, sans recompilation.
