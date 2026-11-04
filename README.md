@@ -68,8 +68,36 @@ Comme sur WhatsApp, chaque message envoyé affiche une coche double dans la bull
 automatiquement quand la conversation est ouverte (et à la réception d'un message
 si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, jamais son contenu.
 
-## Limites connues (v0.2)
+## Groupes chiffrés
+
+- Onglet **Groupes** → « groupe + » → choisis un nom et des contacts appairés.
+- Une **clé de groupe AES-256** aléatoire est générée ; chaque invité la reçoit
+  chiffrée individuellement avec sa clé de session (X25519), via le relais.
+- Les messages de groupe sont chiffrés avec la clé de groupe et envoyés à tous
+  les membres ; le nom de l'expéditeur est affiché au-dessus de chaque bulle.
+
+## Pièces jointes chiffrées
+
+- Bouton 📎 dans une conversation : le fichier est chiffré localement en
+  **AES-256-GCM** avec une clé aléatoire par fichier ; cette clé est incluse
+  dans le message, lui-même chiffré de bout en bout.
+- À la réception, le fichier est déchiffré et enregistré dans le dossier
+  documents de l'app (`talmessenger_files/`) ; un appui l'ouvre.
+- Le relais ne voit jamais ni le nom ni le contenu du fichier en clair.
+
+## Binaires
+
+| Plateforme | Comment obtenir le binaire |
+|---|---|
+| **Android (APK)** | [Release GitHub](https://github.com/btalal/Talmessenger/releases) (asset `talmessenger-*-signed.apk`, arm64), ou `flutter build apk --release` |
+| **Windows x64 (EXE)** | artefact `talmessenger-windows-x64` produit par la [CI GitHub Actions](.github/workflows/release.yml) (`flutter build windows --release` sur `windows-latest`), ou localement sur Windows : `flutter build windows --release` |
+
+> Un exécutable Windows x64 nécessite impérativement le toolchain MSVC d'une machine
+> Windows — c'est pourquoi la CI `windows-latest` le produit. L'APK arm64 signé est
+> livré en release ; installe-le sur Android via « sources inconnues ».
+
+## Limites connues (v0.3)
 
 - Appairage manuel par code (pas de découverte automatique).
-- Pas de pièces jointes ni d'appels — texte uniquement.
-- Une seule conversation par contact ; pas de groupes.
+- Groupes : pas de sortie/re-ajout de membres, pas d'admin.
+- Pas d'appels audio/vidéo.

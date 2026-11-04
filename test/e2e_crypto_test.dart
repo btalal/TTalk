@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talmessenger/crypto/e2e_crypto.dart';
+import 'package:talmessenger/models/group.dart';
 import 'package:talmessenger/models/message.dart';
 
 void main() {
@@ -114,6 +115,48 @@ void main() {
         'timestamp': '2025-01-01T00:00:00.000',
       });
       expect(legacy.read, isFalse);
+    });
+  });
+
+  group('Pièces jointes chiffrées', () {
+    test('fichier chiffré puis déchiffré = octets identiques', () async {
+      final fileKey = SecretKey(await generateFileKey());
+      final original = Uint8List.fromList(List.generate(100000, (i) => i % 256));
+      final enc = await encryptFile(fileKey, original);
+      expect(enc.length, greaterThan(original.length));
+      final dec = await decryptFile(fileKey, enc);
+      expect(dec, equals(original));
+    });
+
+    test('déchiffrement de fichier échoue avec une mauvaise clé', () async {
+      final k1 = SecretKey(await generateFileKey());
+      final k2 = SecretKey(await generateFileKey());
+      final enc = await encryptFile(k1, Uint8List.fromList([1, 2, 3, 4]));
+      expect(() => decryptFile(k2, enc), throwsA(anything));
+    });
+
+    test('formatFileSize', () {
+      expect(formatFileSize(512), '512 o');
+      expect(formatFileSize(2048), '2.0 Ko');
+      expect(formatFileSize(5 * 1024 * 1024), '5.0 Mo');
+    });
+  });
+
+  group('Groupes (modèle)', () {
+    test('GroupInvite sérialise/désérialise la clé de groupe', () {
+      final invite = GroupInvite(
+        groupId: 'g1',
+        name: 'Famille',
+        groupKeyB64: base64Encode(List.generate(32, (i) => i)),
+        memberIds: const ['a', 'b'],
+        fromId: 'a',
+        fromName: 'Alice',
+      );
+      final back = GroupInvite.fromJsonString(invite.toJsonString(), fromId: 'a', fromName: 'Alice');
+      expect(back.groupId, 'g1');
+      expect(back.name, 'Famille');
+      expect(base64Decode(back.groupKeyB64), List.generate(32, (i) => i));
+      expect(back.memberIds, ['a', 'b']);
     });
   });
 

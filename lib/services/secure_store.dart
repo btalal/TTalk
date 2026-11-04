@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../crypto/e2e_crypto.dart';
+import '../models/group.dart';
 import '../models/message.dart';
 
 class SecureStore {
@@ -87,25 +88,39 @@ class SecureStore {
   Future<void> saveData({
     required List<Conversation> conversations,
     required List<ChatMessage> messages,
+    List<Group> groups = const [],
+    Map<String, SecretKey> groupKeys = const {},
   }) async {
     final key = _pinKey;
     if (key == null) throw StateError('Coffre verrouillé');
+    final groupKeyMap = <String, String>{};
+    for (final e in groupKeys.entries) {
+      groupKeyMap[e.key] = base64Encode(await e.value.extractBytes());
+    }
     final payload = utf8.encode(jsonEncode({
       'conversations': conversations.map((c) => c.toJson()).toList(),
       'messages': messages.map((m) => m.toJson()).toList(),
+      'groups': groups.map((g) => g.toJson()).toList(),
+      'groupKeys': groupKeyMap,
     }));
     final blob = await encryptLocal(key, Uint8List.fromList(payload));
     await _prefs.setString(_dataBlobKey, base64Encode(blob));
   }
 
-  Future<({List<Conversation> conversations, List<ChatMessage> messages})> loadData() async {
+  Future<({List<Conversation> conversations, List<ChatMessage> messages, List<Group> groups, Map<String, List<int>> groupKeys})> loadData() async {
     final key = _pinKey;
     final blobB64 = _prefs.getString(_dataBlobKey);
     if (key == null || blobB64 == null) {
-      return (conversations: <Conversation>[], messages: <ChatMessage>[]);
+      return (
+        conversations: <Conversation>[],
+        messages: <ChatMessage>[],
+        groups: <Group>[],
+        groupKeys: <String, List<int>>{},
+      );
     }
     final clear = await decryptLocal(key, base64Decode(blobB64));
     final json = jsonDecode(utf8.decode(clear)) as Map<String, dynamic>;
+    final rawGroupKeys = (json['groupKeys'] as Map<String, dynamic>?) ?? {};
     return (
       conversations: (json['conversations'] as List)
           .map((c) => Conversation.fromJson(c as Map<String, dynamic>))
@@ -113,6 +128,10 @@ class SecureStore {
       messages: (json['messages'] as List)
           .map((m) => ChatMessage.fromJson(m as Map<String, dynamic>))
           .toList(),
+      groups: ((json['groups'] as List?) ?? [])
+          .map((g) => Group.fromJson(g as Map<String, dynamic>))
+          .toList(),
+      groupKeys: rawGroupKeys.map((k, v) => MapEntry(k, base64Decode(v as String))),
     );
   }
 }

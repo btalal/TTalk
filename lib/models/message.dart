@@ -9,6 +9,13 @@ class ChatMessage {
     required this.timestamp,
     this.plaintext,
     this.read = false,
+    this.isGroup = false,
+    this.senderName,
+    this.kind = 'text',
+    this.fileName,
+    this.fileSize,
+    this.filePath,
+    this.readBy = const [],
   });
 
   final String id;
@@ -18,6 +25,15 @@ class ChatMessage {
   final DateTime timestamp;
   String? plaintext;
   bool read;
+  bool isGroup;
+  String? senderName;
+  String kind;
+  String? fileName;
+  int? fileSize;
+  String? filePath;
+  List<String> readBy;
+
+  bool get isFile => kind == 'file';
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -26,7 +42,14 @@ class ChatMessage {
         'ciphertext': base64Encode(ciphertext),
         'timestamp': timestamp.toIso8601String(),
         'read': read,
+        'isGroup': isGroup,
+        'kind': kind,
+        'readBy': readBy,
         if (plaintext != null) 'plaintext': plaintext,
+        if (senderName != null) 'senderName': senderName,
+        if (fileName != null) 'fileName': fileName,
+        if (fileSize != null) 'fileSize': fileSize,
+        if (filePath != null) 'filePath': filePath,
       };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
@@ -37,6 +60,13 @@ class ChatMessage {
         timestamp: DateTime.parse(json['timestamp'] as String),
         plaintext: json['plaintext'] as String?,
         read: json['read'] as bool? ?? false,
+        isGroup: json['isGroup'] as bool? ?? false,
+        senderName: json['senderName'] as String?,
+        kind: json['kind'] as String? ?? 'text',
+        fileName: json['fileName'] as String?,
+        fileSize: json['fileSize'] as int?,
+        filePath: json['filePath'] as String?,
+        readBy: (json['readBy'] as List?)?.map((e) => e as String).toList() ?? const [],
       );
 }
 
