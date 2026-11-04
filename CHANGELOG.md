@@ -1,5 +1,19 @@
 # Versions
 
+## 0.5.0 — Windows et Android, versions finales
+
+- Promotion du périmètre validé sur deux PC Windows x64 et un smartphone Android :
+  messages et fichiers, contacts et historique après redémarrage, réception différée,
+  groupes à trois appareils et transfert de propriété.
+- Android : APK signé avec la même clé que la préversion pour permettre la mise
+  à jour en conservant les données ; numéro de version Android augmenté à 24.
+- Windows : ZIP portable x64 organisé avec TTalk.exe et son dossier app/.
+- Aucune fonction ni dépendance de notifications ajoutée : ce développement est reporté.
+
+Le protocole du relais reste inchangé (protocole 2). iPhone reste en préversion.
+La réception mobile reprend à l’ouverture de l’application ; pas de notifications push.
+
+
 ## 0.5.0-preview.11 — Premiers clients Android et iPhone
 
 - Projets Android 7.0+ et iOS 15+ avec la même identité visuelle et le protocole 2

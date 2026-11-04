@@ -1,11 +1,11 @@
-# TTalk 0.5 — première préversion mobile
+# TTalk 0.5.0 — Android final et iPhone en préversion
 
 Android et iOS utilisent le même relais **0.4 / protocole 2** que Windows
-0.4.0-rc.4. Chaque téléphone possède sa propre identité : appairer chaque appareil
+0.4 / 0.5.0. Chaque téléphone possède sa propre identité : appairer chaque appareil
 séparément, saisir le même serveur HTTPS, puis comparer les numéros de sécurité.
 L’hébergement du relais reste à créer ; aucune adresse n’est préconfigurée.
 
-## Android — APK
+## Android 0.5.0 — APK signé (version finale)
 
 Android **7.0 minimum (API 24)**. Le package universel inclut ARM64, ARMv7 et x86_64.
 Une fois l’APK signé reçu sur le téléphone, autoriser son installation depuis le
@@ -41,7 +41,7 @@ un APK signé. Sans ces variables, la CI produit volontairement un APK non sign�
 Une autre possibilité est `zipalign` puis `apksigner sign` des Android Build Tools,
 suivi de `apksigner verify --verbose`.
 
-## iPhone — sans Mac et sans abonnement Apple Developer
+## iPhone — préversion, sans Mac et sans abonnement Apple Developer
 
 iOS **15 minimum**. La CI compile sur un Mac GitHub et prépare
 `ttalk-ios-unsigned.ipa`. Ce fichier **n’est pas directement installable** : Apple
@@ -90,4 +90,4 @@ sur son propre Mac : `flutter build ios --release --no-codesign`, puis ouvrir
 
 Les compilations et les tests sur émulateur/simulateur ne prouvent pas à eux seuls
 le bon fonctionnement sur tous les téléphones. Le relais et les limites des groupes
-restent ceux de la préversion Windows, décrits dans `docs/WINDOWS_READINESS.md`.
+restent ceux de la version Windows, décrits dans `docs/WINDOWS_READINESS.md`.

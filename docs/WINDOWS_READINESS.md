@@ -1,31 +1,37 @@
-# Finalisation Windows — 0.4.0-rc.3
+# Validation Windows et Android — 0.5.0
 
-Windows est prioritaire. Android puis iOS seront développés après validation de
-l’application et du service Windows en conditions réelles.
+La version 0.5.0 est publiée en finale pour Windows x64 et Android, sur le
+périmètre fonctionnel validé. iPhone reste en préversion.
 
-## Préparé dans le dépôt
+## Essais confirmés par l’utilisateur le 3 novembre 2026
 
-- Configuration du relais sans recompilation, WSS obligatoire hors boucle locale.
-- Identité stable issue de la clé X25519, preuve HMAC d’un défi éphémère.
-- Coffre conservé ; migration des contacts ; groupes anciens archivés en lecture.
-- File d’envoi chiffrée persistante et reprise après reconnexion/redémarrage.
-- SQLite côté relais : enregistrement durable avant acceptation, effacement du
-  contenu après confirmation du destinataire, reprise et déduplication.
-- Invitations et accusés conservés/chiffrés ; horodatage d’origine chiffré.
-- Métadonnées liées au contenu, compteur de transfert et limites de charge.
-- Déploiement Render décrit dans server/README.md et render.yaml.
+Sur deux PC Windows x64 et un smartphone Android :
 
-## Vérifications requises avant une version finale
+- Envoi et réception des messages et des fichiers.
+- Contacts et historique conservés après redémarrage des applications.
+- Message envoyé au téléphone déconnecté reçu à la réouverture.
+- Groupe avec les trois appareils et transfert de propriété.
 
-1. Créer le service permanent et le disque sur le compte d’hébergement choisi.
-   Le prix affiché par le prestataire doit être accepté par le titulaire du compte.
-2. Vérifier /healthz, le certificat TLS et la connexion WSS publique.
-3. Avec deux PC sur des réseaux distincts : appairage, messages dans les deux sens,
-   réception hors ligne, redémarrage des applications et du relais.
-4. Tester les pièces jointes, les groupes et les droits sur ces deux PC, puis
-   vérifier sauvegarde/restauration du disque du serveur.
-5. Valider Windows 10 et Windows 11 propres. La CI vérifie la compilation et
-   l’ouverture du ZIP sous Windows Server 2022, pas tous ces parcours matériels.
+Ces résultats sont rapportés par l’utilisateur ; les versions précises de Windows
+et les caractéristiques du téléphone n’ont pas été communiquées.
+
+## Contrôles automatisés
+
+La CI analyse et teste le code commun et le relais. Elle ouvre le ZIP Windows
+extrait sous Windows Server 2022, vérifie son organisation, les binaires x64 et
+le refus d’une seconde instance. Le test Android s’exécute sur émulateur et
+vérifie l’identité persistante, le PIN, le coffre et la file d’envoi.
+Les signatures Android et les sommes SHA256 sont vérifiées avant publication.
+
+## Qualification à poursuivre selon le déploiement
+
+Les essais confirmés ne remplacent pas une qualification de toutes les
+installations Windows 10/11 et de tous les téléphones, ni un audit cryptographique
+indépendant. La sauvegarde/restauration du disque du relais et la surveillance
+opérationnelle dépendent de l’hébergement choisi et restent à vérifier sur celui-ci.
+
+Les notifications mobiles sont volontairement reportées : aucun SDK Firebase/APNs
+n’a été ajouté. La réception reprend quand l’application est ouverte.
 
 ## Limites conservées
 
@@ -37,7 +43,3 @@ La révocation des clés de groupe actuelle dépend encore de l’exclusion du
 membre par le relais ; elle doit être revue cryptographiquement pour résister à
 une collusion entre un ancien membre et un relais compromis. Les échanges directs
 utilisent des clés de session entre les deux appareils.
-
-Il ne faut pas qualifier la version de totalement finalisée tant que le service
-public et les deux PC n’ont pas été validés. Aucun hébergement payant n’a été créé
-ou facturé par l’agent.
