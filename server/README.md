@@ -12,7 +12,7 @@ validez une commande que si son montant mensuel vous convient.
 
 1. Créer un compte sur https://render.com et choisir **New → Blueprint**.
 2. Connecter le dépôt public `btalal/TTalk`, branche
-   la branche par défaut du dépôt (`main/ttalk` après son renommage), puis sélectionner le fichier `render.yaml`.
+   la branche par défaut du dépôt (`main/ttalk`), puis sélectionner le fichier `render.yaml`.
 3. Vérifier le service Starter, le disque de 1 Go et le montant facturé, puis
    lancer le déploiement. Aucun secret d’application n’est à saisir.
 4. Render fournit une adresse `https://…onrender.com`. Ouvrir `/healthz` sur cette
