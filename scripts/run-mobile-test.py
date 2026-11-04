@@ -2,7 +2,7 @@
 import subprocess
 import sys
 
-command = ["flutter", "test", "integration_test/mobile_smoke_test.dart", "-d", sys.argv[1], "--no-pub"]
+command = ["flutter", "test", "integration_test/mobile_smoke_test.dart", "-d", sys.argv[1]]
 try:
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, timeout=600)
@@ -16,7 +16,7 @@ except subprocess.TimeoutExpired as error:
     code = 1
 print(output, flush=True)
 if code:
-    detail = "\n".join(output.splitlines()[-60:])
+    detail = "\n".join(output.splitlines()[-60:])[-3500:]
     detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
     print(f"::error::{detail}", flush=True)
 sys.exit(code)

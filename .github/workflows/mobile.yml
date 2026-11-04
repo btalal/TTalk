@@ -63,8 +63,10 @@ jobs:
           SDK_MANAGER_PATH="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           test -f "$SDK_MANAGER_PATH"
           python3 scripts/run-logged.py "$SDK_MANAGER_PATH" "ndk;29.0.14206865" "cmake;3.22.1" "platforms;android-36" "build-tools;36.0.0"
+      # Native builds must regenerate plugin registrants for their build mode.
+      # --no-pub skips that in Flutter 3.47.9 and leaves debug-only plugins behind.
       - name: Build release APK for external signing
-        run: python3 scripts/run-logged.py flutter build apk --release --no-pub
+        run: python3 scripts/run-logged.py flutter build apk --release
       - name: Stage unsigned Android package
         run: |
           mkdir -p dist
@@ -102,7 +104,7 @@ jobs:
           cache: true
       - run: flutter pub get --enforce-lockfile
       - name: Build unsigned iPhone application
-        run: flutter build ios --release --no-codesign --no-pub
+        run: flutter build ios --release --no-codesign
       - name: Package IPA for personal signing
         run: |
           mkdir -p dist Payload
