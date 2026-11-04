@@ -85,6 +85,13 @@ La Personal Team ne permet pas de distribuer TTalk par TestFlight ou l’App Sto
 Une telle distribution nécessite l’abonnement Apple Developer, une signature de
 distribution et la validation d’Apple.
 
+## Mac — préversion native
+
+La release mobile inclut `ttalk-macos-preview.zip`, une application Flutter
+macOS distincte de l’IPA iPhone. Elle n’est pas signée avec Developer ID ni
+notarisée ; macOS peut refuser son ouverture après téléchargement. Le
+[guide macOS](MACOS_INSTALL.md) décrit la compilation locale et les essais.
+
 ## Fonctionnement et limites à tester
 
 - Messages directs, groupes, transfert de propriété, événements d’arrivée, accusés
