@@ -62,7 +62,7 @@ jobs:
         run: |
           SDK_MANAGER_PATH="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           test -f "$SDK_MANAGER_PATH"
-          python3 scripts/run-logged.py "$SDK_MANAGER_PATH" "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-36" "build-tools;36.0.0"
+          python3 scripts/run-logged.py "$SDK_MANAGER_PATH" "ndk;29.0.14206865" "cmake;3.22.1" "platforms;android-36" "build-tools;36.0.0"
       - name: Build release APK for external signing
         run: python3 scripts/run-logged.py flutter build apk --release --no-pub
       - name: Stage unsigned Android package

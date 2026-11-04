@@ -23,7 +23,9 @@ et la même clé de signature**. Ne pas désinstaller l’application pour force
 mise à jour : la désinstallation supprime ses données. Ne pas remplacer une clé
 perdue par une nouvelle sans prévenir les utilisateurs.
 
-Compilation avec votre clé (variables d’environnement, ne pas versionner leurs valeurs) :
+Compilation : Flutter 3.47.9, JDK 21, SDK Android 36 et NDK 29.0.14206865.
+
+Avec votre clé (variables d’environnement, ne pas versionner leurs valeurs) :
 
 ```sh
 flutter pub get --enforce-lockfile

@@ -7,7 +7,8 @@ plugins {
 android {
     namespace = "com.talal.ttalk"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Pin the stable toolchain available on CI; avoid the broken r28c SDK archive.
+    ndkVersion = "29.0.14206865"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
