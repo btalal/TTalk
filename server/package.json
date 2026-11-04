@@ -1,0 +1,13 @@
+{
+  "name": "talmessenger-relay",
+  "version": "0.1.0",
+  "description": "Relais minimal pour TalMessenger — ne voit que des paquets chiffrés.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node relay.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
