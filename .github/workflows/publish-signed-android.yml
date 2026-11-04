@@ -43,7 +43,7 @@ jobs:
             gh release upload "$MOBILE_TAG" dist/ttalk-android.apk dist/ttalk-android.apk.sha256 --clobber
             NOTES_FILE=$(python3 -c 'import json,sys; print("release-signatures/"+json.load(open(sys.argv[1]))["notes_file"])' "$MANIFEST")
             if [[ "$MOBILE_TAG" == android-v* ]]; then
-              gh release edit "$MOBILE_TAG" --title "TTalk ${MOBILE_TAG#android-v} — Android" --notes-file "$NOTES_FILE" --prerelease=false --latest=false
+              gh release edit "$MOBILE_TAG" --title "📱 Android — TTalk ${MOBILE_TAG#android-v} · Version stable" --notes-file "$NOTES_FILE" --prerelease=false --latest=false
             else
               gh release edit "$MOBILE_TAG" --title "TTalk $MOBILE_TAG — Android signé et iPhone à signer" --notes-file "$NOTES_FILE" --prerelease --latest=false
             fi
