@@ -1,0 +1,30 @@
+app = "ttalk"
+primary_region = "cdg"
+
+[env]
+  HOST = "0.0.0.0"
+  PORT = "8080"
+  DATA_DIR = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/healthz"
+
+[mounts]
+  source = "ttalk_messages"
+  destination = "/data"
+  initial_size = "1GB"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512MB"
