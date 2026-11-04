@@ -1,6 +1,16 @@
-# TTalk
+<p align="center">
+  <img src="assets/branding/ttalk.png" width="180" height="180" alt="Logo TTalk : deux bulles bleu nuit et violet, avec un cadenas ivoire" />
+</p>
 
-Messagerie texte **chiffrée de bout en bout**, simple, au format **EXE** pour **Windows 10/11 x64**.
+<h1 align="center">TTalk</h1>
+
+<p align="center">
+  Messagerie texte <strong>chiffrée de bout en bout</strong>, simple, pour <strong>Windows 10/11 x64</strong>.
+</p>
+
+Deux bulles pour la conversation, un cadenas pour la confidentialité : l’identité
+visuelle de TTalk associe le bleu nuit, l’indigo et le violet. Cette même icône
+accompagne l’application Windows et son écran de déverrouillage.
 
 ## Comment ça marche
 

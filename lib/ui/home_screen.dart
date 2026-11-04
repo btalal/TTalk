@@ -43,7 +43,19 @@ class _HomeScreenState extends State<HomeScreen>
       listenable: app,
       builder: (context, _) => Scaffold(
         appBar: AppBar(
-          title: const Text('TTalk'),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/branding/ttalk.png',
+                width: 40,
+                height: 40,
+                excludeFromSemantics: true,
+              ),
+              const SizedBox(width: 8),
+              const Text('TTalk'),
+            ],
+          ),
           bottom: TabBar(
             controller: _tabController,
             tabs: [
