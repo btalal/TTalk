@@ -14,7 +14,7 @@ accompagne l’application Windows et son écran de déverrouillage.
 
 ## Préversion mobile 0.5
 
-Les projets Android (6.0+) et iOS (15+) partagent le protocole chiffré de Windows
+Les projets Android (7.0+) et iOS (15+) partagent le protocole chiffré de Windows
 0.4 et son relais. L’interface s’adapte au téléphone ; les identités sont stockées
 dans le Keystore Android ou le Trousseau iOS. Chaque appareil s’appaire séparément.
 

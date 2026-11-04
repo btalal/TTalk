@@ -7,7 +7,7 @@ L’hébergement du relais reste à créer ; aucune adresse n’est préconfigur
 
 ## Android — APK
 
-Android **6.0 minimum (API 23)**. Le package universel inclut ARM64, ARMv7 et x86_64.
+Android **7.0 minimum (API 24)**. Le package universel inclut ARM64, ARMv7 et x86_64.
 Une fois l’APK signé reçu sur le téléphone, autoriser son installation depuis le
 navigateur ou l’application Fichiers, puis installer TTalk. Aucun accès aux contacts,
 à la caméra ou à la localisation n’est demandé. Le sélecteur de documents sert
