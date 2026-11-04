@@ -16,7 +16,7 @@ plusieurs versions sur le même profil en même temps.
 
 Un PC utilisateur n’a pas besoin de rester allumé : le relais est hébergé en
 permanence. Il reste à créer l’hébergement si vous n’en avez pas encore.
-Guide : https://github.com/btalal/TTalk/blob/vibe/talmessenger-e2e-5e4935/server/README.md
+Guide : https://github.com/btalal/TTalk/blob/HEAD/server/README.md
 Node.js n’est nécessaire sur le PC que pour les tests avec un relais local.
 
 Les contacts et les clés persistent après redémarrage. Les envois sans réseau
