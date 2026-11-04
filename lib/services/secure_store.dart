@@ -21,6 +21,7 @@ class SecureStore {
   final SharedPreferences _prefs;
   final FlutterSecureStorage _secure;
   SecretKey? _pinKey;
+  Future<void> _saveQueue = Future.value();
 
   static Future<SecureStore> create({String? pin}) async {
     final prefs = await SharedPreferences.getInstance();
@@ -30,6 +31,12 @@ class SecureStore {
     final store = SecureStore._(prefs, secure);
     if (pin != null) await store.unlockWithPin(pin);
     return store;
+  }
+
+  String get displayName => _prefs.getString('display_name') ?? 'Utilisateur';
+
+  Future<void> setDisplayName(String name) async {
+    await _prefs.setString('display_name', name);
   }
 
   bool get isUnlocked => _pinKey != null;
@@ -45,6 +52,7 @@ class SecureStore {
   }
 
   Future<bool> unlockWithPin(String pin) async {
+    _pinKey = null;
     final saltB64 = _prefs.getString(_pinSaltKey);
     final verifierB64 = _prefs.getString(_pinVerifierKey);
     if (saltB64 == null || verifierB64 == null) return false;
@@ -65,7 +73,8 @@ class SecureStore {
 
   Future<void> saveIdentity(IdentityKeys keys) async {
     final privBytes = await keys.privateKey.extractPrivateKeyBytes();
-    await _secure.write(key: _identityPubKey, value: base64Encode(keys.publicKey));
+    await _secure.write(
+        key: _identityPubKey, value: base64Encode(keys.publicKey));
     await _secure.write(key: _identityPrivKey, value: base64Encode(privBytes));
   }
 
@@ -89,6 +98,22 @@ class SecureStore {
     required List<ChatMessage> messages,
     List<Group> groups = const [],
     Map<String, SecretKey> groupKeys = const {},
+  }) {
+    final pending = _saveQueue.then((_) => _writeData(
+          conversations: conversations,
+          messages: messages,
+          groups: groups,
+          groupKeys: groupKeys,
+        ));
+    _saveQueue = pending.catchError((Object _) {});
+    return pending;
+  }
+
+  Future<void> _writeData({
+    required List<Conversation> conversations,
+    required List<ChatMessage> messages,
+    List<Group> groups = const [],
+    Map<String, SecretKey> groupKeys = const {},
   }) async {
     final key = _pinKey;
     if (key == null) throw StateError('Coffre verrouillé');
@@ -106,7 +131,13 @@ class SecureStore {
     await _prefs.setString(_dataBlobKey, base64Encode(blob));
   }
 
-  Future<({List<Conversation> conversations, List<ChatMessage> messages, List<Group> groups, Map<String, List<int>> groupKeys})> loadData() async {
+  Future<
+      ({
+        List<Conversation> conversations,
+        List<ChatMessage> messages,
+        List<Group> groups,
+        Map<String, List<int>> groupKeys
+      })> loadData() async {
     final key = _pinKey;
     final blobB64 = _prefs.getString(_dataBlobKey);
     if (key == null || blobB64 == null) {
@@ -130,7 +161,8 @@ class SecureStore {
       groups: ((json['groups'] as List?) ?? [])
           .map((g) => Group.fromJson(g as Map<String, dynamic>))
           .toList(),
-      groupKeys: rawGroupKeys.map((k, v) => MapEntry(k, base64Decode(v as String))),
+      groupKeys:
+          rawGroupKeys.map((k, v) => MapEntry(k, base64Decode(v as String))),
     );
   }
 }

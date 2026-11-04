@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../state/app_state.dart';
 
@@ -17,32 +18,45 @@ class _UnlockScreenState extends State<UnlockScreen> {
   String? _error;
 
   Future<void> _submit() async {
+    if (_busy) return;
     setState(() {
       _busy = true;
       _error = null;
     });
     final app = widget.app;
     final pin = _pinController.text.trim();
-    if (pin.length < 4) {
+    if (!RegExp(r'^\d{4,12}$').hasMatch(pin)) {
       setState(() {
         _error = 'Le code PIN doit contenir au moins 4 chiffres.';
         _busy = false;
       });
       return;
     }
-    if (app.store.hasPin) {
-      await app.unlock(pin);
-      if (!app.unlocked && mounted) {
-        setState(() {
-          _error = 'Code PIN incorrect.';
-          _busy = false;
-        });
+    try {
+      if (app.store.hasPin) {
+        await app.unlock(pin);
+        if (!app.unlocked && mounted) {
+          setState(() {
+            _error = 'Code PIN incorrect.';
+            _busy = false;
+          });
+        }
+      } else {
+        await app.createPin(pin);
       }
-    } else {
-      await app.store.setupPin(pin);
-      await app.unlock(pin);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'Impossible d’ouvrir le coffre. Réessaie.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  void dispose() {
+    _pinController.dispose();
+    super.dispose();
   }
 
   @override
@@ -76,6 +90,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
                   obscureText: true,
                   keyboardType: TextInputType.number,
                   maxLength: 12,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
                     labelText: 'Code PIN',
                     border: OutlineInputBorder(),

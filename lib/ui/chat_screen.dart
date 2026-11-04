@@ -49,18 +49,29 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _send(AppState app) {
+  Future<void> _send(AppState app) async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    if (_isGroup) {
-      app.sendGroupMessage(_chatId, text);
-    } else {
-      app.sendMessage(_chatId, text);
+    try {
+      if (_isGroup) {
+        await app.sendGroupMessage(_chatId, text);
+      } else {
+        await app.sendMessage(_chatId, text);
+      }
+      if (!mounted) return;
+      _controller.clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scroll.hasClients) {
+          _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Envoi impossible. Vérifie la connexion au relais.'),
+        ));
+      }
     }
-    _controller.clear();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
-    });
   }
 
   Future<void> _pickFile(AppState app) async {
@@ -68,13 +79,21 @@ class _ChatScreenState extends State<ChatScreen> {
     if (result == null || result.files.isEmpty) return;
     final f = result.files.first;
     if (f.path == null) return;
-    await app.sendFile(
-      _chatId,
-      f.path!,
-      f.name,
-      f.size,
-      isGroup: _isGroup,
-    );
+    try {
+      await app.sendFile(
+        _chatId,
+        f.path!,
+        f.name,
+        f.size,
+        isGroup: _isGroup,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Pièce jointe non envoyée. Vérifie la connexion et la limite de 5 Mo.')));
+      }
+    }
   }
 
   @override
@@ -212,7 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             if (mine) ...[
                               const SizedBox(width: 4),
                               Icon(
-                                Icons.done_all,
+                                m.delivered ? Icons.done_all : Icons.check,
                                 size: 14,
                                 color: m.read
                                     ? Colors.blueAccent

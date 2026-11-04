@@ -15,7 +15,14 @@ import '../services/relay_client.dart';
 import '../services/secure_store.dart';
 
 class AppState extends ChangeNotifier {
-  AppState({required this.store, required this.relay});
+  AppState({
+    required this.store,
+    required this.relay,
+    Future<Directory> Function()? documentsDirectory,
+  }) : _documentsDirectory =
+            documentsDirectory ?? getApplicationDocumentsDirectory;
+
+  final Future<Directory> Function() _documentsDirectory;
 
   final SecureStore store;
   final RelayClient relay;
@@ -56,9 +63,13 @@ class AppState extends ChangeNotifier {
         _sessionKeys[c.peerId] = await identity!
             .deriveSessionKey(Uint8List.fromList(c.peerPublicKey));
       }
-      await _restoreGroups();
+      _restoreGroups(data.groups, data.groupKeys);
     }
     relay.onInbound = _handleInbound;
+    relay.onMessageError = (_) {
+      error = 'Un message invalide n’a pas pu être traité.';
+      notifyListeners();
+    };
     relay.onStateChange = (_) => notifyListeners();
     notifyListeners();
   }
@@ -78,20 +89,57 @@ class AppState extends ChangeNotifier {
         _sessionKeys[c.peerId] = await identity!
             .deriveSessionKey(Uint8List.fromList(c.peerPublicKey));
       }
-      await _restoreGroups();
+      _restoreGroups(data.groups, data.groupKeys);
     }
+    _registerIfReady();
     notifyListeners();
   }
 
-  Future<void> _restoreGroups() async {
-    final data = await store.loadData();
-    groups = data.groups;
+  void _restoreGroups(List<Group> restored, Map<String, List<int>> keys) {
+    groups = restored;
+    _groupKeys.clear();
     for (final g in groups) {
-      final raw = data.groupKeys[g.id];
+      final raw = keys[g.id];
       if (raw != null) {
         _groupKeys[g.id] = SecretKey(Uint8List.fromList(raw));
       }
     }
+  }
+
+  Future<void> createPin(String pin) async {
+    if (store.hasPin) throw StateError('Un code PIN existe déjà');
+    await store.setupPin(pin);
+    unlocked = true;
+    _registerIfReady();
+    notifyListeners();
+  }
+
+  Future<void> connectRelay(String url) async {
+    error = null;
+    try {
+      await relay.connect(url);
+      _registerIfReady();
+    } catch (_) {
+      error =
+          'Relais indisponible. Tes messages restent accessibles hors ligne.';
+    }
+    notifyListeners();
+  }
+
+  void _registerIfReady() {
+    if (unlocked && identity != null && relay.state == RelayState.connected) {
+      relay.register(name: store.displayName, publicKey: identity!.publicKey);
+    }
+  }
+
+  Future<void> setDisplayName(String name) async {
+    final value = name.trim();
+    if (value.isEmpty || value.length > 40) {
+      throw ArgumentError('Nom : 1 à 40 caractères');
+    }
+    await store.setDisplayName(value);
+    _registerIfReady();
+    notifyListeners();
   }
 
   Future<void> _persist() async {
@@ -113,6 +161,7 @@ class AppState extends ChangeNotifier {
   Future<void> _handleInbound(Map<String, dynamic> msg) async {
     switch (msg['type']) {
       case 'registered':
+        notifyListeners();
         break;
       case 'pairing_code':
         break;
@@ -150,9 +199,11 @@ class AppState extends ChangeNotifier {
         break;
       case 'cipher':
         final from = msg['from'] as String;
+        final messageId = msg['messageId'] as String;
         final groupId = msg['groupId'] as String?;
-        final payload =
-            Uint8List.fromList(base64Decode(msg['payload'] as String));
+        final encoded = msg['payload'] as String;
+        if (encoded.length > 16 * 1024 * 1024) break;
+        final payload = Uint8List.fromList(base64Decode(encoded));
         if (groupId != null) {
           final pending =
               _pendingInvites.where((i) => i.groupId == groupId).firstOrNull;
@@ -161,6 +212,11 @@ class AppState extends ChangeNotifier {
                   ? null
                   : SecretKey(base64Decode(pending.groupKeyB64)));
           if (gk == null) break;
+          final group = groups.where((g) => g.id == groupId).firstOrNull;
+          if (group != null && !group.memberIds.contains(from)) break;
+          if (messagesByConv[groupId]?.any((m) => m.id == messageId) ?? false) {
+            break;
+          }
           final plain = await decryptMessage(gk, payload);
           if (plain.startsWith('{"kind":"control"')) {
             try {
@@ -186,16 +242,21 @@ class AppState extends ChangeNotifier {
             timestamp: DateTime.now(),
             plaintext: plain,
             isGroup: true,
+            senderId: from,
             senderName: _peerNames[from] ?? 'Membre',
           );
           await _applyInboundMeta(m, plain);
           messagesByConv.putIfAbsent(groupId, () => []).add(m);
-          relay.sendRead(from, m.id);
+          relay.sendDelivered(from, m.id, groupId: groupId);
           await _persist();
           notifyListeners();
         } else {
           final conv = conversations.where((c) => c.peerId == from).toList();
           if (conv.isEmpty) break;
+          if (messagesByConv[conv.first.id]?.any((m) => m.id == messageId) ??
+              false) {
+            break;
+          }
           final key = _sessionKeys[from];
           if (key == null) break;
           final plain = await decryptMessage(key, payload);
@@ -209,7 +270,7 @@ class AppState extends ChangeNotifier {
           );
           await _applyInboundMeta(m, plain);
           messagesByConv.putIfAbsent(conv.first.id, () => []).add(m);
-          relay.sendRead(from, m.id);
+          relay.sendDelivered(from, m.id, groupId: groupId);
           final idx = conversations.indexOf(conv.first);
           conversations[idx] = Conversation(
             id: conv.first.id,
@@ -236,16 +297,34 @@ class AppState extends ChangeNotifier {
         _pendingInvites.add(invite);
         notifyListeners();
         break;
+      case 'delivered':
       case 'read':
-        final fromId = msg['from'] as String;
-        final messageId = msg['messageId'] as String;
-        final convR = conversations.where((c) => c.peerId == fromId).toList();
-        if (convR.isEmpty) break;
-        final list = messagesByConv[convR.first.id];
-        if (list == null) break;
-        final target = list.where((m) => m.id == messageId).toList();
-        if (target.isEmpty) break;
-        target.first.read = true;
+        final from = msg['from'] as String;
+        final id = msg['messageId'] as String;
+        final groupId = msg['groupId'] as String?;
+        final conversation =
+            conversations.where((c) => c.peerId == from).firstOrNull;
+        final group = groups.where((g) => g.id == groupId).firstOrNull;
+        if (groupId != null &&
+            (group == null || !group.memberIds.contains(from))) {
+          break;
+        }
+        final chatId = groupId ?? conversation?.id;
+        final message = messagesByConv[chatId]
+            ?.where((m) => m.id == id && m.fromMe)
+            .firstOrNull;
+        if (message == null) break;
+        if (msg['type'] == 'read') {
+          if (message.readBy.contains(from)) break;
+          message.readBy = [...message.readBy, from];
+          message.read = group == null ||
+              group.memberIds
+                  .where((id) => id != myId)
+                  .every(message.readBy.contains);
+        } else if (message.delivered) {
+          break;
+        }
+        message.delivered = true;
         await _persist();
         notifyListeners();
         break;
@@ -253,16 +332,20 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> markConversationRead(String conversationId) async {
-    final conv = conversations.where((c) => c.id == conversationId).toList();
-    if (conv.isEmpty) return;
+    final conversation =
+        conversations.where((c) => c.id == conversationId).firstOrNull;
+    final group = groups.where((g) => g.id == conversationId).firstOrNull;
     final list = messagesByConv[conversationId];
-    if (list == null) return;
+    if ((conversation == null && group == null) || list == null) return;
     var changed = false;
-    for (final m in list) {
-      if (!m.fromMe && !m.read) {
-        m.read = true;
+    for (final message in list) {
+      if (!message.fromMe && !message.isSystem && !message.read) {
+        message.read = true;
         changed = true;
-        relay.sendRead(conv.first.peerId, m.id);
+        final recipient = conversation?.peerId ?? message.senderId;
+        if (recipient != null) {
+          relay.sendRead(recipient, message.id, groupId: group?.id);
+        }
       }
     }
     if (changed) {
@@ -271,19 +354,19 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> _applyInboundMeta(ChatMessage m, String plain) async {
+  Future<void> _applyInboundMeta(ChatMessage message, String plain) async {
+    Object? decoded;
     try {
-      final meta = jsonDecode(plain) as Map<String, dynamic>;
-      if (meta['kind'] == 'file') {
-        m.kind = 'file';
-        m.fileName = meta['fileName'] as String?;
-        m.fileSize = meta['fileSize'] as int?;
-        m.plaintext = null;
-        await handleInboundFile(m, meta);
-      }
-    } catch (_) {
-      m.kind = 'text';
+      decoded = jsonDecode(plain);
+    } on FormatException {
+      return;
     }
+    if (decoded is! Map<String, dynamic> || decoded['kind'] != 'file') return;
+    message.kind = 'file';
+    message.fileName = decoded['fileName'] as String;
+    message.fileSize = decoded['fileSize'] as int;
+    message.plaintext = null;
+    await handleInboundFile(message, decoded);
   }
 
   final List<GroupInvite> _pendingInvites = [];
@@ -598,7 +681,16 @@ class AppState extends ChangeNotifier {
       : (_peerNames[peerId] ??
           peerId.substring(0, peerId.length < 8 ? peerId.length : 8));
 
+  static const maxAttachmentBytes = 5 * 1024 * 1024;
+
+  void _requireConnected() {
+    if (relay.state != RelayState.connected || myId == null) {
+      throw StateError('Connecte-toi au relais avant d’envoyer un message.');
+    }
+  }
+
   Future<void> sendGroupMessage(String groupId, String text) async {
+    _requireConnected();
     final g = groups.firstWhere((e) => e.id == groupId);
     final key = _groupKeys[groupId];
     if (key == null) return;
@@ -623,7 +715,15 @@ class AppState extends ChangeNotifier {
   Future<ChatMessage> sendFile(
       String conversationId, String filePath, String fileName, int fileSize,
       {bool isGroup = false}) async {
-    final bytes = await File(filePath).readAsBytes();
+    _requireConnected();
+    final file = File(filePath);
+    if (await file.length() > maxAttachmentBytes) {
+      throw ArgumentError('Pièce jointe limitée à 5 Mo.');
+    }
+    final bytes = await file.readAsBytes();
+    if (bytes.length > maxAttachmentBytes) {
+      throw ArgumentError('Pièce jointe limitée à 5 Mo.');
+    }
     final fileKey = SecretKey(await generateFileKey());
     final encFile = await encryptFile(fileKey, bytes);
     final sessionKey = isGroup
@@ -647,7 +747,8 @@ class AppState extends ChangeNotifier {
       isGroup: isGroup,
       kind: 'file',
       fileName: fileName,
-      fileSize: fileSize,
+      fileSize: bytes.length,
+      filePath: file.path,
       senderName: myName ?? 'Moi',
     );
     if (isGroup) {
@@ -668,21 +769,28 @@ class AppState extends ChangeNotifier {
       ChatMessage m, Map<String, dynamic> meta) async {
     final fileKey =
         SecretKey(Uint8List.fromList(base64Decode(meta['fileKey'] as String)));
-    final encData = base64Decode(meta['data'] as String);
+    final data = meta['data'] as String;
+    if (data.length > (maxAttachmentBytes + 64) * 4 ~/ 3 + 4) {
+      throw const FormatException('Pièce jointe trop grande');
+    }
+    final encData = base64Decode(data);
     final clear = await decryptFile(fileKey, Uint8List.fromList(encData));
-    final dir = await getApplicationDocumentsDirectory();
+    if (clear.length > maxAttachmentBytes) {
+      throw const FormatException('Pièce jointe trop grande');
+    }
+    final dir = await _documentsDirectory();
     final safeName =
         (meta['fileName'] as String).replaceAll(RegExp(r'[^\w.\-]'), '_');
-    final outPath = '${dir.path}/ttalk_files/$safeName';
+    final outPath = '${dir.path}/ttalk_files/${_uuid.v4()}_$safeName';
     await File(outPath).parent.create(recursive: true);
     await File(outPath).writeAsBytes(clear);
     m.filePath = outPath;
+    m.fileSize = clear.length;
     m.plaintext = null;
-    await _persist();
-    notifyListeners();
   }
 
   Future<void> sendMessage(String conversationId, String text) async {
+    _requireConnected();
     final conv = conversations.firstWhere((c) => c.id == conversationId);
     final key = _sessionKeys[conv.peerId]!;
     final cipher = await encryptMessage(key, text);
