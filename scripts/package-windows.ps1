@@ -61,7 +61,7 @@ try {
     Start-Sleep -Seconds 8
     $process.Refresh()
     if ($process.HasExited) { throw "TTalk s’est arrêté au démarrage : $($process.ExitCode)" }
-    if ($process.MainWindowHandle -eq 0) { throw 'La fenêtre TTalk ne s’est pas ouverte' }
+    if ($process.MainWindowHandle -eq 0) { throw "La fenêtre TTalk ne s’est pas ouverte" }
     Write-Host "Package x64 vérifié ; fenêtre ouverte hors ligne. SHA256 : $hash"
 } finally {
     if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id -Force }
