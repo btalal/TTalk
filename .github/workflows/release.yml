@@ -2,6 +2,8 @@ name: Release Windows 10/11 x64 (EXE)
 
 on:
   push:
+    branches:
+      - 'vibe/talmessenger-e2e-5e4935'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
@@ -56,15 +58,27 @@ jobs:
           exit $buildExit
       - name: Package and smoke-test Windows x64
         shell: pwsh
-        run: ./scripts/package-windows.ps1
+        run: |
+          try {
+            ./scripts/package-windows.ps1
+          } catch {
+            $message = $_.Exception.Message -replace "[\r\n]", ' '
+            Write-Output "::error::$message"
+            '### Windows packaging error' >> $env:GITHUB_STEP_SUMMARY
+            '```text' >> $env:GITHUB_STEP_SUMMARY
+            ($_ | Out-String) >> $env:GITHUB_STEP_SUMMARY
+            '```' >> $env:GITHUB_STEP_SUMMARY
+            exit 1
+          }
       - uses: actions/upload-artifact@v4
         with:
-          name: ttalk-windows-x64-${{ github.ref_name }}
+          name: ttalk-windows-x64-${{ github.run_id }}
           path: |
             ttalk-windows-x64.zip
             ttalk-windows-x64.zip.sha256
           if-no-files-found: error
       - name: Create Windows Release (idempotent)
+        if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
