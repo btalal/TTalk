@@ -14,8 +14,12 @@ const int pbkdf2Iterations = 210000;
 Uint8List randomBytes(int length) {
   final rng = Random.secure();
   return Uint8List.fromList(
-      List<int>.generate(length, (_) => rng.nextInt(256)));
+    List<int>.generate(length, (_) => rng.nextInt(256)),
+  );
 }
+
+String identityId(Uint8List publicKey) =>
+    crypto_pkg.sha256.convert(publicKey).toString();
 
 class IdentityKeys {
   IdentityKeys({required this.publicKey, required this.privateKey});
@@ -23,24 +27,28 @@ class IdentityKeys {
   final SimpleKeyPair privateKey;
   final Uint8List publicKey;
 
+  String get stableId => identityId(publicKey);
+
   static Future<IdentityKeys> generate() async {
     final kp = await X25519().newKeyPair();
     final pub = await kp.extractPublicKey();
     return IdentityKeys(
-        privateKey: kp, publicKey: Uint8List.fromList(pub.bytes));
+      privateKey: kp,
+      publicKey: Uint8List.fromList(pub.bytes),
+    );
   }
 
-  Future<SecretKey> deriveSessionKey(Uint8List remotePublicKey) async {
+  Future<SecretKey> deriveSessionKey(
+    Uint8List remotePublicKey, {
+    String context = 'ttalk-session-v1',
+  }) async {
     final remote = SimplePublicKey(remotePublicKey, type: KeyPairType.x25519);
     final shared = await X25519().sharedSecretKey(
       keyPair: privateKey,
       remotePublicKey: remote,
     );
     final hkdf = Hkdf(hmac: Hmac(Sha256()), outputLength: aesKeyLength);
-    return hkdf.deriveKey(
-      secretKey: shared,
-      nonce: utf8.encode('ttalk-session-v1'),
-    );
+    return hkdf.deriveKey(secretKey: shared, nonce: utf8.encode(context));
   }
 }
 
@@ -85,10 +93,7 @@ Future<SecretKey> derivePinKey(String pin, Uint8List salt) async {
     iterations: pbkdf2Iterations,
     bits: aesKeyLength * 8,
   );
-  return pbkdf2.deriveKey(
-    secretKey: SecretKey(utf8.encode(pin)),
-    nonce: salt,
-  );
+  return pbkdf2.deriveKey(secretKey: SecretKey(utf8.encode(pin)), nonce: salt);
 }
 
 Future<Uint8List> encryptLocal(SecretKey key, Uint8List plaintext) =>
@@ -115,7 +120,8 @@ String formatFileSize(int bytes) {
 }
 
 String safetyFingerprint(Uint8List myPublicKey, Uint8List peerPublicKey) {
-  final keys = [myPublicKey, peerPublicKey]..sort((a, b) {
+  final keys = [myPublicKey, peerPublicKey]
+    ..sort((a, b) {
       for (var i = 0; i < a.length; i++) {
         if (a[i] != b[i]) return a[i] - b[i];
       }
@@ -126,7 +132,8 @@ String safetyFingerprint(Uint8List myPublicKey, Uint8List peerPublicKey) {
   final groups = <String>[];
   for (var i = 0; i < hexStr.length; i += 4) {
     groups.add(
-        hexStr.substring(i, i + 4 > hexStr.length ? hexStr.length : i + 4));
+      hexStr.substring(i, i + 4 > hexStr.length ? hexStr.length : i + 4),
+    );
   }
   return groups.join(' ');
 }

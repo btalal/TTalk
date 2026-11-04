@@ -9,9 +9,7 @@ import 'package:ttalk/state/app_state.dart';
 import 'support/group_fakes.dart';
 
 void main() {
-  test(
-      'pending invitation follows membership and ownership changes before acceptance',
-      () async {
+  test('pending invitation follows membership and ownership changes before acceptance', () async {
     final aliceRelay = MemoryRelay('alice', 'Alice');
     final bobRelay = MemoryRelay('bob', 'Bob');
     final carolRelay = MemoryRelay('carol', 'Carole');
@@ -41,11 +39,19 @@ void main() {
       'peerName': 'Alice',
       'peerPublicKey': base64Encode(alice.identity!.publicKey),
     });
-    final session =
-        await carol.identity!.deriveSessionKey(alice.identity!.publicKey);
-    final payload = await encryptMessage(session, invite.toJsonString());
+    final session = await carol.identity!.deriveSessionKey(
+      alice.identity!.publicKey,
+    );
+    final payload = await transportPacket(
+      session,
+      invite.toJsonString(),
+      'alice',
+      'invite',
+      kind: 'invite',
+    );
     await carolRelay.onInbound!({
       'type': 'group_invite',
+      'messageId': 'invite',
       'from': 'alice',
       'fromName': 'Alice',
       'payload': base64Encode(payload),
@@ -63,19 +69,21 @@ void main() {
     expect(carol.pendingInvites.single.ownerId, 'bob');
     await carol.acceptInvite(staleInvitation);
     expect(carol.groups.single.ownerId, 'bob');
-    expect(carol.messagesByConv[id]!.single.plaintext,
-        'Carole a rejoint le groupe.');
+    expect(
+      carol.messagesByConv[id]!.single.plaintext,
+      'Carole a rejoint le groupe.',
+    );
     await bobRelay.onInbound!(carolRelay.outgoing.single);
     expect(
-        bob.messagesByConv[id]!.last.plaintext, 'Carole a rejoint le groupe.');
+      bob.messagesByConv[id]!.last.plaintext,
+      'Carole a rejoint le groupe.',
+    );
     for (final app in [alice, bob, carol]) {
       app.dispose();
     }
   });
 
-  test(
-      'accepted invitation notifies both clients; encrypted ownership transfer persists',
-      () async {
+  test('accepted invitation notifies both clients; encrypted ownership transfer persists', () async {
     final aliceRelay = MemoryRelay('alice', 'Alice');
     final bobRelay = MemoryRelay('bob', 'Bob');
     final aliceStore = MemoryStore(), bobStore = MemoryStore();
@@ -102,14 +110,20 @@ void main() {
     final join = bobRelay.outgoing.single;
     expect(join['to'], ['alice']);
     final clear = await decryptMessage(
-        key, Uint8List.fromList(base64Decode(join['payload'] as String)));
-    expect(jsonDecode(clear)['kind'], 'control');
+      key,
+      Uint8List.fromList(base64Decode(join['payload'] as String)),
+    );
+    expect(jsonDecode(jsonDecode(clear)['body'] as String)['kind'], 'control');
     expect(clear, contains('join'));
     await aliceRelay.onInbound!(join);
     expect(
-        alice.messagesByConv[id]!.single.plaintext, 'Bob a rejoint le groupe.');
+      alice.messagesByConv[id]!.single.plaintext,
+      'Bob a rejoint le groupe.',
+    );
     expect(
-        bob.messagesByConv[id]!.single.plaintext, 'Bob a rejoint le groupe.');
+      bob.messagesByConv[id]!.single.plaintext,
+      'Bob a rejoint le groupe.',
+    );
     await aliceRelay.onInbound!(join);
     await bob.acceptInvite(invite);
     expect(alice.messagesByConv[id], hasLength(1));
@@ -126,7 +140,9 @@ void main() {
       expect(store.savedMessages.last.isSystem, isTrue);
     }
     await expectLater(
-        alice.transferGroupOwnership(id, 'bob'), throwsStateError);
+      alice.transferGroupOwnership(id, 'bob'),
+      throwsStateError,
+    );
     expect(aliceRelay.outgoing, hasLength(1));
     alice.dispose();
     bob.dispose();
