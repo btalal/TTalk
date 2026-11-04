@@ -1,6 +1,8 @@
 name: ttalk
-description: TTalk - simple and encrypted messages — messagerie texte chiffrée de bout en bout (Android & Windows).
+description: TTalk - simple and encrypted messages — messagerie texte chiffrée de bout en bout pour Windows 10/11 x64.
 publish_to: "none"
+platforms:
+  windows:
 version: 0.3.2+4
 
 environment:

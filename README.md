@@ -1,6 +1,6 @@
 # TTalk
 
-Messagerie texte **chiffrée de bout en bout**, simple, pour **Windows 10/11 x64**.
+Messagerie texte **chiffrée de bout en bout**, simple, au format **EXE** pour **Windows 10/11 x64**.
 
 ## Comment ça marche
 
@@ -10,7 +10,7 @@ Messagerie texte **chiffrée de bout en bout**, simple, pour **Windows 10/11 x64
   (et toute personne interceptant le réseau) ne voit que des octets illisibles.
 - Le stockage local (conversations, messages) est chiffré par un **code PIN**
   (PBKDF2-SHA256, 210 000 itérations, sel aléatoire) via le stockage sécurisé
-  de l'OS (Keystore Android / Credential Manager Windows).
+  de Windows (Gestionnaire d’identifiants / Credential Manager).
 - Un **numéro de sécurité** (empreinte SHA-256 des deux clés publiques, ordonnées)
   permet de vérifier hors-bande qu'aucun tiers n'a substitué les clés (anti-MITM).
 
@@ -26,7 +26,7 @@ Messagerie texte **chiffrée de bout en bout**, simple, pour **Windows 10/11 x64
 ```
 lib/
   crypto/e2e_crypto.dart     # X25519, HKDF, AES-256-GCM, PBKDF2, empreinte
-  services/secure_store.dart # stockage chiffré par PIN (Keystore/Credential Manager)
+  services/secure_store.dart # stockage chiffré par PIN (Credential Manager Windows)
   services/relay_client.dart # client WebSocket du relais
   state/app_state.dart       # état applicatif
   ui/                        # écrans (déverrouillage, accueil, conversation)
@@ -44,22 +44,36 @@ npm start          # écoute sur ws://127.0.0.1:8080 (PORT=<port> pour changer)
 
 > En production, faites tourner le relais derrière **wss://** (TLS) sur un serveur à vous.
 
-## Compiler l'application
+## Développer et compiler sous Windows
 
-Prérequis : [Flutter SDK](https://docs.flutter.dev/get-started/install) (stable).
+Prérequis sur une machine **Windows 10/11 x64** :
 
-```bash
-flutter pub get
-flutter test                       # tests crypto
-flutter run -d android             # Android (téléphone connecté ou émulateur)
-flutter run -d windows             # Windows (mode développeur activé)
+- Flutter **3.44.0** (version utilisée par la CI).
+- Visual Studio 2022 avec la charge de travail **Développement Desktop en C++**
+  et le SDK Windows.
+- Mode développeur Windows activé pour les liens symboliques des plugins.
+- Node.js et npm pour exécuter le relais local.
+
+Depuis la racine du dépôt :
+
+```powershell
+flutter doctor -v
+flutter pub get --enforce-lockfile
+flutter test
+flutter run -d windows
+flutter build windows --release --target-platform windows-x64
 ```
 
 L'URL du relais se règle à la compilation :
 
-```bash
-flutter run -d android --dart-define=RELAY_URL=wss://relais.example.com
+```powershell
+flutter build windows --release --target-platform windows-x64 --dart-define=RELAY_URL=wss://relais.example.com
 ```
+
+Par défaut, l'application utilise `ws://localhost:8080` : lancez le relais avant
+l'application. Pour communiquer entre deux PC, utilisez un relais commun accessible
+via `wss://`. Le serveur Node.js écoute uniquement sur l'interface locale ; exposez-le
+avec un reverse proxy TLS sur la machine qui l'héberge.
 
 ## Accusés de lecture
 
@@ -91,16 +105,17 @@ si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, j
   documents de l'app (`ttalk_files/`) ; un appui l'ouvre.
 - Le relais ne voit jamais ni le nom ni le contenu du fichier en clair.
 
-## Binaires
+## Télécharger et lancer TTalk
 
-| Plateforme | Comment obtenir le binaire |
-|---|---|
-| **Android (APK)** | [Release GitHub](https://github.com/btalal/Talmessenger/releases) (asset `ttalk-*-signed.apk`, arm64), ou `flutter build apk --release` |
-| **Windows x64 (EXE)** | artefact `ttalk-windows-x64` produit par la [CI GitHub Actions](.github/workflows/release.yml) (`flutter build windows --release` sur `windows-latest`), ou localement sur Windows : `flutter build windows --release` |
+Les [releases GitHub](https://github.com/btalal/TTalk/releases) Windows contiennent
+l'archive **`ttalk-windows-x64.zip`**. Extrayez **tout** son contenu, puis lancez
+**`ttalk.exe`**. Gardez les DLL et le dossier `data` à côté de l'exécutable :
+le fichier EXE seul ne suffit pas.
 
-> Un exécutable Windows x64 nécessite impérativement le toolchain MSVC d'une machine
-> Windows — c'est pourquoi la CI `windows-latest` le produit. L'APK arm64 signé est
-> livré en release ; installe-le sur Android via « sources inconnues ».
+Le [workflow de release](.github/workflows/release.yml) teste l'application sur
+Windows, compile uniquement la cible Windows x64, puis publie le ZIP sur un tag
+`vX.Y.Z-windows` après le push d'un tag de version `vX.Y.Z`.
+La compilation de l'EXE nécessite Windows et MSVC.
 
 ## Limites connues (v0.3)
 

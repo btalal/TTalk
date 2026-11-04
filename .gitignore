@@ -5,9 +5,6 @@
 .pub-cache/
 .pub/
 build/
-android/.gradle/
-android/app/build/
-android/local.properties
 windows/flutter/ephemeral/
 *.iml
 .idea/
@@ -15,4 +12,3 @@ windows/flutter/ephemeral/
 .DS_Store
 server/node_modules/
 server/package-lock.json
-android/.kotlin/

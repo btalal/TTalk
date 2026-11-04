@@ -25,7 +25,6 @@ class SecureStore {
   static Future<SecureStore> create({String? pin}) async {
     final prefs = await SharedPreferences.getInstance();
     const secure = FlutterSecureStorage(
-      aOptions: AndroidOptions(encryptedSharedPreferences: true),
       wOptions: WindowsOptions(useBackwardCompatibility: false),
     );
     final store = SecureStore._(prefs, secure);
