@@ -35,9 +35,9 @@ le [guide mobile](docs/MOBILE_INSTALL.md).
 La préversion iOS adapte TTalk à l’iPhone et conserve l’identité de l’appareil
 dans le **Trousseau iOS**. Chaque iPhone s’appaire séparément avec ses contacts.
 
-L’installation nécessite un **IPA signé avec un compte Apple**. Le
-[guide mobile](docs/MOBILE_INSTALL.md) présente notamment une solution de signature
-personnelle depuis Windows, sans Mac personnel.
+Sur un Mac récent, Xcode peut signer et installer la préversion directement sur
+un iPhone avec un compte Apple gratuit. Un IPA non signé est aussi produit par
+la CI pour une signature personnelle. Voir le [guide mobile](docs/MOBILE_INSTALL.md).
 
 ## Nouveautés Windows et Android 0.5.1
 
@@ -99,15 +99,14 @@ test/e2e_crypto_test.dart    # tests unitaires crypto
 
 1. Extraire tout le ZIP Windows x64, puis lancer **`TTalk.exe`** à la racine.
 2. Créer ou saisir son PIN. Les données existantes sont conservées.
-3. Ouvrir **Configurer le serveur** et saisir l’adresse HTTPS du relais hébergé.
+3. Ouvrir **Configurer le serveur** et saisir `https://ttalk.fly.dev`.
    Les deux PC doivent utiliser la même adresse. Aucune recompilation n’est nécessaire.
 4. Choisir **Mon nom**, puis échanger un code d’appairage et comparer les numéros
    de sécurité par un autre canal.
 
-L’adresse n’est pas préconfigurée : utilisez votre relais hébergé, ou créez-en
-un avant d’appairer vos appareils. Le déploiement
-[Render prêt à configurer](server/README.md) évite de laisser un PC allumé.
-Les tarifs sont à vérifier avant toute commande chez l’hébergeur.
+L’adresse n’est pas préconfigurée : chaque nouvel appareil doit utiliser le même
+relais. La configuration et le déploiement du serveur sont décrits dans
+[server/README.md](server/README.md).
 
 Les identifiants sont désormais liés aux clés persistantes des appareils.
 Les contacts restent valables après redémarrage. Les envois sans réseau sont
