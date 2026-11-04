@@ -1,0 +1,9 @@
+{
+  "release_tag": "mobile-v0.5.0-preview.11",
+  "unsigned_url": "https://github.com/btalal/TTalk/releases/download/mobile-v0.5.0-preview.11/ttalk-android-unsigned.apk",
+  "unsigned_sha256": "1df460bcbd6498fa647a6e36adc523ed4c1bd6e89f8f4c844947eec68bdcaf34",
+  "signed_sha256": "f689c2af3a96c6418eb6dab2a68f9970c787ad2767a89d0fd9be8396c3aa753a",
+  "patch_file": "android-preview.11.bsdiff",
+  "patch_sha256": "4b825761c9fad812fa49aa022c424546826b7f95940305f70823d2a0dbe35552",
+  "certificate_sha256": "36e670dd15277af14036eca6c8d9f35d88b4d7ced95b308f6465f40ea2232f27"
+}

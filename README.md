@@ -14,7 +14,7 @@ accompagne les versions pour ordinateur et téléphone.
 
 ## Windows 10/11 x64
 
-La version Windows **0.4**, encore candidate, est une application de bureau
+La version Windows **0.5**, encore candidate, est une application de bureau
 au format **EXE**, distribuée dans une archive ZIP. Son icône permet de repérer
 le lanceur `TTalk.exe` ; elle apparaît également sur l’écran de déverrouillage.
 Un code PIN protège le coffre local et les clés de l’appareil sont conservées
@@ -26,7 +26,8 @@ La préversion Android propose une interface adaptée au téléphone. Chaque app
 possède sa propre identité, conservée dans le **Keystore Android**, et s’appaire
 séparément avec ses contacts.
 
-L’installation nécessite un **APK signé**. Les modalités sont détaillées dans
+L’installation utilise **`ttalk-android.apk`**, le package signé de la release mobile.
+Les modalités sont détaillées dans
 le [guide mobile](docs/MOBILE_INSTALL.md).
 
 ## iPhone sous iOS 15+ — préversion 0.5
@@ -80,7 +81,7 @@ server/relay.js              # relais Node.js (ne voit que du chiffré)
 test/e2e_crypto_test.dart    # tests unitaires crypto
 ```
 
-## Utiliser Windows 0.4 (version candidate)
+## Utiliser Windows 0.5 (préversion)
 
 1. Extraire tout le ZIP Windows x64, puis lancer **`TTalk.exe`** à la racine.
 2. Créer ou saisir son PIN. Les données existantes sont conservées.

@@ -7,6 +7,7 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-preview.[0-9]+'
 
 concurrency:
   group: release-${{ github.ref }}
@@ -93,7 +94,7 @@ jobs:
                  --title "TTalk $VERSION_TAG - Windows x64 (EXE)" \
                  --notes-file CHANGELOG.md
           gh release upload "$TAG" ttalk-windows-x64.zip ttalk-windows-x64.zip.sha256 --repo "$GH_REPO" --clobber
-          if [[ "$VERSION_TAG" == *-rc.* ]]; then
+          if [[ "$VERSION_TAG" == *-rc.* || "$VERSION_TAG" == *-preview.* ]]; then
             gh release edit "$TAG" --repo "$GH_REPO" --draft=false --prerelease --latest=false
           else
             gh release edit "$TAG" --repo "$GH_REPO" --draft=false --prerelease=false --latest
