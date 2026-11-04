@@ -15,3 +15,4 @@ windows/flutter/ephemeral/
 .DS_Store
 server/node_modules/
 server/package-lock.json
+android/.kotlin/
