@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../services/relay_client.dart';
 import '../state/app_state.dart';
 import 'chat_screen.dart';
+import 'chat_actions.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.app});
@@ -22,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (_tabController.index != _tab) {
         setState(() => _tab = _tabController.index);
@@ -58,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           bottom: TabBar(
             controller: _tabController,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
             tabs: [
               const Tab(
                 text: 'Conversations',
@@ -71,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: const Icon(Icons.groups_outlined),
                 ),
               ),
+              const Tab(text: 'Contacts', icon: Icon(Icons.contacts_outlined)),
             ],
           ),
           actions: MediaQuery.sizeOf(context).width < 600
@@ -152,9 +155,11 @@ class _HomeScreenState extends State<HomeScreen>
               configure: () => _showRelaySettings(context, app),
             ),
             Expanded(
-              child: _tab == 0
-                  ? _buildConversations(context, app)
-                  : _buildGroups(context, app),
+              child: switch (_tab) {
+                0 => _buildConversations(context, app),
+                1 => _buildGroups(context, app),
+                _ => _buildConversations(context, app, contactsOnly: true),
+              },
             ),
           ],
         ),
@@ -162,28 +167,44 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildConversations(BuildContext context, AppState app) {
-    if (app.conversations.isEmpty) {
+  Widget _buildConversations(
+    BuildContext context,
+    AppState app, {
+    bool contactsOnly = false,
+  }) {
+    final contacts = contactsOnly
+        ? app.conversations
+        : app.visibleConversations;
+    if (contacts.isEmpty) {
       return const Center(
         child: Text(
-          'Aucune conversation.\nAppuie sur l\'icône personne pour appairer un contact.',
+          'Aucune conversation.\nUtilise l’action d’appairage pour ajouter un contact.',
           textAlign: TextAlign.center,
         ),
       );
     }
     return ListView.builder(
-      itemCount: app.conversations.length,
+      itemCount: contacts.length,
       itemBuilder: (context, i) {
-        final c = app.conversations[i];
+        final c = contacts[i];
         final msgs = app.messagesByConv[c.id] ?? [];
         final last = msgs.isEmpty ? null : msgs.last;
         return ListTile(
-          leading: CircleAvatar(
-            child: Text(c.peerName.isEmpty ? '?' : c.peerName[0].toUpperCase()),
+          leading: ChatAvatar(
+            name: c.displayName,
+            symbol: c.localSettings.icon,
           ),
-          title: Text(c.peerName),
+          title: Text(
+            c.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           subtitle: Text(
-            last == null
+            contactsOnly
+                ? (c.localSettings.alias == null
+                      ? 'Contact appairé'
+                      : 'Nom d’origine : ${c.peerName}')
+                : last == null
                 ? 'Conversation chiffrée de bout en bout'
                 : (last.fromMe ? 'Moi : ' : '') +
                       (last.isFile
@@ -192,12 +213,17 @@ class _HomeScreenState extends State<HomeScreen>
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          trailing: last == null
-              ? null
-              : Text(
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!contactsOnly && last != null)
+                Text(
                   DateFormat.Hm().format(last.timestamp),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+              ChatActionsMenu(app: app, chatId: c.id),
+            ],
+          ),
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => ChatScreen(app: app, conversation: c),
@@ -222,10 +248,12 @@ class _HomeScreenState extends State<HomeScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                tooltip: 'Accepter l’invitation',
                 icon: const Icon(Icons.check, color: Colors.green),
                 onPressed: () => app.acceptInvite(inv),
               ),
               IconButton(
+                tooltip: 'Refuser l’invitation',
                 icon: const Icon(Icons.close, color: Colors.red),
                 onPressed: () => app.declineInvite(inv),
               ),
@@ -239,8 +267,17 @@ class _HomeScreenState extends State<HomeScreen>
       final last = msgs.isEmpty ? null : msgs.last;
       children.add(
         ListTile(
-          leading: const CircleAvatar(child: Icon(Icons.groups)),
-          title: Text(g.name),
+          leading: ChatAvatar(
+            name: g.displayName,
+            symbol: g.localSettings.icon,
+            isGroup: true,
+          ),
+          title: Text(
+            g.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: ChatActionsMenu(app: app, chatId: g.id, isGroup: true),
           subtitle: Text(
             last == null
                 ? '${g.memberIds.length} membres — chiffré de bout en bout'
@@ -373,6 +410,14 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
       if (name != null) await app.setDisplayName(name);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible d’enregistrer le nom. Réessaie.'),
+          ),
+        );
+      }
     } finally {
       // Dialog dismissal animations can still reference its controller.
       await Future<void>.delayed(const Duration(milliseconds: 300));
@@ -380,79 +425,108 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _showNewGroupDialog(BuildContext context, AppState app) {
+  Future<void> _showNewGroupDialog(BuildContext context, AppState app) async {
     final nameController = TextEditingController();
     final selected = <String>{};
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setStateDialog) => AlertDialog(
-          title: const Text('Nouveau groupe chiffré'),
-          content: SizedBox(
-            width: 340,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom du groupe',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (app.conversations.isEmpty)
-                  const Text('Appaire d\'abord des contacts pour les inviter.')
-                else
-                  Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: app.conversations.map((c) {
-                        final on = selected.contains(c.peerId);
-                        return CheckboxListTile(
-                          dense: true,
-                          value: on,
-                          title: Text(c.peerName),
-                          onChanged: (v) => setStateDialog(() {
-                            if (v == true) {
-                              selected.add(c.peerId);
-                            } else {
-                              selected.remove(c.peerId);
-                            }
-                          }),
-                        );
-                      }).toList(),
+    bool busy = false;
+    String? error;
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, update) => AlertDialog(
+            title: const Text('Nouveau groupe chiffré'),
+            scrollable: true,
+            content: SizedBox(
+              width: 340,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    enabled: !busy,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom du groupe',
+                      border: OutlineInputBorder(),
                     ),
                   ),
-              ],
+                  const SizedBox(height: 12),
+                  if (app.conversations.isEmpty)
+                    const Text("Appaire d'abord des contacts pour les inviter.")
+                  else
+                    ...app.conversations.map(
+                      (c) => CheckboxListTile(
+                        dense: true,
+                        value: selected.contains(c.peerId),
+                        title: Text(c.displayName),
+                        onChanged: busy
+                            ? null
+                            : (value) => update(() {
+                                if (value == true) {
+                                  selected.add(c.peerId);
+                                } else {
+                                  selected.remove(c.peerId);
+                                }
+                              }),
+                      ),
+                    ),
+                  if (error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      error!,
+                      style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+                    ),
+                  ],
+                ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.of(ctx).pop(),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: busy
+                    ? null
+                    : () async {
+                        if (busy) return;
+                        final name = nameController.text.trim();
+                        if (name.isEmpty || selected.isEmpty) {
+                          update(
+                            () => error = 'Indique un nom et sélectionne au moins un contact.',
+                          );
+                          return;
+                        }
+                        update(() {
+                          busy = true;
+                          error = null;
+                        });
+                        try {
+                          await app.createGroup(name, selected.toList());
+                          if (ctx.mounted) Navigator.of(ctx).pop();
+                        } catch (_) {
+                          if (ctx.mounted) {
+                            update(() {
+                              busy = false;
+                              error = 'Impossible de créer le groupe. Vérifie le stockage et réessaie.';
+                            });
+                          }
+                        }
+                      },
+                child: Text(busy ? 'Création…' : 'Créer'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (nameController.text.trim().isEmpty || selected.isEmpty) {
-                  return;
-                }
-                await app.createGroup(
-                  nameController.text.trim(),
-                  selected.toList(),
-                );
-                if (ctx.mounted) Navigator.of(ctx).pop();
-              },
-              child: const Text('Créer'),
-            ),
-          ],
         ),
-      ),
-    );
+      );
+    } finally {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      nameController.dispose();
+    }
   }
 
   void _showMyCode(BuildContext context, AppState app) {
-    if (app.myId == null || app.relay.state != RelayState.connected) {
+    if (!app.registered || app.relay.state != RelayState.connected) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Connecte-toi au relais pour t’appairer.'),
@@ -463,89 +537,114 @@ class _HomeScreenState extends State<HomeScreen>
     app.relay.startPairing();
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Mon code d\'appairage'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              app.relay.myPairingCode ?? 'Génération…',
-              style: const TextStyle(
-                fontSize: 32,
-                letterSpacing: 6,
-                fontWeight: FontWeight.bold,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, update) => AlertDialog(
+          title: const Text('Mon code d\'appairage'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                app.relay.myPairingCode ?? 'Génération…',
+                style: const TextStyle(
+                  fontSize: 32,
+                  letterSpacing: 6,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Donne ce code à ton contact (par un autre canal) pour créer une conversation chiffrée.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: () {
-                app.relay.startPairing();
-                setState(() {});
-                Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Code d\'appairage généré — partage-le à ton contact.',
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Nouveau code'),
+              const SizedBox(height: 12),
+              const Text(
+                'Donne ce code à ton contact (par un autre canal) pour créer une conversation chiffrée.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () {
+                  app.relay.startPairing();
+                  update(() {});
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Nouveau code'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Fermer'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Fermer'),
-          ),
-        ],
       ),
     );
   }
 
-  void _showPairDialog(BuildContext context, AppState app) {
+  Future<void> _showPairDialog(BuildContext context, AppState app) async {
     final controller = TextEditingController();
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Appairer un contact'),
-        content: TextField(
-          controller: controller,
-          textCapitalization: TextCapitalization.characters,
-          maxLength: 6,
-          decoration: const InputDecoration(
-            labelText: 'Code reçu par ton contact',
-            border: OutlineInputBorder(),
+    String? error;
+    bool busy = false;
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, update) => AlertDialog(
+            title: const Text('Appairer un contact'),
+            scrollable: true,
+            content: TextField(
+              controller: controller,
+              enabled: !busy,
+              textCapitalization: TextCapitalization.characters,
+              maxLength: 6,
+              decoration: InputDecoration(
+                labelText: 'Code reçu de ton contact',
+                errorText: error,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.of(ctx).pop(),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: busy
+                    ? null
+                    : () async {
+                        if (busy) return;
+                        final code = controller.text;
+                        update(() {
+                          busy = true;
+                          error = null;
+                        });
+                        try {
+                          final message = await app.pairWithCode(code);
+                          if (!ctx.mounted) return;
+                          if (message == null) {
+                            Navigator.of(ctx).pop();
+                          } else {
+                            update(() {
+                              error = message;
+                              busy = false;
+                            });
+                          }
+                        } catch (_) {
+                          if (ctx.mounted) {
+                            update(() {
+                              error = 'Appairage impossible. Vérifie la connexion au relais.';
+                              busy = false;
+                            });
+                          }
+                        }
+                      },
+                child: const Text('Appairer'),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final err = await app.pairWithCode(
-                controller.text.trim().toUpperCase(),
-              );
-              if (ctx.mounted) Navigator.of(ctx).pop();
-              if (err != null && context.mounted) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(err)));
-              }
-            },
-            child: const Text('Appairer'),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      controller.dispose();
+    }
   }
 }
 

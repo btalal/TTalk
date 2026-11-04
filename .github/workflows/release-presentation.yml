@@ -33,4 +33,4 @@ jobs:
             --notes-file docs/releases/windows-0.5.0.md
           gh release edit android-v0.5.0 \
             --title '📱 Android — TTalk 0.5.0 · Version stable' \
-            --notes-file docs/ANDROID_RELEASE.md
+            --notes-file release-signatures/android-0.5.0.md

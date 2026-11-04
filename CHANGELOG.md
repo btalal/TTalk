@@ -1,5 +1,19 @@
 # Versions
 
+## 0.5.1 — Gestion des conversations et personnalisation
+
+- Suppression locale des messages, conversations et contacts avec confirmation.
+- Effacement de l’historique des groupes et action « Quitter et supprimer ».
+- Onglet Contacts pour conserver un contact après suppression de la conversation.
+- Noms personnalisés et galerie d’icônes pour les contacts et groupes, conservés
+  dans le coffre chiffré et visibles uniquement sur cet appareil.
+- Protection contre la réapparition des messages supprimés lors des retransmissions.
+- Conservation des fichiers déjà enregistrés et des contrôles de groupe en attente.
+- Correctifs de menus et formulaires : code d’appairage renouvelé visible,
+  validation des codes, protection contre le double envoi et la perte d’un
+  brouillon, erreurs de sauvegarde visibles et nom modifié hors ligne actualisé.
+
+
 ## 0.5.0 — Windows et Android, versions finales
 
 - Promotion du périmètre validé sur deux PC Windows x64 et un smartphone Android :

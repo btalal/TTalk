@@ -1,11 +1,11 @@
-# TTalk 0.5.0 — Android final et iPhone en préversion
+# TTalk 0.5.1 — Android final et iPhone en préversion
 
 Android et iOS utilisent le même relais **0.4 / protocole 2** que Windows
-0.4 / 0.5.0. Chaque téléphone possède sa propre identité : appairer chaque appareil
+0.4 / 0.5.1. Chaque téléphone possède sa propre identité : appairer chaque appareil
 séparément, saisir le même serveur HTTPS, puis comparer les numéros de sécurité.
 L’hébergement du relais reste à créer ; aucune adresse n’est préconfigurée.
 
-## Android 0.5.0 — APK signé (version finale)
+## Android 0.5.1 — APK signé (version finale)
 
 Android **7.0 minimum (API 24)**. Le package universel inclut ARM64, ARMv7 et x86_64.
 Une fois l’APK signé reçu sur le téléphone, autoriser son installation depuis le
