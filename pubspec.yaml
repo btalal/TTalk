@@ -3,7 +3,7 @@ description: TTalk - simple and encrypted messages — messagerie texte chiffré
 publish_to: "none"
 platforms:
   windows:
-version: 0.3.5+7
+version: 0.3.6+8
 
 environment:
   sdk: ^3.13.0

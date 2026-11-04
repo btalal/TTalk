@@ -33,14 +33,17 @@ Assert-X64 (Join-Path $ReleasePath 'flutter_windows.dll')
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
 if ($LASTEXITCODE -ne 0 -or -not $vs) { throw 'Installation MSVC introuvable' }
-$runtime = Get-ChildItem (Join-Path $vs 'VC/Redist/MSVC') -Directory |
+$redist = Join-Path $vs 'VC/Redist/MSVC'
+$runtime = Get-ChildItem $redist -Directory |
+    Where-Object { $_.Name -match '^\d+(\.\d+){1,3}$' } |
     Sort-Object { [version]$_.Name } -Descending |
     ForEach-Object { Join-Path $_.FullName 'x64/Microsoft.VC143.CRT' } |
     Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $runtime) { throw 'Runtime Microsoft VC143 x64 introuvable' }
-foreach ($file in @('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')) {
-    Copy-Item (Join-Path $runtime $file) $ReleasePath -Force
-    Assert-X64 (Join-Path $ReleasePath $file)
+if (-not $runtime) { $runtime = Join-Path $redist 'v143/x64/Microsoft.VC143.CRT' }
+if (-not (Test-Path $runtime)) { throw 'Runtime Microsoft VC143 x64 introuvable' }
+foreach ($dll in Get-ChildItem $runtime -Filter '*.dll' -File) {
+    Copy-Item $dll.FullName $ReleasePath -Force
+    Assert-X64 (Join-Path $ReleasePath $dll.Name)
 }
 Copy-Item 'docs/WINDOWS_PACKAGE.txt' (Join-Path $ReleasePath 'LIRE-MOI.txt') -Force
 
