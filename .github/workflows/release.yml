@@ -16,12 +16,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: "3.35.7"
           channel: stable
       - run: flutter pub get
       - run: flutter test
-      - run: flutter build apk --release
-        name: Compiler l'APK Android (arm64 + armeabi-v7a + x86_64)
+      - run: flutter build apk --release --target-platform android-arm64
+        name: Compiler l'APK Android (arm64)
       - uses: actions/upload-artifact@v4
         with:
           name: ttalk-android-apk
@@ -31,6 +31,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: build/app/outputs/flutter-apk/app-release.apk
+          name: TTalk ${{ github.ref_name }} — APK Android arm64
+          body: APK release signé (debug keystore côté CI). Voir les notes de release pour l'installation.
 
   build-windows-exe:
     runs-on: windows-latest
@@ -38,12 +40,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: "3.35.7"
           channel: stable
       - run: flutter pub get
       - run: flutter test
       - run: flutter build windows --release
         name: Compiler l'exécutable Windows x64
+      - name: Zipper le dossier Release Windows
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath ttalk-windows-x64.zip
       - uses: actions/upload-artifact@v4
         with:
           name: ttalk-windows-x64
@@ -52,5 +57,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            build/windows/x64/runner/Release/ttalk.exe
+          files: ttalk-windows-x64.zip
+          name: TTalk ${{ github.ref_name }} — EXE Windows x64
+          body: Exécutable Windows x64 (ttalk.exe + DLLs). Extraire le ZIP et lancer ttalk.exe.
