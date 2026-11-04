@@ -5,8 +5,12 @@ import subprocess
 import sys
 
 lines = deque(maxlen=400)
-process = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT, text=True)
+try:
+    process = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT, text=True)
+except OSError as error:
+    print(f"::error::{error}", flush=True)
+    sys.exit(1)
 for line in process.stdout:
     print(line, end="", flush=True)
     # SDK manager writes hundreds of progress updates; keep diagnostics instead.
