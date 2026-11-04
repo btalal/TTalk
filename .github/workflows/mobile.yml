@@ -13,7 +13,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    steps:
+      - name: Stop superseded mobile preview runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh run list --workflow mobile.yml --limit 30 --json databaseId,headSha,status > runs.json
+          python3 -c 'import json,os; print("\n".join(str(r["databaseId"]) for r in json.load(open("runs.json")) if r["headSha"] != os.environ["GITHUB_SHA"] and r["status"] != "completed"))' > superseded.txt
+          while IFS= read -r RUN_ID; do
+            if [ -n "$RUN_ID" ]; then gh run cancel "$RUN_ID" || true; fi
+          done < superseded.txt
+
   android:
+    needs: prepare
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -45,9 +62,7 @@ jobs:
           set -e
           if [ "$BUILD_STATUS" -ne 0 ]; then
             tail -80 android-build.log >> "$GITHUB_STEP_SUMMARY"
-            tail -35 android-build.log | while IFS= read -r line; do
-              echo "::error::$line"
-            done
+            python3 -c 'from pathlib import Path; s="\n".join(Path("android-build.log").read_text().splitlines()[-100:]); print("::error::"+s.replace("%","%25").replace("\r","%0D").replace("\n","%0A"))'
           fi
           exit "$BUILD_STATUS"
       - name: Stage unsigned Android package
@@ -72,9 +87,10 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/mobile_smoke_test.dart -d emulator-5554 --no-pub
+          script: python3 scripts/run-mobile-test.py emulator-5554
 
   ios:
+    needs: prepare
     runs-on: macos-15
     timeout-minutes: 45
     steps:
@@ -101,9 +117,10 @@ jobs:
       - name: Test Keychain and mobile UI on iPhone simulator
         run: |
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if x["name"].startswith("iPhone")))')
+          open -a Simulator --args -CurrentDeviceUDID "$DEVICE_ID"
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
-          flutter test integration_test/mobile_smoke_test.dart -d "$DEVICE_ID" --no-pub
+          python3 scripts/run-mobile-test.py "$DEVICE_ID"
 
   publish:
     if: startsWith(github.ref, 'refs/tags/mobile-v')

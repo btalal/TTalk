@@ -42,6 +42,9 @@ android {
 
     buildTypes {
         release {
+            // Keep native plugin reflection intact in this first mobile preview.
+            isMinifyEnabled = false
+            isShrinkResources = false
             // CI emits an unsigned APK unless a persistent signing key is supplied.
             signingConfig = if (System.getenv("TTALK_ANDROID_KEYSTORE").isNullOrBlank())
                 null else signingConfigs.getByName("production")

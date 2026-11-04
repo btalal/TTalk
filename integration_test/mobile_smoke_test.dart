@@ -27,12 +27,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(TextField), findsOneWidget);
       await tester.enterText(find.byType(TextField), pin);
-      await tester.tap(
-        find.widgetWithText(
-          FilledButton,
-          store.hasPin ? 'Déverrouiller' : 'Créer',
-        ),
+      final submit = find.widgetWithText(
+        FilledButton,
+        store.hasPin ? 'Déverrouiller' : 'Créer',
       );
+      await tester.ensureVisible(submit);
+      await tester.pumpAndSettle();
+      await tester.tap(submit);
       // Real PBKDF2 runs on-device; allow the asynchronous key derivation to finish.
       for (var i = 0; i < 120 && !app.unlocked; i++) {
         await tester.pump(const Duration(milliseconds: 100));
