@@ -1,4 +1,4 @@
-# Revue du projet — version 0.3.3
+# Revue du projet — version 0.3.4
 
 Périmètre : code Dart (démarrage, coffre, crypto, état, groupes, interface), relais
 Node.js, configuration native Windows, dépendances et publication. Cette revue et

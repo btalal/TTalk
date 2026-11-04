@@ -1,6 +1,6 @@
 # Versions
 
-## 0.3.3
+## 0.3.4
 
 - Groupes : transfert de propriété avec confirmation et événements d’arrivée chiffrés.
 - Démarrage de l’interface même si le relais est indisponible ; reconnexion contrôlée.

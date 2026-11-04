@@ -61,13 +61,13 @@ flutter doctor -v
 flutter pub get --enforce-lockfile
 flutter test
 flutter run -d windows
-flutter build windows --release --target-platform windows-x64
+flutter build windows --release
 ```
 
 L'URL du relais se règle à la compilation :
 
 ```powershell
-flutter build windows --release --target-platform windows-x64 --dart-define=RELAY_URL=wss://relais.example.com
+flutter build windows --release --dart-define=RELAY_URL=wss://relais.example.com
 ```
 
 L’application s’ouvre même si le relais est indisponible. Après déverrouillage,
