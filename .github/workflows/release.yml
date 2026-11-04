@@ -1,16 +1,16 @@
-name: Release packages (APK Android + EXE Windows x64)
+name: Release packages (APK Android + EXE Windows)
 
 on:
   push:
-    tags: ["v*"]
-  workflow_dispatch:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  build-android-apk:
-    name: Android — APK
+  release-android:
+    name: Android - APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,27 +21,18 @@ jobs:
       - run: flutter pub get
       - run: flutter test
       - run: flutter build apk --release --target-platform android-arm64
-        name: Compiler l'APK Android (arm64)
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ttalk-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-      - name: Publier l'APK dans la release ANDROID
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}-android
-          name: "TTalk ${{ github.ref_name }} — Android (APK arm64)"
-          body: |
-            ## TTalk pour Android — ${{ github.ref_name }}
-            APK release arm64 (`com.talal.ttalk`).
-            Installation : autoriser « sources inconnues », puis ouvrir l'APK.
-          files: build/app/outputs/flutter-apk/app-release.apk
-          draft: false
-          prerelease: false
+      - name: Create Android Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}-android" \
+            build/app/outputs/flutter-apk/app-release.apk \
+            --repo btalal/Talmessenger \
+            --title "TTalk ${{ github.ref_name }} - Android (APK arm64)" \
+            --notes "APK release arm64 (com.talal.ttalk)."
 
-  build-windows-exe:
-    name: Windows — EXE x64
+  release-windows:
+    name: Windows - EXE x64
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -52,24 +43,15 @@ jobs:
       - run: flutter pub get
       - run: flutter test
       - run: flutter build windows --release
-        name: Compiler l'exécutable Windows x64
-      - name: Zipper le dossier Release Windows
+      - name: Zip le dossier Release Windows
         shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath ttalk-windows-x64.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ttalk-windows-x64
-          path: ttalk-windows-x64.zip
-      - name: Publier l'EXE dans la release WINDOWS
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}-windows
-          name: "TTalk ${{ github.ref_name }} — Windows x64 (EXE)"
-          body: |
-            ## TTalk pour Windows x64 — ${{ github.ref_name }}
-            Exécutable `ttalk.exe` + DLLs dans `ttalk-windows-x64.zip`.
-            Extraire le ZIP et lancer `ttalk.exe`.
-          files: ttalk-windows-x64.zip
-          draft: false
-          prerelease: false
+      - name: Create Windows Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}-windows" \
+            ttalk-windows-x64.zip \
+            --repo btalal/Talmessenger \
+            --title "TTalk ${{ github.ref_name }} - Windows x64 (EXE)" \
+            --notes "ttalk.exe + DLLs dans ttalk-windows-x64.zip."
