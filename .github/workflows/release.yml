@@ -1,4 +1,4 @@
-name: Release (APK Android + EXE Windows x64)
+name: Release packages (APK Android + EXE Windows x64)
 
 on:
   push:
@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   build-android-apk:
+    name: Android — APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,15 +26,22 @@ jobs:
         with:
           name: ttalk-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-      - name: Publier l'APK en release (sur tag v*)
+      - name: Publier l'APK dans la release ANDROID
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}-android
+          name: "TTalk ${{ github.ref_name }} — Android (APK arm64)"
+          body: |
+            ## TTalk pour Android — ${{ github.ref_name }}
+            APK release arm64 (`com.talal.ttalk`).
+            Installation : autoriser « sources inconnues », puis ouvrir l'APK.
           files: build/app/outputs/flutter-apk/app-release.apk
-          name: TTalk ${{ github.ref_name }} — APK Android arm64
-          body: APK release signé (debug keystore côté CI). Voir les notes de release pour l'installation.
+          draft: false
+          prerelease: false
 
   build-windows-exe:
+    name: Windows — EXE x64
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -51,11 +59,17 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ttalk-windows-x64
-          path: build/windows/x64/runner/Release/
-      - name: Publier le ZIP Windows en release (sur tag v*)
+          path: ttalk-windows-x64.zip
+      - name: Publier l'EXE dans la release WINDOWS
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}-windows
+          name: "TTalk ${{ github.ref_name }} — Windows x64 (EXE)"
+          body: |
+            ## TTalk pour Windows x64 — ${{ github.ref_name }}
+            Exécutable `ttalk.exe` + DLLs dans `ttalk-windows-x64.zip`.
+            Extraire le ZIP et lancer `ttalk.exe`.
           files: ttalk-windows-x64.zip
-          name: TTalk ${{ github.ref_name }} — EXE Windows x64
-          body: Exécutable Windows x64 (ttalk.exe + DLLs). Extraire le ZIP et lancer ttalk.exe.
+          draft: false
+          prerelease: false
