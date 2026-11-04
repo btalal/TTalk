@@ -1,7 +1,8 @@
 # Versions
 
-## 0.4.0-rc.1 — Windows candidate
+## 0.4.0-rc.2 — Windows candidate
 
+- Refus d’écriture locale détecté même sans exception ; reprise sans confirmation prématurée.
 - Serveur HTTPS/WSS configurable dans l’interface, sans recompilation.
 - Identité persistante avec preuve de possession de la clé X25519 à la connexion.
 - Contacts conservés après redémarrage ; migration des anciens contacts par leur clé.

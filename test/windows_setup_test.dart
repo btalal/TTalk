@@ -14,6 +14,21 @@ import 'package:ttalk/ui/home_screen.dart';
 
 import 'support/group_fakes.dart';
 
+class RejectingPreferences implements SharedPreferences {
+  RejectingPreferences(this.delegate);
+  final SharedPreferences delegate;
+  bool reject = false;
+  @override
+  String? getString(String key) => delegate.getString(key);
+  @override
+  bool containsKey(String key) => delegate.containsKey(key);
+  @override
+  Future<bool> setString(String key, String value) async =>
+      reject ? false : delegate.setString(key, value);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
@@ -134,6 +149,26 @@ void main() {
       );
       expect(app.identity!.publicKey, Uint8List.fromList(identity.publicKey));
       app.dispose();
+    },
+  );
+  test(
+    'a false storage result is a failure and the next write can recover',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
+      final preferences = RejectingPreferences(
+        await SharedPreferences.getInstance(),
+      );
+      final store = await SecureStore.create(preferences: preferences);
+      await store.setupPin('1234');
+      preferences.reject = true;
+      await expectLater(
+        store.saveData(conversations: [], messages: []),
+        throwsStateError,
+      );
+      preferences.reject = false;
+      await store.saveData(conversations: [], messages: []);
+      expect((await store.loadData()).messages, isEmpty);
     },
   );
 }
