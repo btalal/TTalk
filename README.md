@@ -1,6 +1,6 @@
 # TTalk
 
-Messagerie texte **chiffrée de bout en bout**, simple, pour **Android** et **Windows**.
+Messagerie texte **chiffrée de bout en bout**, simple, pour **Windows 10/11 x64**.
 
 ## Comment ça marche
 
