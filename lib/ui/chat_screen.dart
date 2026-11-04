@@ -9,7 +9,8 @@ import '../models/message.dart';
 import '../state/app_state.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.app, this.conversation, this.group});
+  const ChatScreen(
+      {super.key, required this.app, this.conversation, this.group});
 
   final AppState app;
   final Conversation? conversation;
@@ -79,10 +80,10 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final app = widget.app;
-    final msgs = app.messagesByConv[_chatId] ?? [];
     return ListenableBuilder(
       listenable: app,
-      builder: (context, _) => _build(context, app, msgs),
+      builder: (context, _) =>
+          _build(context, app, app.messagesByConv[_chatId] ?? []),
     );
   }
 
@@ -95,7 +96,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(_title),
             Text(
               _isGroup
-                  ? '${widget.group!.memberIds.length} membres — chiffré de bout en bout'
+                  ? '${app.groups.where((g) => g.id == _chatId).firstOrNull?.memberIds.length ?? 0} membres — chiffré de bout en bout'
                   : 'Chiffré de bout en bout',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -125,19 +126,33 @@ class _ChatScreenState extends State<ChatScreen> {
               itemCount: msgs.length,
               itemBuilder: (context, i) {
                 final m = msgs[i];
+                if (m.isSystem) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      m.plaintext ?? '',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  );
+                }
                 final mine = m.fromMe;
                 return Align(
-                  alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment:
+                      mine ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.75,
                     ),
                     decoration: BoxDecoration(
                       color: mine
                           ? Theme.of(context).colorScheme.primaryContainer
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -164,7 +179,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         m.fileName ?? 'fichier',
@@ -173,7 +189,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ),
                                       Text(
                                         '${formatFileSize(m.fileSize ?? 0)} — chiffré',
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall,
                                       ),
                                     ],
                                   ),
@@ -198,7 +216,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                 size: 14,
                                 color: m.read
                                     ? Colors.blueAccent
-                                    : Theme.of(context).textTheme.labelSmall?.color,
+                                    : Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.color,
                               ),
                             ],
                           ],
@@ -279,23 +300,44 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: ListView(
                       shrinkWrap: true,
                       children: gg.memberIds.map((id) {
-                        final name = id == app.myId ? 'Moi' : (app.peerNameOf(id));
+                        final name =
+                            id == app.myId ? 'Moi' : (app.peerNameOf(id));
                         final isAdmin = gg.isAdmin(id);
                         final isMe = id == app.myId;
                         return ListTile(
                           dense: true,
                           leading: CircleAvatar(
                             radius: 16,
-                            child: Text(name.isEmpty ? '?' : name[0].toUpperCase()),
+                            child: Text(
+                                name.isEmpty ? '?' : name[0].toUpperCase()),
                           ),
                           title: Text(name + (isAdmin ? '  👑' : '')),
-                          trailing: admin && !isMe
-                              ? IconButton(
+                          subtitle: Text(gg.isOwner(id)
+                              ? 'Propriétaire'
+                              : (!gg.joinedMemberIds.contains(id)
+                                  ? 'Invitation en attente'
+                                  : (isAdmin ? 'Administrateur' : 'Membre'))),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (gg.ownerId == app.myId &&
+                                  !isMe &&
+                                  gg.joinedMemberIds.contains(id))
+                                IconButton(
+                                  tooltip: 'Transférer la propriété',
+                                  icon: const Icon(Icons.manage_accounts),
+                                  onPressed: () => _confirmOwnershipTransfer(
+                                      ctx, app, gg.id, id),
+                                ),
+                              if (admin && !isMe && !gg.isOwner(id))
+                                IconButton(
                                   tooltip: 'Retirer du groupe',
-                                  icon: const Icon(Icons.person_remove, color: Colors.red),
+                                  icon: const Icon(Icons.person_remove,
+                                      color: Colors.red),
                                   onPressed: () => app.removeMember(gg.id, id),
-                                )
-                              : null,
+                                ),
+                            ],
+                          ),
                         );
                       }).toList(),
                     ),
@@ -310,7 +352,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ListTile(
                     leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text('Quitter le groupe', style: TextStyle(color: Colors.red)),
+                    title: const Text('Quitter le groupe',
+                        style: TextStyle(color: Colors.red)),
                     onTap: () async {
                       Navigator.of(ctx).pop();
                       await app.leaveGroup(gg.id);
@@ -326,9 +369,47 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Future<void> _confirmOwnershipTransfer(
+    BuildContext context,
+    AppState app,
+    String groupId,
+    String peerId,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Transférer la propriété ?'),
+        content: Text(
+          '${app.peerNameOf(peerId)} deviendra propriétaire du groupe. '
+          'Tu resteras membre et perdras tes droits d’administration.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Annuler')),
+          FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Transférer')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await app.transferGroupOwnership(groupId, peerId);
+    } on StateError catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
   void _showReinviteDialog(BuildContext ctx, AppState app, String groupId) {
     final candidates = app.conversations
-        .where((c) => !app.groups.firstWhere((g) => g.id == groupId).memberIds.contains(c.peerId))
+        .where((c) => !app.groups
+            .firstWhere((g) => g.id == groupId)
+            .memberIds
+            .contains(c.peerId))
         .toList();
     showDialog<void>(
       context: ctx,
@@ -354,7 +435,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(dctx).pop(), child: const Text('Fermer')),
+          TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: const Text('Fermer')),
         ],
       ),
     );
@@ -382,7 +465,9 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Fermer')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Fermer')),
         ],
       ),
     );
