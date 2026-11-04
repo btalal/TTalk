@@ -1,5 +1,21 @@
 # Versions
 
+## 0.5.0-preview.1 — Premiers clients Android et iPhone
+
+- Projets Android 6.0+ et iOS 15+ avec la même identité visuelle et le protocole 2
+  du relais Windows 0.4 ; chaque appareil dispose de ses propres clés.
+- Stockage sécurisé Android Keystore et Trousseau iOS, sauvegarde Android désactivée.
+- Menu adapté aux petits écrans, PIN défilant avec le clavier, confidentialité
+  à l’inactivité et reconnexion après suspension ; accusés limités à l’écran visible.
+- Compilations Android APK et iOS IPA non signés, tests natifs sur émulateur Android
+  et simulateur iPhone ; signature séparée avec une clé Android persistante.
+- Guide de signature personnelle de l’IPA depuis Windows, sans Mac personnel.
+
+Préversion de développement : pas de notifications APNs/FCM ni de réception
+garantie en arrière-plan. L’installation iPhone nécessite une signature Apple ;
+les comptes gratuits imposent généralement un renouvellement tous les 7 jours.
+Les échanges sur appareils réels et l’hébergement restent à valider.
+
 ## 0.4.0-rc.4 — Présentation Windows
 
 - Icône TTalk bleu nuit et violet dans Windows, l’application et le README.

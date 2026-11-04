@@ -69,7 +69,7 @@ void main() {
       await app.init();
       await tester.pumpWidget(MaterialApp(home: HomeScreen(app: app)));
       expect(
-        find.text('Configure le serveur pour communiquer entre deux PC.'),
+        find.text('Configure le serveur pour communiquer entre tes appareils.'),
         findsOneWidget,
       );
       await tester.tap(find.byTooltip('Configurer le serveur'));

@@ -24,7 +24,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scroll = ScrollController();
 
@@ -35,18 +35,31 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.app.markConversationRead(_chatId);
-    });
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markVisibleRead());
     widget.app.addListener(_onAppChanged);
   }
 
-  void _onAppChanged() {
+  void _markVisibleRead() {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (!mounted ||
+        (lifecycle != null && lifecycle != AppLifecycleState.resumed) ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
     widget.app.markConversationRead(_chatId);
+  }
+
+  void _onAppChanged() => _markVisibleRead();
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _markVisibleRead();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.app.removeListener(_onAppChanged);
     _controller.dispose();
     _scroll.dispose();
@@ -118,12 +131,14 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_title),
+            Text(_title, maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(
               _isGroup
                   ? '${app.groups.where((g) => g.id == _chatId).firstOrNull?.memberIds.length ?? 0} membres — chiffré de bout en bout'
                   : 'Chiffré de bout en bout',
               style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

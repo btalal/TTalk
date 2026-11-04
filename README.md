@@ -5,12 +5,24 @@
 <h1 align="center">TTalk</h1>
 
 <p align="center">
-  Messagerie texte <strong>chiffrée de bout en bout</strong>, simple, pour <strong>Windows 10/11 x64</strong>.
+  Messagerie texte <strong>chiffrée de bout en bout</strong>, simple, pour <strong>Windows 10/11 x64</strong>, avec une première préversion <strong>Android et iPhone</strong>.
 </p>
 
 Deux bulles pour la conversation, un cadenas pour la confidentialité : l’identité
 visuelle de TTalk associe le bleu nuit, l’indigo et le violet. Cette même icône
 accompagne l’application Windows et son écran de déverrouillage.
+
+## Préversion mobile 0.5
+
+Les projets Android (6.0+) et iOS (15+) partagent le protocole chiffré de Windows
+0.4 et son relais. L’interface s’adapte au téléphone ; les identités sont stockées
+dans le Keystore Android ou le Trousseau iOS. Chaque appareil s’appaire séparément.
+
+Le [guide mobile](docs/MOBILE_INSTALL.md) explique l’APK Android signé et la
+signature personnelle de l’IPA iPhone depuis Windows. Les archives CI non signées
+**ne s’installent pas directement**. Les notifications push et la réception
+permanente en arrière-plan ne sont pas encore intégrées ; la réception reprend
+à l’ouverture de l’application. Les échanges sur appareils réels restent à valider.
 
 ## Comment ça marche
 
@@ -20,7 +32,7 @@ accompagne l’application Windows et son écran de déverrouillage.
   (et toute personne interceptant le réseau) ne voit que des octets illisibles.
 - Le stockage local (conversations, messages) est chiffré par un **code PIN**
   (PBKDF2-SHA256, 210 000 itérations, sel aléatoire) via le stockage sécurisé
-  de Windows.
+  de Windows, Android ou iOS selon l’appareil.
 - Un **numéro de sécurité** (empreinte SHA-256 des deux clés publiques, ordonnées)
   permet de vérifier hors-bande qu'aucun tiers n'a substitué les clés (anti-MITM).
 
