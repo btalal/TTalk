@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talmessenger/crypto/e2e_crypto.dart';
+import 'package:talmessenger/models/message.dart';
 
 void main() {
   group('E2E encryption', () {
@@ -84,6 +85,35 @@ void main() {
       final b = Uint8List.fromList(List.generate(32, (i) => 255 - i));
       final c = Uint8List.fromList(List.generate(32, (i) => i + 1));
       expect(safetyFingerprint(a, b), isNot(equals(safetyFingerprint(a, c))));
+    });
+  });
+
+  group('Accusés de lecture (modèle)', () {
+    test('le statut read est persisté et vaut false par défaut', () {
+      final m = ChatMessage(
+        id: 'm1',
+        conversationId: 'c1',
+        fromMe: true,
+        ciphertext: [1, 2, 3],
+        timestamp: DateTime(2025, 1, 1),
+        plaintext: 'salut',
+      );
+      expect(m.read, isFalse);
+      m.read = true;
+      final restored = ChatMessage.fromJson(m.toJson());
+      expect(restored.read, isTrue);
+      expect(restored.plaintext, 'salut');
+    });
+
+    test('les anciens messages sans champ read restent lisibles (false)', () {
+      final legacy = ChatMessage.fromJson({
+        'id': 'm2',
+        'conversationId': 'c1',
+        'fromMe': false,
+        'ciphertext': 'AQID',
+        'timestamp': '2025-01-01T00:00:00.000',
+      });
+      expect(legacy.read, isFalse);
     });
   });
 

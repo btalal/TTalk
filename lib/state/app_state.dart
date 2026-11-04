@@ -134,6 +134,7 @@ class AppState extends ChangeNotifier {
           plaintext: plain,
         );
         messagesByConv.putIfAbsent(conv.first.id, () => []).add(m);
+        relay.sendRead(from, m.id);
         final idx = conversations.indexOf(conv.first);
         conversations[idx] = Conversation(
           id: conv.first.id,
@@ -146,6 +147,38 @@ class AppState extends ChangeNotifier {
         await _persist();
         notifyListeners();
         break;
+      case 'read':
+        final fromId = msg['from'] as String;
+        final messageId = msg['messageId'] as String;
+        final convR = conversations.where((c) => c.peerId == fromId).toList();
+        if (convR.isEmpty) break;
+        final list = messagesByConv[convR.first.id];
+        if (list == null) break;
+        final target = list.where((m) => m.id == messageId).toList();
+        if (target.isEmpty) break;
+        target.first.read = true;
+        await _persist();
+        notifyListeners();
+        break;
+    }
+  }
+
+  Future<void> markConversationRead(String conversationId) async {
+    final conv = conversations.where((c) => c.id == conversationId).toList();
+    if (conv.isEmpty) return;
+    final list = messagesByConv[conversationId];
+    if (list == null) return;
+    var changed = false;
+    for (final m in list) {
+      if (!m.fromMe && !m.read) {
+        m.read = true;
+        changed = true;
+        relay.sendRead(conv.first.peerId, m.id);
+      }
+    }
+    if (changed) {
+      await _persist();
+      notifyListeners();
     }
   }
 

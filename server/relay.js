@@ -73,6 +73,16 @@ wss.on('connection', (ws) => {
         });
         break;
       }
+      case 'read': {
+        const target = clients.get(String(msg.to));
+        if (!target) return;
+        send(target, {
+          type: 'read',
+          from: ws._id,
+          messageId: msg.messageId,
+        });
+        break;
+      }
     }
   });
   ws.on('close', () => {
