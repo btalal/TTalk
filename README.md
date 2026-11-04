@@ -39,6 +39,13 @@ Sur un Mac récent, Xcode peut signer et installer la préversion directement su
 un iPhone avec un compte Apple gratuit. Un IPA non signé est aussi produit par
 la CI pour une signature personnelle. Voir le [guide mobile](docs/MOBILE_INSTALL.md).
 
+## Mac Apple Silicon — préversion
+
+Une application Flutter native pour macOS est compilée séparément de l’IPA
+iPhone. La préversion Mac n’est pas encore signée avec Developer ID ni notarisée.
+Voir le [guide macOS](docs/MACOS_INSTALL.md) pour la compiler et la tester sur
+un Mac mini M4.
+
 ## Nouveautés Windows et Android 0.5.1
 
 Les menus **⋮** permettent de supprimer un message, une conversation ou un contact,
