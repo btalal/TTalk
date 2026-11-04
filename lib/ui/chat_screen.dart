@@ -102,7 +102,13 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
-          if (!_isGroup)
+          if (_isGroup)
+            IconButton(
+              tooltip: 'Membres du groupe',
+              icon: const Icon(Icons.group),
+              onPressed: () => _showMembersSheet(context, app),
+            )
+          else
             IconButton(
               tooltip: 'Numéro de sécurité',
               icon: const Icon(Icons.verified_user_outlined),
@@ -236,6 +242,119 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showMembersSheet(BuildContext context, AppState app) {
+    final g = widget.group!;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => ListenableBuilder(
+        listenable: app,
+        builder: (ctx, _) {
+          final group = app.groups.where((e) => e.id == g.id).toList();
+          if (group.isEmpty) {
+            return const SizedBox(
+              height: 120,
+              child: Center(child: Text('Tu as quitté ce groupe.')),
+            );
+          }
+          final gg = group.first;
+          final admin = app.amAdmin(gg.id);
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(gg.name, style: Theme.of(ctx).textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  Text('${gg.memberIds.length} membres — époque ${gg.epoch}'),
+                  const Divider(),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: gg.memberIds.map((id) {
+                        final name = id == app.myId ? 'Moi' : (app.peerNameOf(id));
+                        final isAdmin = gg.isAdmin(id);
+                        final isMe = id == app.myId;
+                        return ListTile(
+                          dense: true,
+                          leading: CircleAvatar(
+                            radius: 16,
+                            child: Text(name.isEmpty ? '?' : name[0].toUpperCase()),
+                          ),
+                          title: Text(name + (isAdmin ? '  👑' : '')),
+                          trailing: admin && !isMe
+                              ? IconButton(
+                                  tooltip: 'Retirer du groupe',
+                                  icon: const Icon(Icons.person_remove, color: Colors.red),
+                                  onPressed: () => app.removeMember(gg.id, id),
+                                )
+                              : null,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const Divider(),
+                  if (admin)
+                    ListTile(
+                      leading: const Icon(Icons.person_add),
+                      title: const Text('Réinviter / ajouter un membre'),
+                      subtitle: const Text('Depuis tes contacts appairés'),
+                      onTap: () => _showReinviteDialog(ctx, app, gg.id),
+                    ),
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.red),
+                    title: const Text('Quitter le groupe', style: TextStyle(color: Colors.red)),
+                    onTap: () async {
+                      Navigator.of(ctx).pop();
+                      await app.leaveGroup(gg.id);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showReinviteDialog(BuildContext ctx, AppState app, String groupId) {
+    final candidates = app.conversations
+        .where((c) => !app.groups.firstWhere((g) => g.id == groupId).memberIds.contains(c.peerId))
+        .toList();
+    showDialog<void>(
+      context: ctx,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Ajouter un membre'),
+        content: candidates.isEmpty
+            ? const Text('Tous tes contacts sont déjà membres.')
+            : SizedBox(
+                width: 300,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: candidates
+                      .map((c) => ListTile(
+                            dense: true,
+                            title: Text(c.peerName),
+                            trailing: const Icon(Icons.add),
+                            onTap: () {
+                              app.reInviteMember(groupId, c.peerId);
+                              Navigator.of(dctx).pop();
+                            },
+                          ))
+                      .toList(),
+                ),
+              ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dctx).pop(), child: const Text('Fermer')),
         ],
       ),
     );

@@ -75,6 +75,12 @@ si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, j
   chiffrée individuellement avec sa clé de session (X25519), via le relais.
 - Les messages de groupe sont chiffrés avec la clé de groupe et envoyés à tous
   les membres ; le nom de l'expéditeur est affiché au-dessus de chaque bulle.
+- **Gestion des membres** (icône 👥 dans le groupe) :
+  - 👑 le créateur est **admin** ; il peut **réinviter/ajouter** un contact et
+    **retirer** un membre (la clé de groupe est alors **pivotée** — `epoch+1` —
+    pour que le membre retiré ne puisse plus lire les nouveaux messages) ;
+  - tout membre peut **quitter** le groupe ; si le dernier admin part, le premier
+    membre restant devient admin.
 
 ## Pièces jointes chiffrées
 
@@ -99,5 +105,5 @@ si l'écran est ouvert). Le relais ne transporte que l'identifiant du message, j
 ## Limites connues (v0.3)
 
 - Appairage manuel par code (pas de découverte automatique).
-- Groupes : pas de sortie/re-ajout de membres, pas d'admin.
+- Groupes : pas de transfert de propriété du groupe, pas de notification « X a rejoint ».
 - Pas d'appels audio/vidéo.
