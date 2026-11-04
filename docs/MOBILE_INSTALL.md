@@ -3,7 +3,8 @@
 Android et iOS utilisent le même relais **0.4 / protocole 2** que Windows
 0.4 / 0.5.1. Chaque téléphone possède sa propre identité : appairer chaque appareil
 séparément, saisir le même serveur HTTPS, puis comparer les numéros de sécurité.
-L’hébergement du relais reste à créer ; aucune adresse n’est préconfigurée.
+Le relais actuel est `https://ttalk.fly.dev` ; saisir cette adresse dans
+**Configurer le serveur** sur chaque nouvel appareil. Elle n’est pas préconfigurée.
 
 ## Android 0.5.1 — APK signé (version finale)
 
@@ -41,32 +42,48 @@ un APK signé. Sans ces variables, la CI produit volontairement un APK non sign�
 Une autre possibilité est `zipalign` puis `apksigner sign` des Android Build Tools,
 suivi de `apksigner verify --verbose`.
 
-## iPhone — préversion, sans Mac et sans abonnement Apple Developer
+## iPhone — préversion et signature personnelle
 
-iOS **15 minimum**. La CI compile sur un Mac GitHub et prépare
-`ttalk-ios-unsigned.ipa`. Ce fichier **n’est pas directement installable** : Apple
-exige une signature et un profil d’installation.
+iOS **15 minimum**. Le projet utilise Flutter **3.47.9**, CocoaPods et Xcode.
+Sur un Mac mini M4, la méthode recommandée avec un compte Apple gratuit est de
+laisser Xcode **signer et installer directement** l’application sur son iPhone :
 
-Une piste pour un test personnel depuis Windows est [Sideloadly](https://sideloadly.io/) :
+1. Installer Xcode, Flutter 3.47.9 et CocoaPods, puis vérifier `flutter doctor -v`.
+2. Récupérer la branche `main/ttalk` et préparer le projet :
 
-1. Installer l’outil depuis son site officiel et suivre ses prérequis Apple sous Windows.
-2. Connecter et autoriser l’iPhone, puis ouvrir l’IPA dans l’outil.
-3. Effectuer la signature et l’installation avec votre propre compte Apple.
-   Ne communiquer aucun identifiant Apple dans ce dépôt ou à l’assistant.
-4. Si iOS le demande, approuver le profil dans Réglages et activer le mode
-   développeur selon les instructions d’iOS et de l’outil.
+   ```sh
+   git clone --branch main/ttalk https://github.com/btalal/TTalk.git
+   cd TTalk
+   flutter pub get --enforce-lockfile
+   (cd ios && pod install)
+   open ios/Runner.xcworkspace
+   ```
 
-Avec un compte gratuit, la signature est généralement limitée à **7 jours** et
-le nombre d’applications à installer est limité par Apple. Renouveler la signature
-avec le même compte et le même identifiant d’application pour conserver les données.
-Cette installation reste à valider sur un véritable iPhone : ce n’est ni une
-publication App Store ni une livraison TestFlight.
+3. Dans Xcode, ajouter son compte dans **Xcode > Settings > Accounts**. Sélectionner
+   la cible **Runner**, puis **Signing & Capabilities** : cocher **Automatically
+   manage signing** et choisir sa **Personal Team**. Conserver l’identifiant
+   d’application `com.talal.ttalk` s’il est disponible pour ce compte.
+4. Relier l’iPhone par USB, lui faire accepter la confiance du Mac, puis activer
+   le **Mode développeur** dans Réglages > Confidentialité et sécurité si demandé.
+5. Choisir l’iPhone comme destination dans Xcode et lancer **Product > Run**.
+   Xcode crée le profil de développement, signe et installe l’application.
+   Une fois TTalk ouvert, saisir `https://ttalk.fly.dev` dans **Configurer le serveur**.
 
-Une distribution TestFlight ou App Store nécessitera un abonnement Apple Developer,
-la configuration de la signature et une validation des règles Apple. Le projet utilise CocoaPods pour ses plugins et XCTest pour ses tests natifs.
-Pour compiler
-sur son propre Mac : `flutter build ios --release --no-codesign`, puis ouvrir
-`ios/Runner.xcworkspace` dans Xcode et configurer sa signature personnelle.
+Un compte gratuit permet les essais personnels mais les profils expirent après
+**7 jours** : reconstruire et réinstaller depuis Xcode avec le même compte et le
+même identifiant d’application. Ne pas désinstaller TTalk pour renouveler la
+signature : la désinstallation efface les données locales.
+
+La CI GitHub produit aussi `ttalk-ios-unsigned.ipa`. Ce fichier **ne s’installe
+pas directement**. Pour signer cette IPA sur Windows, [Sideloadly](https://sideloadly.io/)
+accepte un compte Apple gratuit et réinstalle l’app sur l’iPhone ; la même limite
+de 7 jours s’applique. Saisir ses identifiants uniquement dans l’outil choisi,
+jamais dans le dépôt ou auprès d’un tiers. Cette voie doit encore être validée
+sur un véritable iPhone avec la version actuelle de TTalk.
+
+La Personal Team ne permet pas de distribuer TTalk par TestFlight ou l’App Store.
+Une telle distribution nécessite l’abonnement Apple Developer, une signature de
+distribution et la validation d’Apple.
 
 ## Fonctionnement et limites à tester
 
