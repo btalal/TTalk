@@ -60,7 +60,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
                 const Icon(Icons.lock_outline, size: 64),
                 const SizedBox(height: 16),
                 Text(
-                  creating ? 'Créer un code PIN' : 'Déverrouiller TalMessenger',
+                  creating ? 'Créer un code PIN' : 'Déverrouiller TTalk',
                   style: Theme.of(context).textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),

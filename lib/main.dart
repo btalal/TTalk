@@ -17,11 +17,11 @@ void main() async {
   final app = AppState(store: store, relay: relay);
   await app.init();
   await relay.connect(relayUrl);
-  runApp(TalMessengerApp(app: app));
+  runApp(TTalkApp(app: app));
 }
 
-class TalMessengerApp extends StatelessWidget {
-  const TalMessengerApp({super.key, required this.app});
+class TTalkApp extends StatelessWidget {
+  const TTalkApp({super.key, required this.app});
 
   final AppState app;
 
@@ -31,7 +31,7 @@ class TalMessengerApp extends StatelessWidget {
       animation: app,
       builder: (context, _) {
         return MaterialApp(
-          title: 'TalMessenger',
+          title: 'TTalk',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(

@@ -6,7 +6,7 @@ const clients = new Map();
 const pendingPairs = new Map();
 
 const wss = new WebSocketServer({ host: '127.0.0.1', port: PORT });
-console.log(`TalMessenger relay listening on ws://127.0.0.1:${PORT}`);
+console.log(`TTalk relay listening on ws://127.0.0.1:${PORT}`);
 
 function send(ws, msg) {
   if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));

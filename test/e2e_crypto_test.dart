@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:talmessenger/crypto/e2e_crypto.dart';
-import 'package:talmessenger/models/group.dart';
-import 'package:talmessenger/models/message.dart';
+import 'package:ttalk/crypto/e2e_crypto.dart';
+import 'package:ttalk/models/group.dart';
+import 'package:ttalk/models/message.dart';
 
 void main() {
   group('E2E encryption', () {

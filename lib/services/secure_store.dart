@@ -39,7 +39,7 @@ class SecureStore {
   Future<void> setupPin(String pin) async {
     final salt = randomBytes(saltLength);
     final key = await derivePinKey(pin, salt);
-    final verifier = await encryptLocal(key, utf8.encode('talmessenger-pin-verifier'));
+    final verifier = await encryptLocal(key, utf8.encode('ttalk-pin-verifier'));
     await _prefs.setString(_pinSaltKey, base64Encode(salt));
     await _prefs.setString(_pinVerifierKey, base64Encode(verifier));
     _pinKey = key;
@@ -52,7 +52,7 @@ class SecureStore {
     final key = await derivePinKey(pin, base64Decode(saltB64));
     try {
       final clear = await decryptLocal(key, base64Decode(verifierB64));
-      if (utf8.decode(clear) != 'talmessenger-pin-verifier') return false;
+      if (utf8.decode(clear) != 'ttalk-pin-verifier') return false;
       _pinKey = key;
       return true;
     } catch (_) {

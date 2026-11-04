@@ -37,7 +37,7 @@ class IdentityKeys {
     final hkdf = Hkdf(hmac: Hmac(Sha256()), outputLength: aesKeyLength);
     return hkdf.deriveKey(
       secretKey: shared,
-      nonce: utf8.encode('talmessenger-session-v1'),
+      nonce: utf8.encode('ttalk-session-v1'),
     );
   }
 }
