@@ -22,6 +22,21 @@ du destinataire. Vous choisissez le relais qui transporte les messages.
 **[Télécharger](#téléchargement)** · **[Démarrer](docs/GETTING_STARTED.md)** ·
 **[Sécurité](docs/SECURITY.md)** · **[Releases](https://github.com/btalal/TTalk/releases)**
 
+## Aperçu de TTalk sur Windows
+
+**Conversation chiffrée** — échanges directs et accusés de lecture.
+
+![Conversation TTalk sur Windows avec des messages de test](docs/media/windows-chat.png)
+
+**Appairage** — saisir le code transmis par un contact, puis comparer les
+numéros de sécurité par un autre canal.
+
+![Fenêtre d’appairage d’un contact dans TTalk sur Windows](docs/media/windows-pairing.png)
+
+**Coffre local** — le PIN déverrouille les messages enregistrés sur cet appareil.
+
+![Écran de déverrouillage du coffre TTalk sur Windows](docs/media/windows-unlock.png)
+
 ## Fonctionnalités
 
 | | TTalk 0.5.1 |

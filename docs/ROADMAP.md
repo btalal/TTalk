@@ -14,7 +14,7 @@ livraison ni compatibilité avant validation sur appareils réels.
 
 - Tester les préversions iPhone et macOS sur appareils réels, documenter les
   résultats, puis préparer une distribution signée adaptée à chaque plateforme.
-- Ajouter des captures d’écran authentiques et anonymisées à la présentation.
+- Compléter les captures Windows par des vues Android et de groupe authentiques.
 - Étudier les notifications mobiles et la réception en arrière-plan.
 - Renforcer le modèle cryptographique des conversations directes et des groupes,
   puis rechercher un audit indépendant avant toute promesse de sécurité accrue.
