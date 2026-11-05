@@ -26,6 +26,10 @@ Pour les nouveaux utilisateurs Android et les utilisateurs de TTalk Android
 - Gestion de l’historique des groupes et possibilité de les quitter localement.
 - Noms de contacts et de groupes personnalisables avec vingt icônes intégrées.
 
+Ces noms et icônes restent propres à l’appareil. Les suppressions locales ne
+retirent pas les copies des autres participants ni les fichiers déjà enregistrés.
+Un message déjà transmis au relais peut encore être livré.
+
 ## Corrections
 
 - Code d’appairage renouvelé visible et saisie mieux vérifiée.

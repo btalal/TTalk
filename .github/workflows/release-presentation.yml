@@ -7,6 +7,7 @@ on:
       - 'docs/releases/**'
       - 'docs/ANDROID_RELEASE.md'
       - 'release-signatures/android-0.5.0.md'
+      - 'release-signatures/android-0.5.1.md'
       - '.github/workflows/release-presentation.yml'
   workflow_dispatch:
 
@@ -34,7 +35,7 @@ jobs:
             --notes-file docs/releases/windows-0.5.1.md
           gh release edit android-v0.5.1 --repo "$GH_REPO" \
             --title 'TTalk 0.5.1 — Android · Stable' \
-            --notes-file docs/ANDROID_RELEASE.md
+            --notes-file release-signatures/android-0.5.1.md
           gh release edit v0.5.1-iphone-mac-preview.1 --repo "$GH_REPO" \
             --title 'TTalk 0.5.1 — iPhone et macOS · Préversion' \
             --notes-file docs/releases/iphone-mac-preview-0.5.1.md
