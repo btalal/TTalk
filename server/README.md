@@ -1,9 +1,28 @@
-# Relais TTalk 0.4 — hébergement permanent
+# Relais TTalk — hébergement
 
-Ce serveur est fourni dans le dépôt. Un seul serveur partagé suffit aux PC et,
-plus tard, aux applications mobiles. Il ne reçoit pas les messages en clair.
+Ce serveur Node.js est fourni dans le dépôt. Les appareils qui échangent
+utilisent la même adresse HTTPS. Le relais transporte des paquets chiffrés et
+leurs métadonnées de routage ; voir le [modèle de sécurité](../docs/SECURITY.md).
 
-## Solution préparée : Render
+## Déployer sur un hébergement au choix
+
+Il faut **Node.js 24**, un disque persistant pour la base SQLite, une terminaison
+HTTPS/WSS avec certificat valide et un seul processus utilisant cette base.
+Configurer `HOST=0.0.0.0` chez l’hébergeur, `PORT` selon sa plateforme et
+`DATA_DIR` sur le disque persistant. Depuis `server` :
+
+```sh
+npm ci
+npm test
+npm start
+```
+
+Vérifier ensuite `https://votre-relais/healthz` : la réponse attendue est
+`{"status":"ok","protocol":2}`. Dans chaque application TTalk, saisir
+l’adresse HTTPS dans **Configurer le serveur**. Le chemin WebSocket `/ws` est
+ajouté par le client.
+
+## Exemple de configuration : Render
 
 Le fichier `render.yaml` à la racine prépare un service Node.js **permanent** avec
 un disque persistant de 1 Go. Le service gratuit qui s’endort n’est pas utilisé.
@@ -17,8 +36,8 @@ validez une commande que si son montant mensuel vous convient.
    lancer le déploiement. Aucun secret d’application n’est à saisir.
 4. Render fournit une adresse `https://…onrender.com`. Ouvrir `/healthz` sur cette
    adresse : la réponse attendue est `{"status":"ok","protocol":2}`.
-5. Dans TTalk Windows 0.4, ouvrir **Configurer le serveur**, coller l’adresse HTTPS
-   et enregistrer. Faire la même chose sur les deux PC, puis les appairer.
+5. Dans TTalk, ouvrir **Configurer le serveur**, coller l’adresse HTTPS et
+   enregistrer sur chaque appareil avant de les appairer.
 
 Les connexions WSS sont terminées par Render : aucun certificat à gérer sur les PC.
 Les mises à jour du service sont manuelles pour éviter de changer le protocole
