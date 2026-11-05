@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/releases/**'
       - 'docs/ANDROID_RELEASE.md'
+      - 'release-signatures/android-0.5.0.md'
       - '.github/workflows/release-presentation.yml'
   workflow_dispatch:
 
@@ -22,15 +23,40 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Clarify Windows and Android stable releases
+      - name: Publish consistent release notes and titles
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          gh release edit v0.5.0-windows \
-            --title '🖥️ Windows x64 — TTalk 0.5.0 · Version stable' \
+          gh release edit v0.5.1-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.5.1 — Windows x64 · Stable' \
+            --notes-file docs/releases/windows-0.5.1.md
+          gh release edit android-v0.5.1 --repo "$GH_REPO" \
+            --title 'TTalk 0.5.1 — Android · Stable' \
+            --notes-file docs/ANDROID_RELEASE.md
+          gh release edit v0.5.1-iphone-mac-preview.1 --repo "$GH_REPO" \
+            --title 'TTalk 0.5.1 — iPhone et macOS · Préversion' \
+            --notes-file docs/releases/iphone-mac-preview-0.5.1.md
+          gh release edit v0.5.0-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.5.0 — Windows x64 · Stable historique' \
             --notes-file docs/releases/windows-0.5.0.md
-          gh release edit android-v0.5.0 \
-            --title '📱 Android — TTalk 0.5.0 · Version stable' \
+          gh release edit android-v0.5.0 --repo "$GH_REPO" \
+            --title 'TTalk 0.5.0 — Android · Stable historique' \
             --notes-file release-signatures/android-0.5.0.md
+
+          # Les anciennes préversions restent consultables, avec des titres lisibles.
+          gh release edit v0.5.0-preview.11-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.5.0 Preview 11 — Windows x64'
+          gh release edit mobile-v0.5.0-preview.11 --repo "$GH_REPO" \
+            --title 'TTalk 0.5.0 Preview 11 — Android et iPhone'
+          gh release edit v0.4.0-rc.4-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.4.0 RC4 — Windows x64 · Préversion'
+          gh release edit v0.4.0-rc.3-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.4.0 RC3 — Windows x64 · Préversion'
+          gh release edit v0.4.0-rc.1-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.4.0 RC1 — Windows x64 · Préversion'
+          gh release edit v0.3.6-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.3.6 — Windows x64 · Archive'
+          gh release edit v0.3.2-windows --repo "$GH_REPO" \
+            --title 'TTalk 0.3.2 — Windows x64 · Archive'

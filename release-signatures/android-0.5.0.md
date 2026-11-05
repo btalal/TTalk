@@ -1,44 +1,68 @@
-<p align="center"><img src="https://raw.githubusercontent.com/btalal/TTalk/android-v0.5.0/assets/branding/ttalk.png" width="88" height="88" alt="TTalk" /></p>
+# 🔒 TTalk 0.5.0 — Android
 
-## 📱 TTalk pour Android — version stable 0.5.0
+🟢 **Version stable historique** · Première version Android stable de TTalk.
+Pour une nouvelle installation, préférer
+[TTalk Android 0.5.1](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1).
 
-Messagerie texte chiffrée de bout en bout pour **Android 7.0 et versions ultérieures**.
+## Téléchargements
 
-### ⬇️ Télécharger pour Android
+- 📦 [APK Android signé 0.5.0](https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android.apk)
+- 🔐 [Empreinte SHA256 de l’APK signé](https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android.apk.sha256)
+- 🖥️ [Windows 0.5.0](https://github.com/btalal/TTalk/releases/tag/v0.5.0-windows)
 
-**[Télécharger TTalk Android (.apk signé)](https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android.apk)**
+`ttalk-android-unsigned.apk` est une archive de compilation, pas le package
+à installer sur un téléphone.
 
-Vous cherchez la version ordinateur ? **[Accéder à la version Windows x64](https://github.com/btalal/TTalk/releases/tag/v0.5.0-windows)**.
+## Pour qui ?
 
-### Installation ou mise à jour
+Pour les utilisateurs qui doivent rester sur la version 0.5.0. La version
+0.5.1 contient des corrections supplémentaires.
 
-1. Sur votre téléphone, téléchargez **`ttalk-android.apk`** avec le lien ci-dessus.
-2. Ouvrez le fichier et autorisez cette source d’installation si Android le demande.
-3. Pour mettre à jour la préversion, installez l’APK **sans désinstaller TTalk** afin de conserver vos données. La clé de signature est identique.
-4. Ouvrez TTalk et utilisez le même relais HTTPS que vos contacts Windows ou Android.
+## Nouveautés
 
-### Fonctionnalités validées
+- Premier APK signé stable pour Android 7.0 et versions ultérieures.
+- Messages et fichiers compatibles avec TTalk Windows via le même relais.
+- Contacts, historique et groupes conservés après redémarrage.
+- Transfert de propriété des groupes et réception différée à la réouverture.
 
-- Messages et fichiers entre Android et Windows.
-- Contacts et historique conservés après redémarrage.
-- Réception des messages en attente à la réouverture.
-- Groupes et transfert de propriété.
+## Corrections
 
-Ces échanges ont été testés sur un smartphone Android et deux PC Windows x64.
+Les correctifs d’appairage et de gestion des conversations sont publiés dans
+la [version 0.5.1](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1).
 
-### À savoir
+## Compatibilité
 
-**Les notifications lorsque l’application est fermée ne sont pas intégrées.** La réception reprend à l’ouverture de TTalk. Cette fonctionnalité est reportée ; aucune dépendance Firebase/APNs n’a été ajoutée.
+| Plateforme | État |
+|---|---|
+| Android 7.0+ | ✅ APK signé ; ARM64, ARMv7 et x86_64 |
+| Windows 10/11 x64 | ✅ [ZIP 0.5.0 séparé](https://github.com/btalal/TTalk/releases/tag/v0.5.0-windows) |
+| iPhone | 🟡 Préversion séparée |
 
-Un relais hébergé reste nécessaire. Cette release concerne Android ; la version iPhone reste en préversion.
+Les notifications push et la réception permanente quand l’application est
+fermée ne sont pas intégrées. Un relais TTalk HTTPS est nécessaire.
 
-<details>
-<summary>Autres fichiers et documentation</summary>
+## Mise à niveau
 
-- `ttalk-android.apk.sha256` : empreinte permettant de vérifier l’intégrité de l’APK signé.
-- `ttalk-android-unsigned.apk` et son empreinte : fichiers de compilation destinés à la signature, à ne pas utiliser pour installer TTalk.
-- Les liens **Source code** générés par GitHub contiennent les sources, pas l’application à installer.
-- Architectures incluses : ARM64, ARMv7 et x86_64.
-- [Guide d’installation mobile](https://github.com/btalal/TTalk/blob/main/ttalk/docs/MOBILE_INSTALL.md)
+Pour passer de la préversion Android à 0.5.0 ou de 0.5.0 à 0.5.1, installer
+l’APK signé **sans désinstaller TTalk**. La même clé de signature est utilisée ;
+la désinstallation effacerait les données locales.
 
-</details>
+## Sécurité
+
+X25519 et HKDF-SHA256 établissent les clés des conversations directes ;
+AES-256-GCM chiffre les messages et fichiers. Le coffre local utilise
+PBKDF2-HMAC-SHA256 ; l’identité est conservée dans le stockage sécurisé
+Android. Comparez les numéros de sécurité des contacts. Le relais voit des
+métadonnées et TTalk n’a pas été audité indépendamment.
+
+## Vérification SHA256
+
+Comparer l’empreinte de `ttalk-android.apk` avec le fichier
+[`ttalk-android.apk.sha256`](https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android.apk.sha256).
+La somme de contrôle ne remplace pas la vérification de la signature Android.
+
+## Documentation
+
+[Installation mobile](https://github.com/btalal/TTalk/blob/main/ttalk/docs/MOBILE_INSTALL.md) ·
+[Sécurité et limites](https://github.com/btalal/TTalk/blob/main/ttalk/docs/SECURITY.md) ·
+[Relais](https://github.com/btalal/TTalk/blob/main/ttalk/server/README.md)

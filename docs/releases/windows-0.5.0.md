@@ -1,40 +1,65 @@
-<p align="center"><img src="https://raw.githubusercontent.com/btalal/TTalk/v0.5.0/assets/branding/ttalk.png" width="88" height="88" alt="TTalk" /></p>
+# 🔒 TTalk 0.5.0 — Windows x64
 
-## 🖥️ TTalk pour Windows — version stable 0.5.0
+🟢 **Version stable historique** · Première version Windows 0.5 compatible
+avec le client Android stable. Pour une nouvelle installation, préférer
+[TTalk 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows).
 
-Messagerie texte chiffrée de bout en bout pour **Windows 10 et 11, x64**.
+## Téléchargements
 
-### ⬇️ Télécharger pour Windows
+- 📦 [Archive Windows x64 0.5.0](https://github.com/btalal/TTalk/releases/download/v0.5.0-windows/ttalk-windows-x64.zip)
+- 🔐 [Empreinte SHA256 du ZIP](https://github.com/btalal/TTalk/releases/download/v0.5.0-windows/ttalk-windows-x64.zip.sha256)
+- 📱 [Android 0.5.0](https://github.com/btalal/TTalk/releases/tag/android-v0.5.0)
 
-**[Télécharger TTalk Windows x64 (.zip)](https://github.com/btalal/TTalk/releases/download/v0.5.0-windows/ttalk-windows-x64.zip)**
+## Pour qui ?
 
-Vous cherchez la version téléphone ? **[Accéder à la version Android](https://github.com/btalal/TTalk/releases/tag/android-v0.5.0)**.
+Pour les personnes devant conserver la version 0.5.0. Les nouveaux utilisateurs
+devraient installer la version stable 0.5.1, qui corrige plusieurs problèmes.
 
-### Installation
+## Nouveautés
 
-1. Téléchargez puis **extrayez entièrement** l’archive ZIP.
-2. Ouvrez le dossier extrait et lancez **`TTalk.exe`**.
-3. Gardez le dossier `app` à côté du lanceur : il contient les composants nécessaires.
-4. Déverrouillez votre coffre avec votre code PIN et utilisez le même relais HTTPS que vos contacts.
-
-### Fonctionnalités validées
-
-- Messages et fichiers entre Windows et Android.
+- Messages et fichiers entre Windows et Android via le même relais.
 - Contacts et historique conservés après redémarrage.
-- Réception des messages en attente à la reconnexion.
+- Livraison des messages en attente lors de la reconnexion.
 - Groupes et transfert de propriété.
 
-Ces échanges ont été testés sur deux PC Windows x64 et un smartphone Android.
+## Corrections
 
-### À savoir
+Les correctifs de gestion des conversations et d’appairage sont publiés dans
+la [version 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows).
 
-Un relais hébergé reste nécessaire pour relier les appareils. Sur téléphone, les notifications lorsque l’application est fermée sont reportées ; la réception reprend à l’ouverture. La version iPhone reste en préversion.
+## Compatibilité
 
-<details>
-<summary>Autres fichiers et documentation</summary>
+| Plateforme | État |
+|---|---|
+| Windows 10/11 x64 | ✅ Cette archive stable |
+| Android 7.0+ | ✅ [APK 0.5.0 séparé](https://github.com/btalal/TTalk/releases/tag/android-v0.5.0) |
+| iPhone | 🟡 Préversion séparée ; essais sur appareil réel encore nécessaires |
 
-- `ttalk-windows-x64.zip.sha256` : empreinte permettant de vérifier l’intégrité du ZIP.
-- Les liens **Source code** générés par GitHub contiennent les sources, pas l’application à lancer.
-- [Guide du relais](https://github.com/btalal/TTalk/blob/main/ttalk/server/README.md) · [Historique des changements](https://github.com/btalal/TTalk/blob/main/ttalk/CHANGELOG.md)
+Les échanges Windows et Android de ce périmètre ont été testés sur deux PC
+Windows x64 et un smartphone Android. Un relais TTalk HTTPS est nécessaire.
 
-</details>
+## Mise à niveau
+
+Extraire tout le ZIP, puis lancer `TTalk.exe` en conservant `app/` à côté.
+Depuis 0.3.6, le PIN, les clés et l’historique sont conservés ; les anciens
+groupes restent consultables mais **doivent être recréés** avec le nouveau
+relais. Pour passer ensuite à 0.5.1, consulter ses notes de version.
+
+## Sécurité
+
+Les conversations directes utilisent X25519, HKDF-SHA256 et AES-256-GCM.
+Le coffre local est dérivé du PIN avec PBKDF2-HMAC-SHA256. Comparez les
+numéros de sécurité des contacts par un autre canal. Le relais peut voir des
+métadonnées ; TTalk n’a pas été audité indépendamment.
+
+## Vérification SHA256
+
+Le fichier `.sha256` accompagne le ZIP. Comparer son empreinte avec celle
+obtenue par `Get-FileHash .\ttalk-windows-x64.zip -Algorithm SHA256` sous
+PowerShell. Les liens « Source code » ne sont pas l’application Windows.
+
+## Documentation
+
+[Démarrage](https://github.com/btalal/TTalk/blob/main/ttalk/docs/GETTING_STARTED.md) ·
+[Installation mobile](https://github.com/btalal/TTalk/blob/main/ttalk/docs/MOBILE_INSTALL.md) ·
+[Sécurité et limites](https://github.com/btalal/TTalk/blob/main/ttalk/docs/SECURITY.md)
