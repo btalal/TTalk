@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/ttalk-banner.svg" width="100%" alt="TTalk : messagerie privée, relais à votre choix" />
+  <img src="docs/media/ttalk-banner.jpg" width="100%" alt="TTalk : messagerie chiffrée de bout en bout pour Windows, Android et iOS en préversion, avec un relais au choix" />
 </p>
 
 # TTalk
@@ -124,3 +124,4 @@ signé et l’archive macOS n’est ni signée ni notarisée.
 - [Historique des versions](CHANGELOG.md)
 
 TTalk est distribué sous [licence Apache-2.0](LICENSE).
+
