@@ -50,17 +50,27 @@ numéros de sécurité par un autre canal.
 Les échanges Windows et Android ont été essayés sur deux PC et un téléphone.
 **iPhone et macOS restent des préversions à tester sur appareil réel.**
 
-### Différences de conception
+## Comparaison
 
-| | TTalk | WhatsApp | Telegram |
-|---|---|---|---|
-| Relais des conversations | Adresse choisie par les utilisateurs | Service WhatsApp | Cloud Telegram |
-| Chiffrement de bout en bout des discussions personnelles | Oui | Oui | « Secret Chats » uniquement ; les discussions Cloud suivent un autre modèle |
+| Fonction | TTalk | WhatsApp | Telegram |
+|---|:---:|:---:|:---:|
+| Application et relais open source | ✅ | ❌ | Partiel : applications clientes |
+| Relais personnel | ✅ | ❌ | ❌ |
+| Chiffrement de bout en bout des discussions | ✅ | ✅ pour les discussions personnelles | Partiel : conversations secrètes |
+| Contrôle de l’hébergement des messages en attente | ✅ | ❌ | ❌ |
+| Auto-hébergement du relais | ✅ | ❌ | ❌ |
+| Vérification des clés avec un contact | ✅ | ✅ | Partiel : conversations secrètes |
 
-Ce tableau décrit le **choix du relais et le mode de chiffrement**, pas la
-qualité globale de sécurité. TTalk est plus jeune et n’a pas été audité
-indépendamment. Sources : [confidentialité WhatsApp](https://www.whatsapp.com/privacyquestions)
-et [FAQ Telegram](https://telegram.org/faq).
+La comparaison porte sur les **fonctions indiquées**, pas sur le niveau global
+de sécurité. « Contrôle de l’hébergement » signifie que vous choisissez où
+fonctionne le relais TTalk ; les copies chez les destinataires et les
+métadonnées restent soumises aux [limites du modèle de sécurité](docs/SECURITY.md).
+TTalk n’a pas été audité indépendamment. Telegram permet bien de comparer les
+clés dans ses conversations secrètes, contrairement à ce que suggère une simple
+croix dans cette case. Sources : [licence TTalk](LICENSE),
+[confidentialité WhatsApp](https://www.whatsapp.com/privacyquestions),
+[codes de sécurité WhatsApp](https://faq.whatsapp.com/1524220618005378) et
+[FAQ Telegram](https://telegram.org/faq).
 
 ## Téléchargement
 
