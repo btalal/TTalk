@@ -20,4 +20,11 @@ livraison ni compatibilité avant validation sur appareils réels.
   puis rechercher un audit indépendant avant toute promesse de sécurité accrue.
 - Clarifier les sauvegardes, la restauration et la migration entre appareils.
 
+## Pistes à évaluer
+
+- Appels audio et vidéo.
+- Synchronisation de l’historique entre plusieurs appareils.
+
+Ces pistes n’ont pas encore de calendrier ni d’engagement de réalisation.
+
 Les limites actuelles sont détaillées dans le [modèle de sécurité](SECURITY.md).
