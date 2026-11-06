@@ -1,11 +1,7 @@
 name: Publish final Apple release
 
 on:
-  push:
-    branches: ['main/ttalk']
-    paths:
-      - 'docs/releases/apple-0.5.1.md'
-      - '.github/workflows/apple-final.yml'
+  # Release archives are rebuilt explicitly; note edits use release-presentation.yml.
   workflow_dispatch:
 
 permissions:
@@ -89,12 +85,12 @@ jobs:
           if gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --repo "$GH_REPO" --clobber
             gh release edit "$TAG" --repo "$GH_REPO" --prerelease=false \
-              --title 'TTalk 0.5.1 — iPhone et Mac · Versions finales' \
+              --title 'TTalk 0.5.1 — iPhone et macOS · Stable' \
               --notes-file docs/releases/apple-0.5.1.md
           else
             gh release create "$TAG" dist/* --repo "$GH_REPO" \
               --target "$RELEASE_COMMIT" --prerelease=false --latest=false \
-              --title 'TTalk 0.5.1 — iPhone et Mac · Versions finales' \
+              --title 'TTalk 0.5.1 — iPhone et macOS · Stable' \
               --notes-file docs/releases/apple-0.5.1.md
           fi
           gh release edit v0.5.1-iphone-mac-preview.1 --repo "$GH_REPO" \
