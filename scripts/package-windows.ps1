@@ -54,8 +54,11 @@ try {
     Copy-Item "$ReleasePath/*" $appPath.FullName -Recurse -Force
     # Older builds may still carry the readme inside their output directory.
     Remove-Item (Join-Path $appPath.FullName 'LIRE-MOI.txt') -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $appPath.FullName 'LISEZ-MOI.txt') -ErrorAction SilentlyContinue
     Copy-Item $LauncherPath (Join-Path $staging 'TTalk.exe')
-    Copy-Item 'docs/WINDOWS_PACKAGE.txt' (Join-Path $staging 'LIRE-MOI.txt')
+    # UTF-8 with BOM and CRLF so every Notepad version shows the accents.
+    $readme = (Get-Content 'docs/WINDOWS_PACKAGE.txt' -Raw -Encoding utf8) -replace "`r?`n", "`r`n"
+    [System.IO.File]::WriteAllText((Join-Path $staging 'LISEZ-MOI.txt'), $readme, [System.Text.UTF8Encoding]::new($true))
     Compress-Archive -Path "$staging/*" -DestinationPath $OutputPath -Force
 } finally {
     if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
@@ -72,7 +75,7 @@ $second = $null
 try {
     Expand-Archive -Path $OutputPath -DestinationPath $extracted
     $rootEntries = @(Get-ChildItem $extracted | Select-Object -ExpandProperty Name | Sort-Object)
-    if (($rootEntries -join '|') -ne 'app|LIRE-MOI.txt|TTalk.exe') {
+    if (($rootEntries -join '|') -ne 'app|LISEZ-MOI.txt|TTalk.exe') {
         throw "Racine du ZIP inattendue : $rootEntries"
     }
     Assert-X64 (Join-Path $extracted 'TTalk.exe')

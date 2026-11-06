@@ -1,34 +1,70 @@
-TTalk Windows 0.5.1 — version finale, Windows 10/11 x64
+TTalk 0.6.1 pour Windows — version finale (Windows 10 et 11, 64 bits)
 
-Fermer les anciennes versions avant de lancer cette version. Ne pas utiliser
-plusieurs versions sur le même profil en même temps.
+Avant de lancer cette version, fermez toute version précédente de TTalk.
+N'utilisez jamais deux versions en même temps avec le même profil.
 
-1. Extraire TOUT le ZIP et double-cliquer sur TTalk.exe à la racine.
-   TTalk.exe       : lanceur de l’application, avec son icône.
-   LIRE-MOI.txt    : ces instructions.
-   app/           : fichiers techniques (application, DLL et données).
-   Garder le dossier app à côté du lanceur. Ne pas déplacer TTalk.exe seul.
-   Un raccourci vers TTalk.exe peut être placé sur le Bureau.
-2. Créer ou saisir son PIN (4 à 12 chiffres).
-3. Ouvrir Configurer le serveur et saisir l’adresse HTTPS du relais hébergé.
-   Les deux PC doivent utiliser la même adresse. Aucune recompilation nécessaire.
-4. Choisir Mon nom, puis échanger un code d’appairage et comparer les numéros de sécurité.
 
-Un PC utilisateur n’a pas besoin de rester allumé : le relais est hébergé en
-permanence. Il reste à créer l’hébergement si vous n’en avez pas encore.
-Guide : https://github.com/btalal/TTalk/blob/HEAD/server/README.md
-Node.js n’est nécessaire sur le PC que pour les tests avec un relais local.
+INSTALLATION
 
-Les contacts et les clés persistent après redémarrage. Les envois sans réseau
-restent dans le coffre. Le serveur conserve les messages chiffrés en attente
-pendant 7 jours maximum. Une horloge indique un envoi encore en attente.
+1. Extrayez l'intégralité du fichier ZIP, puis double-cliquez sur TTalk.exe.
+   Contenu du dossier :
+     TTalk.exe       lanceur de l'application (avec son icône) ;
+     LISEZ-MOI.txt   ce document ;
+     app\            fichiers techniques (application, bibliothèques DLL, données).
+   Laissez le dossier « app » à côté de TTalk.exe : ne déplacez jamais le
+   lanceur seul. Vous pouvez en revanche créer un raccourci sur le Bureau.
 
-Migration : conserver les données Windows et le PIN. Les contacts sont convertis
-automatiquement. Les groupes de 0.3.6 restent consultables mais doivent être recréés.
-Les deux PC et le serveur doivent utiliser la nouvelle version.
+2. Créez votre code PIN (de 4 à 12 chiffres), ou saisissez-le s'il existe déjà.
 
-Les fichiers reçus sont enregistrés en clair dans Documents/ttalk_files après
-déchiffrement. Protéger le compte Windows. Ne pas effacer les clés de l’application.
-Le package n’est pas signé Authenticode ; une somme SHA256 accompagne le ZIP.
-Les échanges ont été validés sur deux PC Windows x64 et un smartphone Android.
-Les notifications mobiles sont reportées ; la réception reprend à l’ouverture de l’app.
+3. Dans le menu « ••• », ouvrez « Configurer le serveur » et saisissez
+   l'adresse HTTPS du relais. Tous les appareils doivent utiliser la même
+   adresse. Aucune recompilation n'est nécessaire.
+
+4. Choisissez « Mon nom », échangez un code d'appairage avec votre contact,
+   puis comparez vos numéros de sécurité.
+
+
+FONCTIONNEMENT
+
+Votre PC n'a pas besoin de rester allumé : le relais est hébergé en permanence.
+Si vous n'avez pas encore d'hébergement, consultez le guide :
+https://github.com/btalal/TTalk/blob/HEAD/server/README.md
+Node.js n'est utile sur le PC que pour tester avec un relais local.
+
+Les contacts et les clés sont conservés après un redémarrage. Les messages
+envoyés sans connexion restent dans le coffre jusqu'au retour du réseau ;
+une petite horloge signale un envoi en attente. Le serveur conserve les
+messages chiffrés en attente pendant 7 jours au maximum.
+
+
+NOUVEAUTÉS DE LA VERSION 0.6.1
+
+- Nouvelle interface, identique sur Windows, Mac, Android et iPhone :
+  menu Discussions, Contacts et Réglages en bas de la fenêtre.
+- Logo, version et état « Connecté » visibles en haut de la fenêtre.
+- Avatars illustrés : 20 pour les contacts et 20 pour les groupes, à choisir
+  dans « Nom et icône ». Pastille verte sur les contacts vérifiés.
+- Nouvelles bulles de messages, filtres sur une ligne, police Inter.
+
+Rappel des nouveautés de la 0.6 : recherche, filtres, conversations
+épinglées et archivées, invitations par QR code ou lien, réponses citées,
+réactions chiffrées, verrouillage automatique, sauvegarde chiffrée locale.
+
+
+MISE À JOUR DEPUIS UNE VERSION PRÉCÉDENTE
+
+Vos données Windows et votre PIN sont conservés ; les contacts sont convertis
+automatiquement. Les groupes créés avec la version 0.3.6 restent consultables
+mais doivent être recréés. Les réactions et les changements de membres d'un
+groupe nécessitent que tous les participants utilisent la version 0.6 ou plus.
+
+
+SÉCURITÉ
+
+Les fichiers reçus sont enregistrés déchiffrés dans Documents\ttalk_files.
+Protégez donc votre session Windows et n'effacez pas les clés de l'application.
+Ce paquet n'est pas signé (Authenticode) : vérifiez son empreinte SHA-256,
+publiée à côté du fichier ZIP.
+
+Les notifications sur mobile ne sont pas encore disponibles : la réception
+reprend à l'ouverture de l'application.
