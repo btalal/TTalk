@@ -43,7 +43,7 @@ Un message déjà transmis au relais peut encore être livré.
 |---|---|
 | Android 7.0+ | ✅ APK signé stable ; ARM64, ARMv7 et x86_64 |
 | Windows 10/11 x64 | ✅ [ZIP stable séparé](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows) |
-| iPhone | 🟡 [Préversion non signée](https://github.com/btalal/TTalk/releases/tag/v0.5.1-iphone-mac-preview.1) |
+| iPhone et macOS | 🟢 [Versions finales Apple 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple) — compilation et signature personnelle dans Xcode |
 
 Les notifications push et la réception permanente lorsque l’application
 est fermée ne sont pas intégrées ; les messages en attente arrivent à sa
