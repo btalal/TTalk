@@ -189,16 +189,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         automaticallyImplyLeading: !widget.embedded,
         title: Row(
           children: [
-            SizedBox(
-              width: 32,
-              height: 32,
-              child: ChatAvatar(
-                name: _title,
-                symbol: app.chatIcon(_chatId),
-                isGroup: _isGroup,
-              ),
+            ChatAvatar(
+              name: _title,
+              symbol: app.chatIcon(_chatId),
+              isGroup: _isGroup,
+              seed: _chatId,
+              size: 38,
+              verified: !_isGroup && app.isVerified(_chatId),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,6 +286,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   );
                 }
                 final mine = m.fromMe;
+                final scheme = Theme.of(context).colorScheme;
+                final dark = Theme.of(context).brightness == Brightness.dark;
+                final bubble = mine
+                    ? (dark ? const Color(0xFF5B4FE0) : scheme.primary)
+                    : scheme.surfaceContainerHigh;
+                final ink = mine ? Colors.white : scheme.onSurface;
+                final faint = mine
+                    ? Colors.white.withValues(alpha: .78)
+                    : scheme.onSurfaceVariant;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -295,10 +303,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             DateUtils.dateOnly(m.timestamp))
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: Text(
-                          DateFormat('dd/MM/yyyy').format(m.timestamp),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.labelSmall,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: scheme.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              DateFormat('dd/MM/yyyy').format(m.timestamp),
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ),
                         ),
                       ),
                     Align(
@@ -319,14 +338,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 .clamp(200.0, 620.0),
                           ),
                           decoration: BoxDecoration(
-                            color: mine
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(16),
+                            color: bubble,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(18),
+                              topRight: const Radius.circular(18),
+                              bottomLeft: Radius.circular(mine ? 18 : 6),
+                              bottomRight: Radius.circular(mine ? 6 : 18),
+                            ),
                           ),
-                          child: Column(
+                          child: DefaultTextStyle.merge(
+                            style: TextStyle(color: ink),
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               if (m.isGroup && !mine)
@@ -380,7 +402,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.attach_file),
+                                      Icon(Icons.attach_file, color: ink),
                                       const SizedBox(width: 6),
                                       Flexible(
                                         child: Column(
@@ -396,7 +418,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                               '${formatFileSize(m.fileSize ?? 0)} — transfert chiffré',
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .labelSmall,
+                                                  .labelSmall
+                                                  ?.copyWith(color: faint),
                                             ),
                                           ],
                                         ),
@@ -434,7 +457,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                     DateFormat.Hm().format(m.timestamp),
                                     style: Theme.of(context)
                                         .textTheme
-                                        .labelSmall,
+                                        .labelSmall
+                                        ?.copyWith(color: faint),
                                   ),
                                   if (mine) ...[
                                     const SizedBox(width: 4),
@@ -446,16 +470,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                           : Icons.check,
                                       size: 14,
                                       color: m.read
-                                          ? Colors.blueAccent
-                                          : Theme.of(context)
-                                                .textTheme
-                                                .labelSmall
-                                                ?.color,
+                                          ? const Color(0xFF7DD3FC)
+                                          : faint,
                                     ),
                                   ],
                                 ],
                               ),
                             ],
+                          ),
                           ),
                         ),
                       ),
@@ -528,15 +550,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               minLines: 1,
                               maxLines: 6,
                               keyboardType: TextInputType.multiline,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 hintText: 'Message chiffré…',
-                                border: OutlineInputBorder(
+                                filled: true,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHigh,
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide.none,
                                   borderRadius: BorderRadius.all(
                                     Radius.circular(24),
                                   ),
                                 ),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 12,
                                 ),
                               ),
                             ),

@@ -6,6 +6,9 @@
 #include "flutter_window.h"
 #include "utils.h"
 
+// Window title; TTalk itself is shown next to the logo inside the window.
+constexpr const wchar_t kWindowTitle[] = L"Messagerie chiffrée & gratuite";
+
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   // A single instance owns the local encrypted vault in this Windows session.
@@ -14,7 +17,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     return EXIT_FAILURE;
   }
   if (::GetLastError() == ERROR_ALREADY_EXISTS) {
-    HWND existing = ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"TTalk");
+    HWND existing = ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", kWindowTitle);
     if (existing != nullptr) {
       ::ShowWindow(existing, SW_RESTORE);
       ::SetForegroundWindow(existing);
@@ -56,7 +59,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
       static_cast<unsigned int>(work_area.left / scale + (work_width > kWidth ? (work_width - kWidth) / 2 : 0)),
       static_cast<unsigned int>(work_area.top / scale + (work_height > kHeight ? (work_height - kHeight) / 2 : 0)));
   Win32Window::Size size(kWidth, kHeight);
-  if (!window.Create(L"TTalk", origin, size)) {
+  if (!window.Create(kWindowTitle, origin, size)) {
     ::CoUninitialize();
     ::CloseHandle(instance_mutex);
     return EXIT_FAILURE;

@@ -11,5 +11,7 @@ class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     super.awakeFromNib()
+    // Same window title as on Windows; TTalk is shown next to the logo.
+    self.title = "Messagerie chiffrée & gratuite"
   }
 }

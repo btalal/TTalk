@@ -113,7 +113,9 @@ void main() {
       await tester.tap(find.text('Camille'));
       await tester.pumpAndSettle();
       expect(find.byType(ChatScreen), findsOneWidget);
-      expect(find.byType(NavigationRail), findsOneWidget);
+      // Same bottom menu as on phones and macOS, even with two columns.
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
       expect(find.text('On se retrouve au jardin à 18 h ?'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
       if (Platform.environment['TTALK_CAPTURE'] == '1') {
