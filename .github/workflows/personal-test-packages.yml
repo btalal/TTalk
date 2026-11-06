@@ -1,0 +1,70 @@
+name: Personal test packages
+on:
+  push:
+    branches: ['feature/ttalk-next']
+    paths:
+      - '.github/workflows/personal-test-packages.yml'
+      - 'tool/prepare_personal_test.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: python3 tool/prepare_personal_test.py
+      - name: Install native tools
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'ndk;29.0.14206865' 'cmake;3.22.1' 'platforms;android-36' 'build-tools;36.0.0'
+      - run: flutter pub get --enforce-lockfile
+      - name: Create personal test signing key
+        run: |
+          keytool -genkeypair -keystore "$RUNNER_TEMP/ttalk-test.jks" \
+            -storepass android -keypass android -alias ttalk-test \
+            -keyalg RSA -keysize 3072 -validity 3650 \
+            -dname 'CN=TTalk Personal Test, O=TTalk Test, C=FR'
+      - name: Build signed personal APK
+        env:
+          TTALK_ANDROID_KEYSTORE: ${{ runner.temp }}/ttalk-test.jks
+          TTALK_ANDROID_STORE_PASSWORD: android
+          TTALK_ANDROID_KEY_ALIAS: ttalk-test
+          TTALK_ANDROID_KEY_PASSWORD: android
+        run: flutter build apk --release
+      - name: Verify APK signature and package
+        run: |
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose build/app/outputs/flutter-apk/app-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging build/app/outputs/flutter-apk/app-release.apk | head -8
+          mv build/app/outputs/flutter-apk/app-release.apk ttalk-0.6-test-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ttalk-test-android-signed
+          path: ttalk-0.6-test-android.apk
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: python tool/prepare_personal_test.py
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ttalk-test-windows-x64
+          path: build/windows/x64/runner/Release/
