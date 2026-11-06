@@ -23,6 +23,14 @@ livraison ni compatibilité avant validation sur appareils réels.
   puis rechercher un audit indépendant avant toute promesse de sécurité accrue.
 - Clarifier les sauvegardes, la restauration et la migration entre appareils.
 
+## Révision de sécurité suivante — décision du 6 novembre 2026
+
+Le chantier Double Ratchet et la refonte des rotations de groupe sont reportés
+à la révision suivant le lot 0.6, à la demande du propriétaire. Ils ne sont
+pas annoncés comme implémentés. Le [plan conservé dans le dépôt](SECURITY_NEXT_REVISION.md)
+précise les exigences de migration, de tests et de revue. Les notifications push
+restent reportées.
+
 ## Pistes à évaluer
 
 - Appels audio et vidéo.
