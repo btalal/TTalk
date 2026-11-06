@@ -233,7 +233,7 @@ class AppState extends ChangeNotifier {
     if (alias.isEmpty || alias.length > 80) {
       throw ArgumentError('Le nom doit contenir de 1 à 80 caractères.');
     }
-    if (icon != null && !ChatSettings.icons.contains(icon)) {
+    if (icon != null && !ChatSettings.isValidIcon(icon)) {
       throw ArgumentError('Icône inconnue.');
     }
     final settings = _settingsFor(id);

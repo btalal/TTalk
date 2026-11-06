@@ -2,26 +2,72 @@ import 'package:flutter/material.dart';
 
 import '../models/chat_settings.dart';
 import '../state/app_state.dart';
+import 'avatar_art.dart';
 
+/// Illustrated avatar of a contact or group. A legacy emoji icon is still
+/// shown as an emoji; without any choice the illustration comes from [seed].
 class ChatAvatar extends StatelessWidget {
   const ChatAvatar({
     super.key,
     required this.name,
     this.symbol,
     this.isGroup = false,
+    this.seed,
+    this.size = 40,
+    this.verified = false,
   });
   final String name;
   final String? symbol;
   final bool isGroup;
+  final String? seed;
+  final double size;
+  final bool verified;
 
   @override
-  Widget build(BuildContext context) => CircleAvatar(
-    child: symbol != null
-        ? Text(symbol!, style: const TextStyle(fontSize: 22))
-        : isGroup
-        ? const Icon(Icons.groups)
-        : Text(name.isEmpty ? '?' : name.characters.first.toUpperCase()),
-  );
+  Widget build(BuildContext context) {
+    final index = ChatSettings.avatarIndex(symbol);
+    final Widget picture = symbol != null && index == null
+        ? CircleAvatar(
+            radius: size / 2,
+            child: Text(symbol!, style: TextStyle(fontSize: size * .5)),
+          )
+        : AvatarArt(
+            index: index ?? ChatSettings.defaultAvatarFor(seed ?? name),
+            group: isGroup,
+            size: size,
+          );
+    return Semantics(
+      label: verified ? '$name, contact vérifié' : name,
+      image: true,
+      child: SizedBox.square(
+        dimension: size,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            picture,
+            if (verified)
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: Container(
+                  width: size * .4,
+                  height: size * .4,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.surface,
+                  ),
+                  child: Icon(
+                    Icons.verified_user,
+                    size: size * .3,
+                    color: const Color(0xFF34D399),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 Future<bool> confirmChatDeletion(
@@ -65,6 +111,7 @@ class ChatActionsMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
     tooltip: isGroup ? 'Actions du groupe' : 'Actions du contact',
+    icon: const Icon(Icons.more_horiz),
     onSelected: (action) async {
       if (action == 'pin' || action == 'archive') {
         try {
@@ -203,6 +250,7 @@ Future<void> showChatCustomization(
   String chatId,
 ) async {
   final controller = TextEditingController(text: app.chatName(chatId));
+  final isGroup = app.groups.any((g) => g.id == chatId);
   String? symbol = app.chatIcon(chatId);
   String? error;
   bool busy = false;
@@ -252,6 +300,52 @@ Future<void> showChatCustomization(
                             : (_) => update(() => symbol = icon),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Ou une illustration',
+                    style: Theme.of(ctx).textTheme.titleSmall,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (var i = 0; i < ChatSettings.avatarCount; i++)
+                      Semantics(
+                        button: true,
+                        selected: symbol == ChatSettings.avatarIcon(i),
+                        label: '${isGroup ? 'Avatar de groupe' : 'Avatar'} ${i + 1}',
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: busy
+                              ? null
+                              : () => update(
+                                  () => symbol = ChatSettings.avatarIcon(i),
+                                ),
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                width: 2,
+                                color: symbol == ChatSettings.avatarIcon(i)
+                                    ? Theme.of(ctx).colorScheme.primary
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            child: AvatarArt(
+                              index: i,
+                              group: isGroup,
+                              size: 52,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ],

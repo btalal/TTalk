@@ -140,7 +140,10 @@ class _TTalkAppState extends State<TTalkApp> with WidgetsBindingObserver {
               ),
             ),
           ),
+          // Inter is bundled so Windows, macOS, Android and iPhone render the
+          // same text.
           theme: ThemeData(
+            fontFamily: 'Inter',
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xFF4338CA),
               brightness: Brightness.light,
@@ -148,9 +151,27 @@ class _TTalkAppState extends State<TTalkApp> with WidgetsBindingObserver {
             useMaterial3: true,
           ),
           darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF4338CA),
-              brightness: Brightness.dark,
+            fontFamily: 'Inter',
+            scaffoldBackgroundColor: const Color(0xFF14141B),
+            colorScheme:
+                ColorScheme.fromSeed(
+                  seedColor: const Color(0xFF6C5CE7),
+                  brightness: Brightness.dark,
+                ).copyWith(
+                  surface: const Color(0xFF14141B),
+                  surfaceContainerLowest: const Color(0xFF0E0E13),
+                  surfaceContainerLow: const Color(0xFF17171F),
+                  surfaceContainer: const Color(0xFF1A1A23),
+                  surfaceContainerHigh: const Color(0xFF1E1E29),
+                  surfaceContainerHighest: const Color(0xFF262633),
+                ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF14141B),
+              surfaceTintColor: Colors.transparent,
+            ),
+            navigationBarTheme: const NavigationBarThemeData(
+              backgroundColor: Color(0xFF121219),
+              indicatorColor: Color(0xFF2E2E48),
             ),
             useMaterial3: true,
           ),

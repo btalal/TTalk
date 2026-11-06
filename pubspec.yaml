@@ -6,7 +6,7 @@ platforms:
   android:
   ios:
   macos:
-version: 0.6.0+27
+version: 0.6.1+28
 
 environment:
   sdk: ^3.13.0
@@ -43,3 +43,13 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/ttalk.png
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700

@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../app_info.dart';
 import '../services/relay_client.dart';
 import '../state/app_state.dart';
 import 'chat_screen.dart';
@@ -87,9 +88,15 @@ class _HomeScreenState extends State<HomeScreen> {
     builder: (context, _) {
       final app = widget.app;
       final settings = SettingsScreen(app: app, embedded: true);
+      final width = MediaQuery.sizeOf(context).width;
+      final connected =
+          app.registered && app.relayUrl.isNotEmpty && app.error == null;
       final list = Column(
         children: [
-          if (MediaQuery.viewInsetsOf(context).bottom == 0)
+          // When everything works, a small "Connecté" badge in the header is
+          // enough; the banner only appears when something needs attention.
+          if (MediaQuery.viewInsetsOf(context).bottom == 0 &&
+              (!connected || app.pendingCount > 0))
             _RelayBanner(
               app: app,
               configure: () => _showRelaySettings(context, app),
@@ -101,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 prefixIcon: const Icon(Icons.search),
                 hintText: 'Rechercher un contact, message ou fichier',
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
@@ -111,27 +118,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           if (_nav == 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Wrap(
-                spacing: 6,
-                children: [
-                  for (final choice in const [
-                    ('all', 'Toutes'),
-                    ('unread', 'Non lues'),
-                    ('groups', 'Groupes'),
-                    ('archive', 'Archives'),
-                  ])
-                    FilterChip(
-                      label: Text(choice.$2),
-                      selected: _filter == choice.$1,
-                      onSelected: (_) => setState(() {
-                        _filter = choice.$1;
-                        _tab = _filter == 'groups' ? 1 : 0;
-                      }),
-                    ),
-                ],
-              ),
+            _FilterBar(
+              value: _filter,
+              onChanged: (value) => setState(() {
+                _filter = value;
+                _tab = _filter == 'groups' ? 1 : 0;
+              }),
             ),
           Expanded(
             child: _tab == 1
@@ -148,19 +140,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ? 'Réglages'
           : 'TTalk';
       final toolbar = AppBar(
+        titleSpacing: 16,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
               'assets/branding/ttalk.png',
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               excludeFromSemantics: true,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Flexible(
-              child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
+            if (width >= 400) ...[
+              const SizedBox(width: 8),
+              _Tag(
+                label: 'v$kAppVersion',
+                semantics: 'Version $kAppVersion',
+                background: Theme.of(context).colorScheme.secondaryContainer,
+                foreground: Theme.of(context).colorScheme.onSecondaryContainer,
+              ),
+            ],
+            if (connected) ...[
+              const SizedBox(width: 8),
+              _ConnectedBadge(compact: width < 600),
+            ],
           ],
         ),
         actions: [
@@ -171,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           PopupMenuButton<String>(
             tooltip: 'Menu TTalk',
+            icon: const Icon(Icons.more_horiz),
             onSelected: (action) {
               switch (action) {
                 case 'server':
@@ -201,31 +213,33 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       );
-      if (!_wide) {
+      // The same bottom menu on every platform (phone, Windows, macOS).
+      final menu = NavigationBar(
+        selectedIndex: _nav,
+        onDestinationSelected: _navigate,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Discussions',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.contacts_outlined),
+            selectedIcon: Icon(Icons.contacts),
+            label: 'Contacts',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Réglages',
+          ),
+        ],
+      );
+      if (!_wide || _nav == 2) {
         return Scaffold(
           appBar: toolbar,
           body: _nav == 2 ? settings : list,
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _nav,
-            onDestinationSelected: _navigate,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.chat_bubble_outline),
-                selectedIcon: Icon(Icons.chat_bubble),
-                label: 'Discussions',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.contacts_outlined),
-                selectedIcon: Icon(Icons.contacts),
-                label: 'Contacts',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: 'Réglages',
-              ),
-            ],
-          ),
+          bottomNavigationBar: menu,
         );
       }
       final selectedId = _selectedConversation?.id ?? _selectedGroup?.id;
@@ -233,44 +247,14 @@ class _HomeScreenState extends State<HomeScreen> {
           app.conversations.any((c) => c.id == selectedId) ||
           app.groups.any((g) => g.id == selectedId);
       return Scaffold(
+        appBar: toolbar,
+        bottomNavigationBar: menu,
         body: Row(
           children: [
-            NavigationRail(
-              selectedIndex: _nav,
-              onDestinationSelected: _navigate,
-              labelType: NavigationRailLabelType.all,
-              leading: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Image.asset(
-                  'assets/branding/ttalk.png',
-                  width: 38,
-                  height: 38,
-                ),
-              ),
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.chat_bubble_outline),
-                  label: Text('Discussions'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.contacts_outlined),
-                  label: Text('Contacts'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  label: Text('Réglages'),
-                ),
-              ],
-            ),
-            SizedBox(
-              width: 350,
-              child: Scaffold(appBar: toolbar, body: list),
-            ),
+            SizedBox(width: 440, child: list),
             const VerticalDivider(width: 1),
             Expanded(
-              child: _nav == 2
-                  ? settings
-                  : exists
+              child: exists
                   ? ChatScreen(
                       key: ValueKey(selectedId),
                       app: app,
@@ -360,16 +344,22 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, i) {
         final e = entries[i], s = app.settingsFor(entries[i].id);
         final last = app.messagesByConv[e.id]?.lastOrNull;
+        final unread = app.unreadCount(e.id) > 0;
+        final scheme = Theme.of(context).colorScheme;
         return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          minVerticalPadding: 10,
           selected:
               _wide &&
               (_selectedConversation?.id ?? _selectedGroup?.id) == e.id,
-          selectedTileColor: Theme.of(context).colorScheme.primaryContainer
-              .withValues(alpha: .45),
+          selectedTileColor: scheme.primaryContainer.withValues(alpha: .45),
           leading: ChatAvatar(
             name: app.chatName(e.id),
             symbol: app.chatIcon(e.id),
             isGroup: e.group != null,
+            seed: e.id,
+            size: 46,
+            verified: e.group == null && app.isVerified(e.id),
           ),
           title: Row(
             children: [
@@ -383,6 +373,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   app.chatName(e.id),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: unread ? FontWeight.w700 : FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -406,12 +399,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (last != null)
                     Text(
                       DateFormat.Hm().format(last.timestamp),
-                      style: Theme.of(context).textTheme.labelSmall,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: unread ? scheme.primary : null,
+                        fontWeight: unread ? FontWeight.w700 : null,
+                      ),
                     ),
-                  if (app.unreadCount(e.id) > 0)
+                  if (unread)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
-                      child: Badge(label: Text('${app.unreadCount(e.id)}')),
+                      child: Badge(
+                        backgroundColor: scheme.primary,
+                        textColor: scheme.onPrimary,
+                        label: Text('${app.unreadCount(e.id)}'),
+                      ),
                     ),
                 ],
               ),
@@ -468,6 +468,9 @@ class _HomeScreenState extends State<HomeScreen> {
           leading: ChatAvatar(
             name: c.displayName,
             symbol: c.localSettings.icon,
+            seed: c.id,
+            size: 46,
+            verified: app.isVerified(c.id),
           ),
           title: Text(
             c.displayName,
@@ -565,6 +568,8 @@ class _HomeScreenState extends State<HomeScreen> {
             name: g.displayName,
             symbol: g.localSettings.icon,
             isGroup: true,
+            seed: g.id,
+            size: 46,
           ),
           title: Text(
             g.displayName,
@@ -973,6 +978,142 @@ class _HomeScreenState extends State<HomeScreen> {
       await Future<void>.delayed(const Duration(milliseconds: 300));
       controller.dispose();
     }
+  }
+}
+
+/// Segmented filters (Toutes, Non lues, Groupes, Archives) on one line, even
+/// at 320 px: labels shrink rather than wrap.
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({required this.value, required this.onChanged});
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          for (final (id, label) in const [
+            ('all', 'Toutes'),
+            ('unread', 'Non lues'),
+            ('groups', 'Groupes'),
+            ('archive', 'Archives'),
+          ])
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: value == id,
+                child: Material(
+                  color: value == id
+                      ? scheme.secondaryContainer
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(9),
+                    onTap: () => onChanged(id),
+                    child: SizedBox(
+                      height: 32,
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: value == id
+                                    ? scheme.onSecondaryContainer
+                                    : scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag({
+    required this.label,
+    required this.semantics,
+    required this.background,
+    required this.foreground,
+    this.dot,
+  });
+  final String label, semantics;
+  final Color background, foreground;
+  final Color? dot;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: semantics,
+    excludeSemantics: true,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (dot != null) ...[
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+            ),
+            if (label.isNotEmpty) const SizedBox(width: 6),
+          ],
+          if (label.isNotEmpty)
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: foreground,
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ConnectedBadge extends StatelessWidget {
+  const _ConnectedBadge({required this.compact});
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Tooltip(
+      message: 'Connecté — messages chiffrés de bout en bout',
+      child: _Tag(
+        label: compact ? '' : 'Connecté',
+        semantics: 'Connecté, messages chiffrés de bout en bout',
+        background: dark ? const Color(0xFF13271F) : const Color(0xFFD1FAE5),
+        foreground: dark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
+        dot: const Color(0xFF34D399),
+      ),
+    );
   }
 }
 
