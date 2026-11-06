@@ -72,17 +72,17 @@ void main() {
         find.text('Configure le serveur pour communiquer entre tes appareils.'),
         findsOneWidget,
       );
-      await tester.tap(find.byTooltip('Configurer le serveur'));
+      await tester.tap(find.text('Serveur'));
       await tester.pumpAndSettle();
       await tester.enterText(
-        find.byType(TextField),
+        find.byType(TextField).last,
         'http://relay.example.com',
       );
       await tester.tap(find.text('Enregistrer et connecter'));
       await tester.pumpAndSettle();
       expect(find.textContaining('HTTPS/WSS'), findsOneWidget);
       await tester.enterText(
-        find.byType(TextField),
+        find.byType(TextField).last,
         'https://relay.example.com',
       );
       await tester.tap(find.text('Enregistrer et connecter'));

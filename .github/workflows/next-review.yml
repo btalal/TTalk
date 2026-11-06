@@ -1,0 +1,110 @@
+name: Validate next TTalk clients
+
+on:
+  pull_request:
+    branches: ['main/ttalk']
+  push:
+    branches: ['feature/ttalk-next']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: next-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: npm ci --prefix server
+      - run: npm test --prefix server
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub
+
+  apple:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Build iPhone Release without distribution credentials
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p build/review/Payload
+          cp -R build/ios/iphoneos/Runner.app build/review/Payload/
+          (cd build/review && ditto -c -k --keepParent Payload ttalk-next-ios-unsigned.ipa)
+      - name: Build Mac Release without distribution credentials
+        run: |
+          flutter build macos --release --config-only
+          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath build/macos-review CODE_SIGNING_ALLOWED=NO build
+          ditto -c -k --keepParent build/macos-review/Build/Products/Release/ttalk.app build/review/ttalk-next-macos-unsigned.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: next-apple-unsigned
+          path: |
+            build/review/*.ipa
+            build/review/*.zip
+
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - name: Install pinned native tools
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'ndk;29.0.14206865' 'cmake;3.22.1' 'platforms;android-36' 'build-tools;36.0.0'
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: next-android-unsigned
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: next-windows-unsigned
+          path: build/windows/x64/runner/Release/

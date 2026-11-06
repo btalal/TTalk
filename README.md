@@ -4,6 +4,9 @@
 
 # TTalk
 
+> **Développement 0.6** : [fonctions et validation en cours](docs/NEXT_VERSION.md).
+> Les nouvelles fonctions de cette branche ne sont pas encore une version finale.
+
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
 
 **TTalk** est une messagerie chiffrée et open source pour Windows, Android, iPhone et macOS. Échangez des messages, des fichiers

@@ -2,7 +2,10 @@
 
 Mis à jour le **4 novembre 2026**. Ce document décrit les versions stables
 Windows et Android 0.5.1 et le relais utilisant le **protocole 2**.
-iPhone reste en préversion.
+Les versions finales iPhone et Mac 0.5.1 ont été validées pour installation
+personnelle via Xcode ; voir [les essais Apple](APPLE_VALIDATION.md).
+Les nouvelles protections de la branche 0.6 restent en développement et sont
+décrites séparément dans [NEXT_SECURITY.md](NEXT_SECURITY.md).
 
 TTalk chiffre le contenu des échanges de bout en bout. Les protections dépendent
 également de la vérification des contacts et de la sécurité des appareils.
@@ -52,7 +55,7 @@ clés, les envois en attente et les personnalisations locales.
 
 Les **clés d’identité sont conservées séparément**, via le stockage sécurisé du
 système : stockage sécurisé Windows, mécanismes reposant sur le Keystore Android,
-et Trousseau iOS pour la préversion iPhone. Leur protection dépend du système et
+et Trousseau sur iPhone et macOS. Leur protection dépend du système et
 de son état de verrouillage ; elles ne sont pas simplement chiffrées par le PIN.
 
 Le PIN n’est pas transmis au relais ni enregistré en clair. Un vérifieur chiffré

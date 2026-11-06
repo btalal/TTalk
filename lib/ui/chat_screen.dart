@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -16,11 +17,13 @@ class ChatScreen extends StatefulWidget {
     required this.app,
     this.conversation,
     this.group,
+    this.embedded = false,
   });
 
   final AppState app;
   final Conversation? conversation;
   final Group? group;
+  final bool embedded;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -30,6 +33,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scroll = ScrollController();
   bool _sending = false;
+  ChatMessage? _replyTo;
+  bool _searching = false;
+  String _search = '';
 
   String get _chatId => widget.group?.id ?? widget.conversation!.id;
   bool get _isGroup => widget.group != null;
@@ -80,12 +86,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     setState(() => _sending = true);
     try {
       if (_isGroup) {
-        await app.sendGroupMessage(_chatId, text);
+        await app.sendGroupMessage(_chatId, text, replyTo: _replyTo);
       } else {
-        await app.sendMessage(_chatId, text);
+        await app.sendMessage(_chatId, text, replyTo: _replyTo);
       }
       if (!mounted) return;
-      if (_controller.text == draft) _controller.clear();
+      if (_controller.text == draft) {
+        _controller.clear();
+        setState(() => _replyTo = null);
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _scroll.hasClients) {
           _scroll.jumpTo(_scroll.position.maxScrollExtent);
@@ -107,6 +116,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _messageAction(ChatMessage message, String action) async {
+    if (action == 'reply') {
+      setState(() => _replyTo = message);
+      return;
+    }
     if (action == 'copy') {
       await Clipboard.setData(ClipboardData(text: message.plaintext ?? ''));
       return;
@@ -161,8 +174,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _build(BuildContext context, AppState app, List<ChatMessage> msgs) {
+    final visible = msgs
+        .where(
+          (m) =>
+              _search.isEmpty ||
+              (m.plaintext ?? '').toLowerCase().contains(
+                _search.toLowerCase(),
+              ) ||
+              (m.fileName ?? '').toLowerCase().contains(_search.toLowerCase()),
+        )
+        .toList();
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: !widget.embedded,
         title: Row(
           children: [
             SizedBox(
@@ -183,7 +207,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   Text(
                     _isGroup
                         ? '${app.groups.where((g) => g.id == _chatId).firstOrNull?.memberIds.length ?? 0} membres — chiffré de bout en bout'
-                        : 'Chiffré de bout en bout',
+                        : (app.isVerified(_chatId)
+                              ? 'Contact vérifié · Chiffré de bout en bout'
+                              : 'Chiffré · Contact à vérifier'),
                     style: Theme.of(context).textTheme.bodySmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -194,6 +220,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Rechercher dans cette conversation',
+            icon: const Icon(Icons.search),
+            onPressed: () => setState(() => _searching = !_searching),
+          ),
           if (_isGroup && !widget.group!.requiresRecreation)
             IconButton(
               tooltip: 'Membres du groupe',
@@ -211,20 +242,40 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             chatId: _chatId,
             isGroup: _isGroup,
             onRemoved: () {
-              if (mounted) Navigator.of(context).pop();
+              if (mounted && !widget.embedded) Navigator.of(context).pop();
             },
           ),
         ],
       ),
       body: Column(
         children: [
+          if (_searching)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: TextField(
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Rechercher dans les messages',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    tooltip: 'Fermer la recherche',
+                    icon: const Icon(Icons.close),
+                    onPressed: () => setState(() {
+                      _search = '';
+                      _searching = false;
+                    }),
+                  ),
+                ),
+                onChanged: (v) => setState(() => _search = v),
+              ),
+            ),
           Expanded(
             child: ListView.builder(
               controller: _scroll,
               padding: const EdgeInsets.all(12),
-              itemCount: msgs.length,
+              itemCount: visible.length,
               itemBuilder: (context, i) {
-                final m = msgs[i];
+                final m = visible[i];
                 if (m.isSystem) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -236,126 +287,180 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   );
                 }
                 final mine = m.fromMe;
-                return Align(
-                  alignment: mine
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.75,
-                    ),
-                    decoration: BoxDecoration(
-                      color: mine
-                          ? Theme.of(context).colorScheme.primaryContainer
-                          : Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if (m.isGroup && !mine)
-                          Text(
-                            app.conversations
-                                    .where((c) => c.peerId == m.senderId)
-                                    .firstOrNull
-                                    ?.displayName ??
-                                m.senderName ??
-                                '?',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (i == 0 ||
+                        DateUtils.dateOnly(visible[i - 1].timestamp) !=
+                            DateUtils.dateOnly(m.timestamp))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Text(
+                          DateFormat.yMMMd().format(m.timestamp),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ),
+                    Align(
+                      alignment: mine
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: GestureDetector(
+                        onLongPress: () => _showMessageMenu(m),
+                        onSecondaryTap: () => _showMessageMenu(m),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
                           ),
-                        if (m.isFile)
-                          InkWell(
-                            onTap: m.filePath == null
-                                ? null
-                                : () => OpenFilex.open(m.filePath!),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.attach_file),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        m.fileName ?? 'fichier',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                          constraints: BoxConstraints(
+                            maxWidth: (MediaQuery.sizeOf(context).width * 0.75)
+                                .clamp(200.0, 620.0),
+                          ),
+                          decoration: BoxDecoration(
+                            color: mine
+                                ? Theme.of(context).colorScheme.primaryContainer
+                                : Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              if (m.isGroup && !mine)
+                                Text(
+                                  app.conversations
+                                          .where((c) => c.peerId == m.senderId)
+                                          .firstOrNull
+                                          ?.displayName ??
+                                      m.senderName ??
+                                      '?',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary,
+                                  ),
+                                ),
+                              if (m.replyToId != null)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(8),
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.surface
+                                        .withValues(alpha: .55),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border(
+                                      left: BorderSide(
+                                        width: 3,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
                                       ),
-                                      Text(
-                                        '${formatFileSize(m.fileSize ?? 0)} — transfert chiffré',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    m.replyPreview ?? 'Message cité',
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall,
+                                  ),
+                                ),
+                              if (m.isFile)
+                                InkWell(
+                                  onTap: m.filePath == null
+                                      ? null
+                                      : () => OpenFilex.open(m.filePath!),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.attach_file),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              m.fileName ?? 'fichier',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              '${formatFileSize(m.fileSize ?? 0)} — transfert chiffré',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
+                                )
+                              else
+                                Text(m.plaintext ?? '🔒 message chiffré'),
+                              if (m.reactions.isNotEmpty)
+                                Wrap(
+                                  spacing: 4,
+                                  children: [
+                                    for (final emoji
+                                        in m.reactions.values.toSet())
+                                      ActionChip(
+                                        label: Text(
+                                          '$emoji ${m.reactions.values.where((v) => v == emoji).length}',
+                                        ),
+                                        onPressed:
+                                            app.canReact(
+                                              _chatId,
+                                              isGroup: _isGroup,
+                                            )
+                                            ? () => _react(m, emoji)
+                                            : null,
+                                      ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          )
-                        else
-                          Text(m.plaintext ?? '🔒 message chiffré'),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              DateFormat.Hm().format(m.timestamp),
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                            PopupMenuButton<String>(
-                              tooltip: 'Actions du message',
-                              iconSize: 16,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 160),
-                              onSelected: (action) => _messageAction(m, action),
-                              itemBuilder: (_) => [
-                                if (!m.isFile)
-                                  const PopupMenuItem(
-                                    value: 'copy',
-                                    child: Text('Copier le texte'),
+                              const SizedBox(height: 2),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    DateFormat.Hm().format(m.timestamp),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall,
                                   ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Supprimer pour moi'),
-                                ),
-                              ],
-                            ),
-                            if (mine) ...[
-                              const SizedBox(width: 4),
-                              Icon(
-                                m.pending
-                                    ? Icons.schedule
-                                    : m.delivered
-                                    ? Icons.done_all
-                                    : Icons.check,
-                                size: 14,
-                                color: m.read
-                                    ? Colors.blueAccent
-                                    : Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.color,
+                                  if (mine) ...[
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      m.pending
+                                          ? Icons.schedule
+                                          : m.delivered
+                                          ? Icons.done_all
+                                          : Icons.check,
+                                      size: 14,
+                                      color: m.read
+                                          ? Colors.blueAccent
+                                          : Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.color,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ],
-                          ],
+                          ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 );
               },
             ),
@@ -368,40 +473,169 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
             )
           else
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      tooltip: 'Pièce jointe chiffrée',
-                      onPressed: () => _pickFile(app),
-                      icon: const Icon(Icons.attach_file),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_replyTo != null)
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.reply),
+                    title: const Text('Répondre au message'),
+                    subtitle: Text(
+                      _replyTo!.plaintext ??
+                          _replyTo!.fileName ??
+                          'Pièce jointe',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: const InputDecoration(
-                          hintText: 'Message chiffré…',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(24)),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    trailing: IconButton(
+                      tooltip: 'Annuler la réponse',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() => _replyTo = null),
+                    ),
+                  ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Pièce jointe chiffrée',
+                          onPressed: () => _pickFile(app),
+                          icon: const Icon(Icons.attach_file),
                         ),
-                        onSubmitted: (_) => _send(app),
-                      ),
+                        Expanded(
+                          child: Focus(
+                            onKeyEvent: (_, event) {
+                              final desktop = [
+                                TargetPlatform.macOS,
+                                TargetPlatform.windows,
+                                TargetPlatform.linux,
+                              ].contains(defaultTargetPlatform);
+                              if (desktop &&
+                                  event is KeyDownEvent &&
+                                  event.logicalKey ==
+                                      LogicalKeyboardKey.enter &&
+                                  !HardwareKeyboard.instance.isShiftPressed &&
+                                  !_controller.value.composing.isValid) {
+                                _send(app);
+                                return KeyEventResult.handled;
+                              }
+                              return KeyEventResult.ignored;
+                            },
+                            child: TextField(
+                              controller: _controller,
+                              minLines: 1,
+                              maxLines: 6,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(
+                                hintText: 'Message chiffré…',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(24),
+                                  ),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          tooltip: 'Envoyer le message',
+                          onPressed: _sending ? null : () => _send(app),
+                          icon: const Icon(Icons.send),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      tooltip: 'Envoyer le message',
-                      onPressed: _sending ? null : () => _send(app),
-                      icon: const Icon(Icons.send),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _react(ChatMessage message, String emoji) async {
+    try {
+      await widget.app.react(_chatId, message.id, emoji, isGroup: _isGroup);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Réaction non enregistrée. Vérifie la compatibilité des contacts.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showMessageMenu(ChatMessage message) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.app.canReact(_chatId, isGroup: _isGroup))
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final emoji in AppState.reactionEmojis)
+                        ActionChip(
+                          label: Text(emoji),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _react(message, emoji);
+                          },
+                        ),
+                    ],
+                  ),
+                )
+              else
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'Réactions : échange d’abord un message avec la version à jour de chaque contact.',
+                  ),
+                ),
+              ListTile(
+                leading: const Icon(Icons.reply),
+                title: const Text('Répondre'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _messageAction(message, 'reply');
+                },
+              ),
+              if (!message.isFile)
+                ListTile(
+                  leading: const Icon(Icons.copy),
+                  title: const Text('Copier le texte'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _messageAction(message, 'copy');
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: const Text('Supprimer pour moi'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _messageAction(message, 'delete');
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -487,7 +721,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                     Icons.person_remove,
                                     color: Colors.red,
                                   ),
-                                  onPressed: () => app.removeMember(gg.id, id),
+                                  onPressed: () async {
+                                    try {
+                                      await app.removeMember(gg.id, id);
+                                    } catch (error) {
+                                      if (ctx.mounted) {
+                                        ScaffoldMessenger.of(ctx).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              error is StateError
+                                                  ? error.message
+                                                  : 'Retrait non enregistré.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
                                 ),
                             ],
                           ),
@@ -645,6 +895,27 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () async {
+              try {
+                await app.verifyContact(_chatId, !app.isVerified(_chatId));
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (_) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text('Vérification non enregistrée.'),
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text(
+              app.isVerified(_chatId)
+                  ? 'Retirer la vérification'
+                  : 'J’ai comparé et confirmé les numéros',
+            ),
+          ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Fermer'),

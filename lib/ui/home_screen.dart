@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -5,6 +9,11 @@ import '../services/relay_client.dart';
 import '../state/app_state.dart';
 import 'chat_screen.dart';
 import 'chat_actions.dart';
+import 'settings_screen.dart';
+import 'qr_scanner_screen.dart';
+import '../services/pairing_invitation.dart';
+import '../models/message.dart';
+import '../models/group.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.app});
@@ -15,155 +24,403 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-  int _tab = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      if (_tabController.index != _tab) {
-        setState(() => _tab = _tabController.index);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final app = widget.app;
-    return ListenableBuilder(
-      listenable: app,
-      builder: (context, _) => Scaffold(
-        appBar: AppBar(
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/branding/ttalk.png',
-                width: 40,
-                height: 40,
-                excludeFromSemantics: true,
-              ),
-              const SizedBox(width: 8),
-              const Text('TTalk'),
-            ],
+class _HomeScreenState extends State<HomeScreen> {
+  int _tab = 0, _nav = 0;
+  String _query = '', _filter = 'all';
+  Conversation? _selectedConversation;
+  Group? _selectedGroup;
+  bool get _wide => MediaQuery.sizeOf(context).width >= 960;
+  void _openChat({Conversation? conversation, Group? group}) {
+    if (_wide) {
+      setState(() {
+        _selectedConversation = conversation;
+        _selectedGroup = group;
+      });
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            app: widget.app,
+            conversation: conversation,
+            group: group,
           ),
-          bottom: TabBar(
-            controller: _tabController,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-            tabs: [
-              const Tab(
-                text: 'Conversations',
-                icon: Icon(Icons.chat_bubble_outline),
-              ),
-              Tab(
-                text: 'Groupes',
-                icon: Badge(
-                  isLabelVisible: app.pendingInvites.isNotEmpty,
-                  label: Text('${app.pendingInvites.length}'),
-                  child: const Icon(Icons.groups_outlined),
-                ),
-              ),
-              const Tab(text: 'Contacts', icon: Icon(Icons.contacts_outlined)),
-            ],
-          ),
-          actions: MediaQuery.sizeOf(context).width < 600
-              ? [
-                  PopupMenuButton<String>(
-                    tooltip: 'Menu TTalk',
-                    onSelected: (action) {
-                      switch (action) {
-                        case 'server':
-                          _showRelaySettings(context, app);
-                        case 'profile':
-                          _showProfile(context, app);
-                        case 'group':
-                          _showNewGroupDialog(context, app);
-                        case 'code':
-                          _showMyCode(context, app);
-                        case 'pair':
-                          _showPairDialog(context, app);
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(
-                        value: 'server',
-                        child: Text('Configurer le serveur'),
-                      ),
-                      const PopupMenuItem(
-                        value: 'profile',
-                        child: Text('Mon nom'),
-                      ),
-                      const PopupMenuItem(
-                        value: 'code',
-                        child: Text("Mon code d’appairage"),
-                      ),
-                      const PopupMenuItem(
-                        value: 'pair',
-                        child: Text('Appairer un contact'),
-                      ),
-                      if (_tab == 1)
-                        const PopupMenuItem(
-                          value: 'group',
-                          child: Text('Nouveau groupe'),
-                        ),
-                    ],
-                  ),
-                ]
-              : [
-                  IconButton(
-                    tooltip: 'Configurer le serveur',
-                    icon: const Icon(Icons.dns_outlined),
-                    onPressed: () => _showRelaySettings(context, app),
-                  ),
-                  IconButton(
-                    tooltip: 'Mon nom',
-                    icon: const Icon(Icons.account_circle_outlined),
-                    onPressed: () => _showProfile(context, app),
-                  ),
-                  if (_tab == 1)
-                    IconButton(
-                      tooltip: 'Nouveau groupe',
-                      icon: const Icon(Icons.group_add),
-                      onPressed: () => _showNewGroupDialog(context, app),
-                    ),
-                  IconButton(
-                    tooltip: 'Mon code d\'appairage',
-                    icon: const Icon(Icons.qr_code),
-                    onPressed: () => _showMyCode(context, app),
-                  ),
-                  IconButton(
-                    tooltip: 'Appairer avec un code',
-                    icon: const Icon(Icons.person_add),
-                    onPressed: () => _showPairDialog(context, app),
-                  ),
-                ],
         ),
-        body: Column(
-          children: [
+      );
+    }
+  }
+
+  Future<void> _scan() async {
+    final value = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => const QrScannerScreen()));
+    if (value == null || !mounted) return;
+    await _pairInvitation(value);
+  }
+
+  Future<void> _pairInvitation(String value) async {
+    try {
+      final invitation = PairingInvitation.parse(value);
+      if (invitation.relay.isNotEmpty &&
+          RelayClient.normalizeUrl(widget.app.relayUrl) != invitation.relay) {
+        throw StateError(
+          'Cette invitation utilise ${invitation.relay}. Configure et vérifie ce relais avant de continuer.',
+        );
+      }
+      final error = await widget.app.pairInvitation(value);
+      if (error != null) throw StateError(error);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    }
+  }
+
+  void _navigate(int index) => setState(() {
+    _nav = index;
+    _tab = index == 1 ? 2 : 0;
+    _filter = 'all';
+  });
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.app,
+    builder: (context, _) {
+      final app = widget.app;
+      final settings = SettingsScreen(app: app, embedded: true);
+      final list = Column(
+        children: [
+          if (MediaQuery.viewInsetsOf(context).bottom == 0)
             _RelayBanner(
               app: app,
               configure: () => _showRelaySettings(context, app),
             ),
-            Expanded(
-              child: switch (_tab) {
-                0 => _buildConversations(context, app),
-                1 => _buildGroups(context, app),
-                _ => _buildConversations(context, app, contactsOnly: true),
-              },
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: TextField(
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Rechercher un contact, message ou fichier',
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+          if (_nav == 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Wrap(
+                spacing: 6,
+                children: [
+                  for (final choice in const [
+                    ('all', 'Toutes'),
+                    ('unread', 'Non lues'),
+                    ('groups', 'Groupes'),
+                    ('archive', 'Archives'),
+                  ])
+                    FilterChip(
+                      label: Text(choice.$2),
+                      selected: _filter == choice.$1,
+                      onSelected: (_) => setState(() {
+                        _filter = choice.$1;
+                        _tab = _filter == 'groups' ? 1 : 0;
+                      }),
+                    ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: _tab == 1
+                ? _buildGroups(context, app)
+                : _nav == 1
+                ? _buildConversations(context, app, contactsOnly: true)
+                : _buildOverview(context, app),
+          ),
+        ],
+      );
+      final title = _nav == 1
+          ? 'Contacts'
+          : _nav == 2
+          ? 'Réglages'
+          : 'TTalk';
+      final toolbar = AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/branding/ttalk.png',
+              width: 30,
+              height: 30,
+              excludeFromSemantics: true,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
-      ),
+        actions: [
+          IconButton(
+            tooltip: 'Appairer un contact',
+            icon: const Icon(Icons.person_add_alt_1),
+            onPressed: () => _showPairDialog(context, app),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Menu TTalk',
+            onSelected: (action) {
+              switch (action) {
+                case 'server':
+                  _showRelaySettings(context, app);
+                case 'profile':
+                  _showProfile(context, app);
+                case 'code':
+                  _showMyCode(context, app);
+                case 'group':
+                  _showNewGroupDialog(context, app);
+                case 'lock':
+                  app.lockVault();
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'code', child: Text('Mon code d’appairage')),
+              PopupMenuItem(value: 'group', child: Text('Nouveau groupe')),
+              PopupMenuItem(value: 'profile', child: Text('Mon nom')),
+              PopupMenuItem(
+                value: 'server',
+                child: Text('Configurer le serveur'),
+              ),
+              PopupMenuItem(
+                value: 'lock',
+                child: Text('Verrouiller maintenant'),
+              ),
+            ],
+          ),
+        ],
+      );
+      if (!_wide) {
+        return Scaffold(
+          appBar: toolbar,
+          body: _nav == 2 ? settings : list,
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _nav,
+            onDestinationSelected: _navigate,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.chat_bubble_outline),
+                selectedIcon: Icon(Icons.chat_bubble),
+                label: 'Discussions',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.contacts_outlined),
+                selectedIcon: Icon(Icons.contacts),
+                label: 'Contacts',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: 'Réglages',
+              ),
+            ],
+          ),
+        );
+      }
+      final selectedId = _selectedConversation?.id ?? _selectedGroup?.id;
+      final exists =
+          app.conversations.any((c) => c.id == selectedId) ||
+          app.groups.any((g) => g.id == selectedId);
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: _nav,
+              onDestinationSelected: _navigate,
+              labelType: NavigationRailLabelType.all,
+              leading: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Image.asset(
+                  'assets/branding/ttalk.png',
+                  width: 38,
+                  height: 38,
+                ),
+              ),
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.chat_bubble_outline),
+                  label: Text('Discussions'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.contacts_outlined),
+                  label: Text('Contacts'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  label: Text('Réglages'),
+                ),
+              ],
+            ),
+            SizedBox(
+              width: 350,
+              child: Scaffold(appBar: toolbar, body: list),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: _nav == 2
+                  ? settings
+                  : exists
+                  ? ChatScreen(
+                      key: ValueKey(selectedId),
+                      app: app,
+                      conversation: _selectedConversation,
+                      group: _selectedGroup,
+                      embedded: true,
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.forum_outlined,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Une conversation, en toute simplicité.',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Choisis un contact ou ajoute une nouvelle conversation.',
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+
+  Widget _buildOverview(BuildContext context, AppState app) {
+    final entries =
+        <({String id, Conversation? contact, Group? group})>[
+              for (final c in app.visibleConversations)
+                (id: c.id, contact: c, group: null),
+              for (final g in app.groups) (id: g.id, contact: null, group: g),
+            ]
+            .where(
+              (e) =>
+                  app.matchesSearch(e.id, _query) &&
+                  app.settingsFor(e.id).archived == (_filter == 'archive') &&
+                  (_filter != 'unread' || app.unreadCount(e.id) > 0),
+            )
+            .toList();
+    DateTime lastAt(String id) =>
+        app.messagesByConv[id]?.lastOrNull?.timestamp ?? DateTime(1970);
+    entries.sort((a, b) {
+      final ap = app.settingsFor(a.id).pinned,
+          bp = app.settingsFor(b.id).pinned;
+      if (ap != bp) return ap ? -1 : 1;
+      return lastAt(b.id).compareTo(lastAt(a.id));
+    });
+    if (entries.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.forum_outlined, size: 36),
+              const SizedBox(height: 12),
+              Text(
+                _query.isNotEmpty
+                    ? 'Aucun résultat sur cet appareil.'
+                    : _filter == 'archive'
+                    ? 'Aucune conversation archivée.'
+                    : 'Aucune conversation à afficher.',
+              ),
+              if (_filter == 'all' && _query.isEmpty)
+                TextButton.icon(
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Ajouter un premier contact'),
+                  onPressed: () => _showPairDialog(context, app),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      itemCount: entries.length,
+      itemBuilder: (context, i) {
+        final e = entries[i], s = app.settingsFor(entries[i].id);
+        final last = app.messagesByConv[e.id]?.lastOrNull;
+        return ListTile(
+          selected:
+              _wide &&
+              (_selectedConversation?.id ?? _selectedGroup?.id) == e.id,
+          selectedTileColor: Theme.of(context).colorScheme.primaryContainer
+              .withValues(alpha: .45),
+          leading: ChatAvatar(
+            name: app.chatName(e.id),
+            symbol: app.chatIcon(e.id),
+            isGroup: e.group != null,
+          ),
+          title: Row(
+            children: [
+              if (s.pinned)
+                const Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: Icon(Icons.push_pin, size: 14),
+                ),
+              Expanded(
+                child: Text(
+                  app.chatName(e.id),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          subtitle: Text(
+            last == null
+                ? 'Commencer la conversation'
+                : (last.fromMe ? 'Moi : ' : '') +
+                      (last.isFile
+                          ? 'Pièce jointe : ${last.fileName}'
+                          : last.plaintext ?? 'Message'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (last != null)
+                    Text(
+                      DateFormat.Hm().format(last.timestamp),
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  if (app.unreadCount(e.id) > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Badge(label: Text('${app.unreadCount(e.id)}')),
+                    ),
+                ],
+              ),
+              ChatActionsMenu(app: app, chatId: e.id, isGroup: e.group != null),
+            ],
+          ),
+          onTap: () => _openChat(conversation: e.contact, group: e.group),
+        );
+      },
     );
   }
 
@@ -172,13 +429,28 @@ class _HomeScreenState extends State<HomeScreen>
     AppState app, {
     bool contactsOnly = false,
   }) {
-    final contacts = contactsOnly
-        ? app.conversations
-        : app.visibleConversations;
+    final contacts =
+        (contactsOnly ? app.conversations : app.visibleConversations)
+            .where(
+              (c) =>
+                  app.matchesSearch(c.id, _query) &&
+                  (contactsOnly ||
+                      (c.localSettings.archived == (_filter == 'archive') &&
+                          (_filter != 'unread' || app.unreadCount(c.id) > 0))),
+            )
+            .toList()
+          ..sort((a, b) {
+            if (a.localSettings.pinned != b.localSettings.pinned) {
+              return a.localSettings.pinned ? -1 : 1;
+            }
+            return (b.lastMessageAt ?? b.createdAt).compareTo(
+              a.lastMessageAt ?? a.createdAt,
+            );
+          });
     if (contacts.isEmpty) {
       return const Center(
         child: Text(
-          'Aucune conversation.\nUtilise l’action d’appairage pour ajouter un contact.',
+          'Aucune conversation à afficher.\nAjoute un contact ou modifie les filtres.',
           textAlign: TextAlign.center,
         ),
       );
@@ -190,6 +462,9 @@ class _HomeScreenState extends State<HomeScreen>
         final msgs = app.messagesByConv[c.id] ?? [];
         final last = msgs.isEmpty ? null : msgs.last;
         return ListTile(
+          selected: _wide && _selectedConversation?.id == c.id,
+          selectedTileColor: Theme.of(context).colorScheme.primaryContainer
+              .withValues(alpha: .45),
           leading: ChatAvatar(
             name: c.displayName,
             symbol: c.localSettings.icon,
@@ -216,6 +491,16 @@ class _HomeScreenState extends State<HomeScreen>
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (c.localSettings.pinned)
+                const Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: Icon(Icons.push_pin, size: 14),
+                ),
+              if (app.unreadCount(c.id) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Badge(label: Text('${app.unreadCount(c.id)}')),
+                ),
               if (!contactsOnly && last != null)
                 Text(
                   DateFormat.Hm().format(last.timestamp),
@@ -224,11 +509,7 @@ class _HomeScreenState extends State<HomeScreen>
               ChatActionsMenu(app: app, chatId: c.id),
             ],
           ),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ChatScreen(app: app, conversation: c),
-            ),
-          ),
+          onTap: () => _openChat(conversation: c),
         );
       },
     );
@@ -262,7 +543,20 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
     }
-    for (final g in app.groups) {
+    final filteredGroups =
+        app.groups
+            .where(
+              (g) =>
+                  app.matchesSearch(g.id, _query) &&
+                  g.localSettings.archived == (_filter == 'archive'),
+            )
+            .toList()
+          ..sort(
+            (a, b) => a.localSettings.pinned == b.localSettings.pinned
+                ? a.displayName.compareTo(b.displayName)
+                : (a.localSettings.pinned ? -1 : 1),
+          );
+    for (final g in filteredGroups) {
       final msgs = app.messagesByConv[g.id] ?? [];
       final last = msgs.isEmpty ? null : msgs.last;
       children.add(
@@ -287,11 +581,7 @@ class _HomeScreenState extends State<HomeScreen>
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ChatScreen(app: app, group: g),
-            ),
-          ),
+          onTap: () => _openChat(group: g),
         ),
       );
     }
@@ -534,12 +824,14 @@ class _HomeScreenState extends State<HomeScreen>
       );
       return;
     }
-    app.relay.startPairing();
+    app.startPairing();
     showDialog<void>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, update) => AlertDialog(
+      builder: (ctx) => ListenableBuilder(
+        listenable: app,
+        builder: (ctx, _) => AlertDialog(
           title: const Text('Mon code d\'appairage'),
+          scrollable: true,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -551,6 +843,34 @@ class _HomeScreenState extends State<HomeScreen>
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              if (app.relay.myPairingCode != null) ...[
+                const SizedBox(height: 12),
+                SizedBox.square(
+                  dimension: 196,
+                  child: QrImageView(
+                    data: PairingInvitation(
+                      code: app.relay.myPairingCode!,
+                      relay: app.relayUrl,
+                      peerId: app.myId,
+                    ).link,
+                    size: 196,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Copier l’invitation'),
+                  onPressed: () => Clipboard.setData(
+                    ClipboardData(
+                      text: PairingInvitation(
+                        code: app.relay.myPairingCode!,
+                        relay: app.relayUrl,
+                        peerId: app.myId,
+                      ).link,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               const Text(
                 'Donne ce code à ton contact (par un autre canal) pour créer une conversation chiffrée.',
@@ -559,8 +879,7 @@ class _HomeScreenState extends State<HomeScreen>
               const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: () {
-                  app.relay.startPairing();
-                  update(() {});
+                  app.startPairing();
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Nouveau code'),
@@ -592,15 +911,24 @@ class _HomeScreenState extends State<HomeScreen>
             content: TextField(
               controller: controller,
               enabled: !busy,
-              textCapitalization: TextCapitalization.characters,
-              maxLength: 6,
+              autocorrect: false,
+              maxLength: 2048,
               decoration: InputDecoration(
-                labelText: 'Code reçu de ton contact',
+                labelText: 'Code ou lien reçu du contact',
                 errorText: error,
                 border: const OutlineInputBorder(),
               ),
             ),
             actions: [
+              if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS)
+                TextButton.icon(
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: const Text('Scanner un QR code'),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _scan();
+                  },
+                ),
               TextButton(
                 onPressed: busy ? null : () => Navigator.of(ctx).pop(),
                 child: const Text('Annuler'),
@@ -616,7 +944,7 @@ class _HomeScreenState extends State<HomeScreen>
                           error = null;
                         });
                         try {
-                          final message = await app.pairWithCode(code);
+                          final message = await app.pairInvitation(code);
                           if (!ctx.mounted) return;
                           if (message == null) {
                             Navigator.of(ctx).pop();

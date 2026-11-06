@@ -106,7 +106,7 @@ void main() {
     final alice = await IdentityKeys.generate();
     final relay = MemoryRelay('bob', 'Bob');
     final bob = AppState(store: MemoryStore(), relay: relay);
-    await bob.init();
+    await bob.init(pin: '123456');
     await relay.onInbound!({
       'type': 'peer_matched',
       'peerId': 'alice',
@@ -143,7 +143,7 @@ void main() {
   test('group read receipts update only sent messages in that group', () async {
     final relay = MemoryRelay('alice', 'Alice');
     final app = AppState(store: MemoryStore(), relay: relay);
-    await app.init();
+    await app.init(pin: '123456');
     final id = await app.createGroup('Amis', ['bob']);
     final message = ChatMessage(
       id: 'm',
@@ -240,7 +240,7 @@ void main() {
       final peer = await IdentityKeys.generate();
       final relay = MemoryRelay('bob', 'Bob');
       final app = AppState(store: MemoryStore(), relay: relay);
-      await app.init();
+      await app.init(pin: '123456');
       await relay.onInbound!({
         'type': 'peer_matched',
         'peerId': 'alice',

@@ -12,6 +12,14 @@ livraison ni compatibilité avant validation sur appareils réels.
 - Relais auto-hébergeable et file d’attente des messages chiffrés.
 - Appairage et vérification des numéros de sécurité.
 
+## Lot 0.6 en développement
+
+Interface bureau à deux colonnes et navigation mobile, recherche locale, QR,
+épinglage/archives, réponses/réactions, verrouillage et sauvegarde chiffrée.
+Les compilations natives et les nouveaux parcours matériels restent à valider.
+Voir [le suivi détaillé](NEXT_VERSION.md) et [les limites de sécurité](NEXT_SECURITY.md).
+Les notifications push sont reportées à la demande du propriétaire.
+
 ## Prochaines étapes
 
 - Étendre les essais Apple aux groupes, pièces jointes, interruptions réseau

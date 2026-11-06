@@ -32,7 +32,11 @@ class DelayedSendApp extends AppState {
   final sent = <String>[];
   final completion = Completer<void>();
   @override
-  Future<void> sendMessage(String conversationId, String text) {
+  Future<void> sendMessage(
+    String conversationId,
+    String text, {
+    ChatMessage? replyTo,
+  }) {
     sent.add(text);
     return completion.future;
   }
@@ -77,7 +81,9 @@ void main() {
     final app = AppState(store: MemoryStore(), relay: relay);
     await app.init();
     await tester.pumpWidget(MaterialApp(home: HomeScreen(app: app)));
-    await tester.tap(find.byIcon(Icons.qr_code));
+    await tester.tap(find.byTooltip('Menu TTalk'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mon code d’appairage'));
     await tester.pumpAndSettle();
     expect(find.text('ABC234'), findsOneWidget);
     await tester.tap(find.text('Nouveau code'));
@@ -124,10 +130,10 @@ void main() {
           home: ChatScreen(app: app, conversation: contact()),
         ),
       );
-      await tester.enterText(find.byType(TextField), 'Premier message');
+      await tester.enterText(find.byType(TextField).last, 'Premier message');
       await tester.tap(find.byIcon(Icons.send));
       await tester.pump();
-      await tester.enterText(find.byType(TextField), 'Brouillon suivant');
+      await tester.enterText(find.byType(TextField).last, 'Brouillon suivant');
       // A keyboard submit must also respect the send already in progress.
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pump();
@@ -150,9 +156,11 @@ void main() {
       await tester.pumpWidget(MaterialApp(home: HomeScreen(app: app)));
       await tester.tap(find.text('Groupes'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Nouveau groupe'));
+      await tester.tap(find.byTooltip('Menu TTalk'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Amis');
+      await tester.tap(find.text('Nouveau groupe'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Amis');
       await tester.tap(find.byType(CheckboxListTile));
       await tester.tap(find.text('Créer'));
       await tester.pumpAndSettle();
@@ -172,16 +180,16 @@ void main() {
     final relay = PairingRelay();
     final app = AppState(store: MemoryStore(), relay: relay);
     await tester.pumpWidget(MaterialApp(home: HomeScreen(app: app)));
-    await tester.tap(find.byIcon(Icons.person_add));
+    await tester.tap(find.byTooltip('Appairer un contact'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'AB');
+    await tester.enterText(find.byType(TextField).last, 'AB');
     await tester.tap(find.text('Appairer'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(relay.answers, isEmpty);
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.textContaining('6 lettres ou chiffres'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'abc234');
+    await tester.enterText(find.byType(TextField).last, 'abc234');
     await tester.tap(find.text('Appairer'));
     await tester.pumpAndSettle();
     expect(relay.answers, ['ABC234']);
@@ -194,9 +202,11 @@ void main() {
     (tester) async {
       final app = FailedProfileApp();
       await tester.pumpWidget(MaterialApp(home: HomeScreen(app: app)));
-      await tester.tap(find.byTooltip('Mon nom'));
+      await tester.tap(find.byTooltip('Menu TTalk'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Nouveau nom');
+      await tester.tap(find.text('Mon nom'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Nouveau nom');
       await tester.tap(find.text('Enregistrer'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);

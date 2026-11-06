@@ -10,6 +10,20 @@ import 'package:ttalk/services/relay_client.dart';
 import 'package:ttalk/services/secure_store.dart';
 
 class MemoryStore implements SecureStore {
+  bool _unlocked = false;
+  @override
+  bool get isUnlocked => _unlocked;
+  @override
+  void lock() {
+    _unlocked = false;
+  }
+
+  @override
+  int get autoLockSeconds => 300;
+  @override
+  bool get biometricsEnabled => false;
+  @override
+  Future<bool> biometricAvailable() async => false;
   bool failWrites = false;
   List<Conversation> savedConversations = [];
   List<OutboundPacket> savedOutbox = [];
@@ -40,12 +54,13 @@ class MemoryStore implements SecureStore {
   bool get hasPin => _hasPin;
   @override
   Future<void> setupPin(String pin) async {
+    _unlocked = true;
     _hasPin = true;
     _pin = pin;
   }
 
   @override
-  Future<bool> unlockWithPin(String pin) async => _pin == pin;
+  Future<bool> unlockWithPin(String pin) async => _unlocked = _pin == pin;
   @override
   Future<void> saveData({
     required List<Conversation> conversations,

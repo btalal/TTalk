@@ -17,7 +17,7 @@ void main() {
     final bob = AppState(store: MemoryStore(), relay: bobRelay);
     final carol = AppState(store: MemoryStore(), relay: carolRelay);
     for (final app in [alice, bob, carol]) {
-      await app.init();
+      await app.init(pin: '123456');
     }
     final id = await alice.createGroup('Amis', ['bob', 'carol']);
     final key = base64Encode(await alice.groupKey(id)!.extractBytes());
@@ -89,8 +89,8 @@ void main() {
     final aliceStore = MemoryStore(), bobStore = MemoryStore();
     final alice = AppState(store: aliceStore, relay: aliceRelay);
     final bob = AppState(store: bobStore, relay: bobRelay);
-    await alice.init();
-    await bob.init();
+    await alice.init(pin: '123456');
+    await bob.init(pin: '123456');
     final id = await alice.createGroup('Amis', ['bob']);
     final key = alice.groupKey(id)!;
     final invite = GroupInvite(

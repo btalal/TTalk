@@ -21,7 +21,12 @@ class ChatMessage {
     this.fileSize,
     this.filePath,
     this.readBy = const [],
-  });
+    this.replyToId,
+    this.replyPreview,
+    Map<String, String>? reactions,
+    Map<String, int>? reactionVersions,
+  }) : reactions = reactions ?? {},
+       reactionVersions = reactionVersions ?? {};
 
   final String id;
   final String conversationId;
@@ -40,6 +45,10 @@ class ChatMessage {
   int? fileSize;
   String? filePath;
   List<String> readBy;
+  final String? replyToId;
+  final String? replyPreview;
+  final Map<String, String> reactions;
+  final Map<String, int> reactionVersions;
 
   bool get isSystem => kind == 'system';
 
@@ -58,6 +67,10 @@ class ChatMessage {
     'isGroup': isGroup,
     'kind': kind,
     'readBy': readBy,
+    if (replyToId != null) 'replyToId': replyToId,
+    if (replyPreview != null) 'replyPreview': replyPreview,
+    'reactions': reactions,
+    'reactionVersions': reactionVersions,
     if (plaintext != null) 'plaintext': plaintext,
     if (senderName != null) 'senderName': senderName,
     if (fileName != null) 'fileName': fileName,
@@ -73,6 +86,14 @@ class ChatMessage {
     timestamp: DateTime.parse(json['timestamp'] as String),
     plaintext: json['plaintext'] as String?,
     read: json['read'] as bool? ?? false,
+    replyToId: json['replyToId'] as String?,
+    replyPreview: json['replyPreview'] as String?,
+    reactions: json['reactions'] == null
+        ? null
+        : Map<String, String>.from(json['reactions'] as Map),
+    reactionVersions: json['reactionVersions'] == null
+        ? null
+        : Map<String, int>.from(json['reactionVersions'] as Map),
     delivered: json['delivered'] as bool? ?? false,
     pending: json['pending'] as bool? ?? false,
     senderId: json['senderId'] as String?,

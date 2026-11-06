@@ -15,6 +15,7 @@ import '../models/outbound_packet.dart';
 import '../models/message.dart';
 import '../services/relay_client.dart';
 import '../services/secure_store.dart';
+import '../services/pairing_invitation.dart';
 
 class AppState extends ChangeNotifier {
   AppState({
@@ -39,6 +40,8 @@ class AppState extends ChangeNotifier {
   final Map<String, String> _peerNames = {};
   final Map<String, List<ChatMessage>> messagesByConv = {};
   bool unlocked = false;
+  bool locking = false;
+  String? _expectedPairPeer;
   String? error;
   String? get myId => relay.myId ?? identity?.stableId;
   String? get myName => relay.displayName;
@@ -190,9 +193,12 @@ class AppState extends ChangeNotifier {
   // Serialize management operations with inbound frames. In particular, a
   // failed deletion must restore a contact before processing its next message.
   Future<void> _changes = Future.value();
-  Future<void> _changeState(Future<void> Function() operation) {
+  Future<T> _changeState<T>(Future<T> Function() operation) {
     final pending = _changes.then((_) => operation());
-    _changes = pending.catchError((Object _) {});
+    _changes = pending.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
     return pending;
   }
 
@@ -436,10 +442,14 @@ class AppState extends ChangeNotifier {
     String body, {
     String? groupId,
     String kind = 'text',
+    ChatMessage? replyTo,
   }) => encryptMessage(
     key,
     jsonEncode({
       'v': 2,
+      'features': ['reactions-v1', 'pairwise-rekey-v1'],
+      if (replyTo != null) 'replyToId': replyTo.id,
+      if (replyTo != null) 'replyPreview': _preview(replyTo),
       'kind': kind,
       'id': id,
       'from': myId,
@@ -449,7 +459,16 @@ class AppState extends ChangeNotifier {
     }),
   );
 
-  Future<({String body, DateTime sentAt, String kind})> _open(
+  Future<
+    ({
+      String body,
+      DateTime sentAt,
+      String kind,
+      String? replyToId,
+      String? replyPreview,
+    })
+  >
+  _open(
     SecretKey key,
     Uint8List payload,
     String from,
@@ -477,7 +496,26 @@ class AppState extends ChangeNotifier {
     }
     final sentAt = DateTime.tryParse(body['sentAt'] as String);
     if (sentAt == null) throw const FormatException('Date du message invalide');
+    final contact = conversations.where((c) => c.peerId == from).firstOrNull;
+    final features = body['features'];
+    if (contact != null &&
+        groupId == null &&
+        features is List &&
+        features.length <= 8 &&
+        features.every((f) => f is String && f.length < 40)) {
+      contact.localSettings.features.addAll(features.cast<String>());
+    }
+    if ((body['replyToId'] != null &&
+            (body['replyToId'] is! String ||
+                (body['replyToId'] as String).length > 80)) ||
+        (body['replyPreview'] != null &&
+            (body['replyPreview'] is! String ||
+                (body['replyPreview'] as String).length > 160))) {
+      throw const FormatException('Réponse citée invalide.');
+    }
     return (
+      replyToId: body['replyToId'] as String?,
+      replyPreview: body['replyPreview'] as String?,
       body: body['body'] as String,
       sentAt: sentAt.toLocal(),
       kind: body['kind'] as String,
@@ -523,6 +561,10 @@ class AppState extends ChangeNotifier {
       return false;
     }
     if (body is! Map || body['kind'] != 'receipt') return false;
+    if (body['type'] == 'reaction') {
+      await _receiveReaction(body, from, groupId);
+      return true;
+    }
     if (!['read', 'delivered'].contains(body['type']) ||
         body['messageId'] is! String) {
       throw const FormatException('Accusé invalide');
@@ -552,6 +594,7 @@ class AppState extends ChangeNotifier {
       _changeState(() => _handleInboundFrame(msg));
 
   Future<void> _handleInboundFrame(Map<String, dynamic> msg) async {
+    if (!unlocked) throw StateError('Coffre verrouillé.');
     switch (msg['type']) {
       case 'registered':
         error = null;
@@ -591,9 +634,17 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         break;
       case 'pairing_code':
+        notifyListeners();
         break;
       case 'peer_matched':
         final peerId = msg['peerId'] as String;
+        if (_expectedPairPeer != null && _expectedPairPeer != peerId) {
+          _expectedPairPeer = null;
+          throw const FormatException(
+            'Le contact ne correspond pas à l’invitation.',
+          );
+        }
+        _expectedPairPeer = null;
         final peerName = msg['peerName'] as String;
         final peerPubBytes = Uint8List.fromList(
           base64Decode(msg['peerPublicKey'] as String),
@@ -669,6 +720,11 @@ class AppState extends ChangeNotifier {
             } on TypeError {
               throw const FormatException('Contrôle de groupe invalide');
             }
+            if (ctrl.kind == 'remove') {
+              throw const FormatException(
+                'Nouvelle clé de groupe refusée dans une enveloppe partagée. Mets les membres à jour.',
+              );
+            }
             if (ctrl.groupId == groupId) {
               if (_groupKeys.containsKey(groupId)) {
                 await _applyControl(ctrl, from);
@@ -689,6 +745,8 @@ class AppState extends ChangeNotifier {
             ciphertext: payload,
             timestamp: opened.sentAt,
             plaintext: plain,
+            replyToId: opened.replyToId,
+            replyPreview: opened.replyPreview,
             isGroup: true,
             senderId: from,
             senderName: _peerNames[from] ?? 'Membre',
@@ -717,6 +775,28 @@ class AppState extends ChangeNotifier {
             await _handleReceipt(plain, from, null);
             break;
           }
+          if (opened.kind == 'control') {
+            final envelope = jsonDecode(plain) as Map<String, dynamic>;
+            final control = GroupControl.fromJsonString(
+              envelope['data'] as String,
+            );
+            if (control.newGroupKeyB64 == null ||
+                base64Decode(control.newGroupKeyB64!).length != 32) {
+              throw const FormatException('Clé du groupe invalide.');
+            }
+            if (control.kind != 'remove') {
+              throw const FormatException('Contrôle direct invalide.');
+            }
+            final pending = _pendingInvites
+                .where((i) => i.groupId == control.groupId)
+                .firstOrNull;
+            if (pending != null) {
+              await _applyPendingControl(pending, control, from);
+            } else {
+              await _applyControl(control, from);
+            }
+            break;
+          }
           if (!['text', 'file'].contains(opened.kind)) {
             throw const FormatException('Type de message invalide');
           }
@@ -727,6 +807,8 @@ class AppState extends ChangeNotifier {
             ciphertext: payload,
             timestamp: opened.sentAt,
             plaintext: plain,
+            replyToId: opened.replyToId,
+            replyPreview: opened.replyPreview,
           );
           if (opened.kind == 'file') await _applyInboundMeta(m, plain);
           conv.first.localSettings.hidden = false;
@@ -1131,7 +1213,9 @@ class AppState extends ChangeNotifier {
     await _persist();
   }
 
-  Future<void> removeMember(String groupId, String peerId) async {
+  Future<void> removeMember(String groupId, String peerId) =>
+      _changeState(() => _removeMember(groupId, peerId));
+  Future<void> _removeMember(String groupId, String peerId) async {
     final g = groups.firstWhere((e) => e.id == groupId);
     if (!amAdmin(groupId) || peerId == myId) return;
     final newKeyBytes = await generateFileKey();
@@ -1147,8 +1231,40 @@ class AppState extends ChangeNotifier {
       removedId: peerId,
     );
     if (g.applyControl(control, senderId: myId!) == null) return;
-    await _broadcastControl(groupId, control, toExcluded: peerId);
-    await _applyControl(control, myId!);
+    final targets = remaining.where((id) => id != myId).toList();
+    if (targets.any(
+      (id) =>
+          _sessionKeys[id] == null || !supportsFeature(id, 'pairwise-rekey-v1'),
+    )) {
+      throw StateError(
+        'Pour retirer un membre en sécurité, appaire les membres restants et échange un message avec leur version à jour.',
+      );
+    }
+    final previous = List<OutboundPacket>.of(_outbox);
+    try {
+      for (final target in targets) {
+        final id = _uuid.v4();
+        _enqueue(
+          OutboundPacket(
+            id: id,
+            type: 'cipher',
+            recipients: [target],
+            payload: await _seal(
+              _sessionKeys[target]!,
+              id,
+              jsonEncode({'kind': 'control', 'data': control.toJsonString()}),
+              kind: 'control',
+            ),
+          ),
+        );
+      }
+      await _applyControl(control, myId!);
+    } catch (_) {
+      _outbox
+        ..clear()
+        ..addAll(previous);
+      rethrow;
+    }
   }
 
   Future<String?> _broadcastControl(
@@ -1156,6 +1272,9 @@ class AppState extends ChangeNotifier {
     GroupControl control, {
     String? toExcluded,
   }) async {
+    if (control.kind == 'remove') {
+      throw StateError('Une nouvelle clé doit être envoyée individuellement.');
+    }
     final g = groups.firstWhere((e) => e.id == groupId);
     final key = _groupKeys[groupId];
     if (key == null) return null;
@@ -1188,57 +1307,88 @@ class AppState extends ChangeNotifier {
     final existing = groups.where((g) => g.id == control.groupId).toList();
     if (existing.isEmpty) return;
     final group = existing.first;
-    final updated = group.applyControl(control, senderId: senderId);
-    if (updated == null) return;
-    if (control.newGroupKeyB64 != null && control.kind == 'remove') {
-      _groupKeys[group.id] = SecretKey(base64Decode(control.newGroupKeyB64!));
-    }
-    groups[groups.indexOf(group)] = updated;
-    if (!updated.memberIds.contains(myId)) {
-      groups.remove(updated);
-      _groupKeys.remove(group.id);
-      messagesByConv.remove(group.id);
-    } else if (control.kind == 'join') {
-      final name = _peerNames[senderId] ?? control.memberName ?? 'Un membre';
-      _peerNames[senderId] = name;
-      _addGroupEvent(group.id, '$name a rejoint le groupe.');
-      // Invitations may predate other members' acceptance. The owner supplies
-      // the accepted roster so a newcomer can validate later ownership changes.
-      if (updated.ownerId == myId && senderId != myId) {
-        final sync = GroupControl(
-          kind: 'sync',
-          groupId: updated.id,
-          memberIds: updated.memberIds,
-          adminIds: updated.adminIds,
-          epoch: updated.epoch,
-          joinedMemberIds: updated.joinedMemberIds,
-        );
-        final id = _uuid.v4();
-        final payload = await _seal(
-          _groupKeys[group.id]!,
-          id,
-          jsonEncode({'kind': 'control', 'data': sync.toJsonString()}),
-          groupId: group.id,
-          kind: 'control',
-        );
-        _enqueue(
-          OutboundPacket(
-            id: id,
-            type: 'cipher',
-            recipients: [senderId],
-            payload: payload,
+    final oldKey = _groupKeys[group.id];
+    final oldMessages = messagesByConv[group.id] == null
+        ? null
+        : List<ChatMessage>.of(messagesByConv[group.id]!);
+    final oldOutbox = List<OutboundPacket>.of(_outbox);
+    final oldNames = Map<String, String>.of(_peerNames);
+    try {
+      final updated = group.applyControl(control, senderId: senderId);
+      if (updated == null) return;
+      if (control.newGroupKeyB64 != null && control.kind == 'remove') {
+        if (base64Decode(control.newGroupKeyB64!).length != 32) {
+          throw const FormatException('Clé du groupe invalide.');
+        }
+        _groupKeys[group.id] = SecretKey(base64Decode(control.newGroupKeyB64!));
+      }
+      groups[groups.indexOf(group)] = updated;
+      if (!updated.memberIds.contains(myId)) {
+        groups.remove(updated);
+        _groupKeys.remove(group.id);
+        messagesByConv.remove(group.id);
+      } else if (control.kind == 'join') {
+        final name = _peerNames[senderId] ?? control.memberName ?? 'Un membre';
+        _peerNames[senderId] = name;
+        _addGroupEvent(group.id, '$name a rejoint le groupe.');
+        // Invitations may predate other members' acceptance. The owner supplies
+        // the accepted roster so a newcomer can validate later ownership changes.
+        if (updated.ownerId == myId && senderId != myId) {
+          final sync = GroupControl(
+            kind: 'sync',
+            groupId: updated.id,
+            memberIds: updated.memberIds,
+            adminIds: updated.adminIds,
+            epoch: updated.epoch,
+            joinedMemberIds: updated.joinedMemberIds,
+          );
+          final id = _uuid.v4();
+          final payload = await _seal(
+            _groupKeys[group.id]!,
+            id,
+            jsonEncode({'kind': 'control', 'data': sync.toJsonString()}),
             groupId: group.id,
-          ),
+            kind: 'control',
+          );
+          _enqueue(
+            OutboundPacket(
+              id: id,
+              type: 'cipher',
+              recipients: [senderId],
+              payload: payload,
+              groupId: group.id,
+            ),
+          );
+        }
+      } else if (control.kind == 'transfer') {
+        _addGroupEvent(
+          group.id,
+          '${peerNameOf(updated.ownerId)} est maintenant propriétaire du groupe.',
         );
       }
-    } else if (control.kind == 'transfer') {
-      _addGroupEvent(
-        group.id,
-        '${peerNameOf(updated.ownerId)} est maintenant propriétaire du groupe.',
-      );
+      await _persist();
+      notifyListeners();
+    } catch (_) {
+      groups.removeWhere((g) => g.id == group.id);
+      groups.add(group);
+      if (oldKey == null) {
+        _groupKeys.remove(group.id);
+      } else {
+        _groupKeys[group.id] = oldKey;
+      }
+      if (oldMessages == null) {
+        messagesByConv.remove(group.id);
+      } else {
+        messagesByConv[group.id] = oldMessages;
+      }
+      _outbox
+        ..clear()
+        ..addAll(oldOutbox);
+      _peerNames
+        ..clear()
+        ..addAll(oldNames);
+      rethrow;
     }
-    await _persist();
-    notifyListeners();
   }
 
   void _addGroupEvent(String groupId, String text) {
@@ -1278,7 +1428,17 @@ class AppState extends ChangeNotifier {
 
   static const maxAttachmentBytes = 5 * 1024 * 1024;
 
-  Future<void> sendGroupMessage(String groupId, String text) async {
+  Future<void> sendGroupMessage(
+    String groupId,
+    String text, {
+    ChatMessage? replyTo,
+  }) => _changeState(() => _sendGroupMessage(groupId, text, replyTo: replyTo));
+  Future<void> _sendGroupMessage(
+    String groupId,
+    String text, {
+    ChatMessage? replyTo,
+  }) async {
+    if (!unlocked || locking) throw StateError('Coffre verrouillé.');
     final g = groups.firstWhere((e) => e.id == groupId);
     if (g.requiresRecreation) {
       throw StateError('Ce groupe ancien doit être recréé.');
@@ -1286,7 +1446,13 @@ class AppState extends ChangeNotifier {
     final key = _groupKeys[groupId];
     if (key == null) throw StateError('Clé du groupe indisponible.');
     final id = _uuid.v4();
-    final cipher = await _seal(key, id, text, groupId: groupId);
+    final cipher = await _seal(
+      key,
+      id,
+      text,
+      groupId: groupId,
+      replyTo: replyTo,
+    );
     final m = ChatMessage(
       id: id,
       pending: true,
@@ -1295,6 +1461,8 @@ class AppState extends ChangeNotifier {
       ciphertext: cipher,
       timestamp: DateTime.now(),
       plaintext: text,
+      replyToId: replyTo?.id,
+      replyPreview: replyTo == null ? null : _preview(replyTo),
       isGroup: true,
       senderName: myName ?? 'Moi',
     );
@@ -1435,11 +1603,22 @@ class AppState extends ChangeNotifier {
     m.plaintext = null;
   }
 
-  Future<void> sendMessage(String conversationId, String text) async {
+  Future<void> sendMessage(
+    String conversationId,
+    String text, {
+    ChatMessage? replyTo,
+  }) =>
+      _changeState(() => _sendMessage(conversationId, text, replyTo: replyTo));
+  Future<void> _sendMessage(
+    String conversationId,
+    String text, {
+    ChatMessage? replyTo,
+  }) async {
+    if (!unlocked || locking) throw StateError('Coffre verrouillé.');
     final conv = conversations.firstWhere((c) => c.id == conversationId);
     final key = _sessionKeys[conv.peerId]!;
     final id = _uuid.v4();
-    final cipher = await _seal(key, id, text);
+    final cipher = await _seal(key, id, text, replyTo: replyTo);
     final m = ChatMessage(
       id: id,
       pending: true,
@@ -1448,6 +1627,8 @@ class AppState extends ChangeNotifier {
       ciphertext: cipher,
       timestamp: DateTime.now(),
       plaintext: text,
+      replyToId: replyTo?.id,
+      replyPreview: replyTo == null ? null : _preview(replyTo),
     );
     _enqueue(
       OutboundPacket(
@@ -1470,6 +1651,282 @@ class AppState extends ChangeNotifier {
       localSettings: conv.localSettings,
     );
     await _persist();
+    notifyListeners();
+  }
+
+  static String _preview(ChatMessage m) {
+    final value = m.isFile
+        ? 'Pièce jointe : ${m.fileName ?? "fichier"}'
+        : (m.plaintext ?? 'Message');
+    return value.length <= 160 ? value : value.substring(0, 160);
+  }
+
+  ChatSettings settingsFor(String id) => _settingsFor(id);
+  int unreadCount(String id) => (messagesByConv[id] ?? [])
+      .where((m) => !m.fromMe && !m.read && !m.isSystem)
+      .length;
+  bool matchesSearch(String id, String query) {
+    final q = query.trim().toLowerCase();
+    return q.isEmpty ||
+        chatName(id).toLowerCase().contains(q) ||
+        (messagesByConv[id] ?? []).any(
+          (m) =>
+              (m.plaintext ?? '').toLowerCase().contains(q) ||
+              (m.fileName ?? '').toLowerCase().contains(q),
+        );
+  }
+
+  Future<void> setChatFlag(String id, {bool? pinned, bool? archived}) =>
+      _changeState(() async {
+        final s = _settingsFor(id);
+        final oldPin = s.pinned, oldArchive = s.archived;
+        s.pinned = pinned ?? s.pinned;
+        s.archived = archived ?? s.archived;
+        try {
+          await _persist();
+        } catch (_) {
+          s.pinned = oldPin;
+          s.archived = oldArchive;
+          rethrow;
+        }
+        notifyListeners();
+      });
+  bool isVerified(String id) =>
+      identity != null &&
+      settingsFor(id).verifiedFingerprint != null &&
+      settingsFor(id).verifiedFingerprint == safetyNumberFor(id);
+  Future<void> verifyContact(String id, bool verified) =>
+      _changeState(() async {
+        final s = _settingsFor(id);
+        final previous = s.verifiedFingerprint;
+        s.verifiedFingerprint = verified ? safetyNumberFor(id) : null;
+        try {
+          await _persist();
+        } catch (_) {
+          s.verifiedFingerprint = previous;
+          rethrow;
+        }
+        notifyListeners();
+      });
+  void startPairing() {
+    relay.startPairing();
+    notifyListeners();
+  }
+
+  Future<String?> pairInvitation(String input) async {
+    if (!input.contains("://")) {
+      _expectedPairPeer = null;
+      return pairWithCode(input);
+    }
+    final invitation = PairingInvitation.parse(input);
+    if (invitation.relay.isNotEmpty &&
+        RelayClient.normalizeUrl(relayUrl) != invitation.relay) {
+      throw StateError(
+        'Cette invitation utilise un autre relais. Vérifie et configure cette adresse avant de continuer.',
+      );
+    }
+    _expectedPairPeer = invitation.peerId;
+    final result = await pairWithCode(invitation.code);
+    if (result != null) _expectedPairPeer = null;
+    return result;
+  }
+
+  Future<void> lockVault() async {
+    if (!unlocked || locking) return;
+    locking = true;
+    relay.disconnect();
+    _outboxRetry?.cancel();
+    notifyListeners();
+    try {
+      await _changeState(() async {
+        Object? failure;
+        try {
+          await _persist();
+        } catch (error) {
+          failure = error;
+        }
+        store.lock();
+        unlocked = false;
+        conversations = [];
+        groups = [];
+        messagesByConv.clear();
+        _sessionKeys.clear();
+        _peerKeys.clear();
+        _peerNames.clear();
+        _groupKeys.clear();
+        _outbox.clear();
+        _inFlight.clear();
+        _pendingInvites.clear();
+        if (failure != null) {
+          throw StateError(
+            'Dernière écriture non enregistrée avant le verrouillage.',
+          );
+        }
+      });
+    } finally {
+      locking = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> unlockBiometrics() async {
+    if (!await store.unlockWithBiometrics()) return false;
+    unlocked = true;
+    await _restoreState();
+    await connectSavedRelay();
+    _registerIfReady();
+    notifyListeners();
+    return true;
+  }
+
+  Future<Uint8List> backup(String password) => _changeState(() async {
+    await _persist();
+    return store.createBackup(password);
+  });
+  Future<void> restoreBackup(Uint8List bytes, String password) =>
+      _changeState(() async {
+        relay.disconnect();
+        await store.restoreBackup(bytes, password);
+        identity = await store.loadOrCreateIdentity();
+        relay.configureIdentity(identity!);
+        await _restoreState();
+        await connectSavedRelay();
+        _registerIfReady();
+        notifyListeners();
+      });
+  bool supportsFeature(String peer, String feature) =>
+      conversations
+          .where((c) => c.peerId == peer)
+          .firstOrNull
+          ?.localSettings
+          .features
+          .contains(feature) ??
+      false;
+  static const reactionEmojis = ['👍', '❤️', '😂', '🎉', '😮', '🙏'];
+  bool canReact(String chatId, {bool isGroup = false}) {
+    final targets = isGroup
+        ? groups
+              .firstWhere((g) => g.id == chatId)
+              .memberIds
+              .where((id) => id != myId)
+        : [conversations.firstWhere((c) => c.id == chatId).peerId];
+    return targets.isNotEmpty &&
+        targets.every((id) => supportsFeature(id, 'reactions-v1'));
+  }
+
+  Future<void> react(
+    String chatId,
+    String messageId,
+    String emoji, {
+    bool isGroup = false,
+  }) => _changeState(() async {
+    if (!unlocked ||
+        locking ||
+        !reactionEmojis.contains(emoji) ||
+        !canReact(chatId, isGroup: isGroup)) {
+      throw StateError(
+        'Réactions disponibles après un échange avec la nouvelle version de chaque contact.',
+      );
+    }
+    final m = messagesByConv[chatId]!.firstWhere((m) => m.id == messageId);
+    final me = myId!;
+    final previous = m.reactions[me];
+    final version = m.reactionVersions[me] ?? 0;
+    final key = isGroup
+        ? _groupKeys[chatId]!
+        : _sessionKeys[conversations.firstWhere((c) => c.id == chatId).peerId]!;
+    final targets = isGroup
+        ? groups
+              .firstWhere((g) => g.id == chatId)
+              .memberIds
+              .where((id) => id != me)
+              .toList()
+        : [conversations.firstWhere((c) => c.id == chatId).peerId];
+    final id = _uuid.v4();
+    final remove = previous == emoji;
+    _enqueue(
+      OutboundPacket(
+        id: id,
+        type: 'cipher',
+        recipients: targets,
+        groupId: isGroup ? chatId : null,
+        payload: await _seal(
+          key,
+          id,
+          jsonEncode({
+            'kind': 'receipt',
+            'type': 'reaction',
+            'messageId': messageId,
+            'emoji': emoji,
+            'remove': remove,
+            'version': version + 1,
+          }),
+          kind: 'receipt',
+          groupId: isGroup ? chatId : null,
+        ),
+      ),
+    );
+    if (remove) {
+      m.reactions.remove(me);
+    } else {
+      m.reactions[me] = emoji;
+    }
+    m.reactionVersions[me] = version + 1;
+    try {
+      await _persist();
+    } catch (_) {
+      if (previous == null) {
+        m.reactions.remove(me);
+      } else {
+        m.reactions[me] = previous;
+      }
+      if (version == 0) {
+        m.reactionVersions.remove(me);
+      } else {
+        m.reactionVersions[me] = version;
+      }
+      _outbox.removeWhere((p) => p.id == id);
+      rethrow;
+    }
+    notifyListeners();
+  });
+  Future<void> _receiveReaction(Map body, String from, String? groupId) async {
+    if (body['messageId'] is! String ||
+        !reactionEmojis.contains(body['emoji']) ||
+        body['version'] is! int ||
+        (body['version'] as int) < 1 ||
+        (body['version'] as int) > 2147483647 ||
+        body['remove'] is! bool) {
+      throw const FormatException('Réaction invalide.');
+    }
+    final chatId =
+        groupId ?? conversations.where((c) => c.peerId == from).firstOrNull?.id;
+    final m = (messagesByConv[chatId] ?? [])
+        .where((m) => m.id == body['messageId'] && !m.isSystem)
+        .firstOrNull;
+    if (m == null || (m.reactionVersions[from] ?? 0) >= body['version']) return;
+    final old = m.reactions[from], oldVersion = m.reactionVersions[from];
+    if (body['remove'] as bool) {
+      m.reactions.remove(from);
+    } else {
+      m.reactions[from] = body['emoji'] as String;
+    }
+    m.reactionVersions[from] = body['version'] as int;
+    try {
+      await _persist();
+    } catch (_) {
+      if (old == null) {
+        m.reactions.remove(from);
+      } else {
+        m.reactions[from] = old;
+      }
+      if (oldVersion == null) {
+        m.reactionVersions.remove(from);
+      } else {
+        m.reactionVersions[from] = oldVersion;
+      }
+      rethrow;
+    }
     notifyListeners();
   }
 
