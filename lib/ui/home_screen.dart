@@ -116,7 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 6,
-                runSpacing: 6,
                 children: [
                   for (final choice in const [
                     ('all', 'Toutes'),
