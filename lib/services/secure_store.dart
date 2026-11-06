@@ -6,6 +6,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../crypto/e2e_crypto.dart';
+import 'biometric_unlock.dart';
+import 'backup_codec.dart';
+import 'relay_client.dart';
 import '../models/group.dart';
 import '../models/outbound_packet.dart';
 import '../models/message.dart';
@@ -37,6 +40,7 @@ class SecureStore {
       wOptions: WindowsOptions(useBackwardCompatibility: false),
     );
     final store = SecureStore._(prefs, secure);
+    await store._completeRestore();
     if (pin != null) await store.unlockWithPin(pin);
     return store;
   }
@@ -146,14 +150,34 @@ class SecureStore {
     List<OutboundPacket> outbox = const [],
     List<GroupInvite> pendingInvites = const [],
   }) {
+    final savedConversations = conversations
+        .map((c) => Conversation.fromJson(c.toJson()))
+        .toList();
+    final savedMessages = messages
+        .map((m) => ChatMessage.fromJson(m.toJson()))
+        .toList();
+    final savedGroups = groups.map((g) => Group.fromJson(g.toJson())).toList();
+    final savedOutbox = outbox
+        .map((o) => OutboundPacket.fromJson(o.toJson()))
+        .toList();
+    final savedInvites = pendingInvites
+        .map(
+          (i) => GroupInvite.fromJsonString(
+            i.toJsonString(),
+            fromId: i.fromId,
+            fromName: i.fromName,
+          ),
+        )
+        .toList();
+    final savedGroupKeys = Map<String, SecretKey>.of(groupKeys);
     final pending = _saveQueue.then(
       (_) => _writeData(
-        conversations: conversations,
-        messages: messages,
-        groups: groups,
-        groupKeys: groupKeys,
-        outbox: outbox,
-        pendingInvites: pendingInvites,
+        conversations: savedConversations,
+        messages: savedMessages,
+        groups: savedGroups,
+        groupKeys: savedGroupKeys,
+        outbox: savedOutbox,
+        pendingInvites: savedInvites,
       ),
     );
     _saveQueue = pending.catchError((Object _) {});
@@ -215,6 +239,18 @@ class SecureStore {
     }
     final clear = await decryptLocal(key, base64Decode(blobB64));
     final json = jsonDecode(utf8.decode(clear)) as Map<String, dynamic>;
+    return _decodeData(json);
+  }
+
+  static ({
+    List<Conversation> conversations,
+    List<ChatMessage> messages,
+    List<Group> groups,
+    Map<String, List<int>> groupKeys,
+    List<OutboundPacket> outbox,
+    List<GroupInvite> pendingInvites,
+  })
+  _decodeData(Map<String, dynamic> json) {
     final rawGroupKeys = (json['groupKeys'] as Map<String, dynamic>?) ?? {};
     return (
       conversations: (json['conversations'] as List)
@@ -242,5 +278,167 @@ class SecureStore {
           )
           .toList(),
     );
+  }
+
+  int get autoLockSeconds => _prefs.getInt('auto_lock_seconds') ?? 300;
+  Future<void> setAutoLockSeconds(int seconds) async {
+    if (![30, 60, 300, 900].contains(seconds)) {
+      throw ArgumentError('Délai invalide.');
+    }
+    if (!await _prefs.setInt('auto_lock_seconds', seconds)) {
+      throw StateError('Réglage non enregistré.');
+    }
+  }
+
+  bool get biometricsEnabled => _prefs.getBool('biometric_unlock') ?? false;
+  Future<bool> biometricAvailable() => BiometricUnlock().available();
+  Future<void> enableBiometrics() async {
+    final key = _pinKey;
+    if (key == null) throw StateError('Coffre verrouillé.');
+    if (!await biometricAvailable()) {
+      throw StateError('Aucune biométrie configurée.');
+    }
+    await BiometricUnlock().enable(base64Encode(await key.extractBytes()));
+    if (!await _prefs.setBool('biometric_unlock', true)) {
+      throw StateError('Réglage non enregistré.');
+    }
+  }
+
+  Future<void> disableBiometrics() async {
+    await BiometricUnlock().disable();
+    if (!await _prefs.setBool('biometric_unlock', false)) {
+      throw StateError('Réglage non enregistré.');
+    }
+  }
+
+  Future<bool> unlockWithBiometrics() async {
+    if (!biometricsEnabled) return false;
+    final saved = await BiometricUnlock().read();
+    if (saved == null) return false;
+    final bytes = base64Decode(saved);
+    if (bytes.length != 32) return false;
+    final key = SecretKey(bytes);
+    final verifier = _prefs.getString(_pinVerifierKey);
+    if (verifier == null) return false;
+    try {
+      if (utf8.decode(await decryptLocal(key, base64Decode(verifier))) !=
+          'ttalk-pin-verifier') {
+        return false;
+      }
+      _pinKey = key;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<Uint8List> createBackup(String password) async {
+    final key = _pinKey;
+    if (key == null) throw StateError('Coffre verrouillé.');
+    await _saveQueue;
+    final encoded = _prefs.getString(_dataBlobKey);
+    final data = encoded == null
+        ? <String, dynamic>{
+            'conversations': [],
+            'messages': [],
+            'groups': [],
+            'groupKeys': {},
+          }
+        : jsonDecode(
+            utf8.decode(await decryptLocal(key, base64Decode(encoded))),
+          ) as Map<String, dynamic>;
+    // Pending sends are not replayed on a recovered device. Attachments are not
+    // copied: untrusted filesystem paths must never survive an import.
+    data['outbox'] = [];
+    for (final m in data['messages'] as List) {
+      (m as Map).remove('filePath');
+    }
+    final identity = await loadIdentity();
+    if (identity == null) throw StateError('Identité introuvable.');
+    return BackupCodec.encode({
+      'version': 1,
+      'data': data,
+      'identity': {
+        'publicKey': base64Encode(identity.publicKey),
+        'privateKey': base64Encode(
+          await identity.privateKey.extractPrivateKeyBytes(),
+        ),
+      },
+      'relay': relayUrl,
+      'displayName': displayName,
+    }, password);
+  }
+
+  Future<void> restoreBackup(Uint8List bytes, String password) async {
+    final key = _pinKey;
+    if (key == null) throw StateError('Coffre verrouillé.');
+    await _saveQueue;
+    final current = await loadData();
+    if (current.conversations.isNotEmpty ||
+        current.groups.isNotEmpty ||
+        current.messages.isNotEmpty) {
+      throw StateError(
+        'Restauration autorisée uniquement dans un coffre vide.',
+      );
+    }
+    final backup = await BackupCodec.decode(bytes, password);
+    final data = backup['data'] as Map<String, dynamic>;
+    data['outbox'] = [];
+    for (final raw in data['messages'] as List) {
+      (raw as Map).remove('filePath');
+    }
+    final parsed = _decodeData(data);
+    if (parsed.messages.length > 50000 ||
+        parsed.conversations.length > 10000 ||
+        parsed.groupKeys.values.any((k) => k.length != 32)) {
+      throw const FormatException('Sauvegarde hors limites.');
+    }
+    final identity = backup['identity'] as Map<String, dynamic>;
+    final priv = base64Decode(identity['privateKey'] as String);
+    final pub = base64Decode(identity['publicKey'] as String);
+    if (priv.length != 32 || pub.length != 32) {
+      throw const FormatException('Identité invalide.');
+    }
+    final actual = await (await X25519().newKeyPairFromSeed(priv))
+        .extractPublicKey();
+    if (base64Encode(actual.bytes) != base64Encode(pub)) {
+      throw const FormatException('Identité incohérente.');
+    }
+    final relay = backup['relay'] as String;
+    final name = backup['displayName'] as String;
+    if (name.length > 40 || relay.length > 2048) {
+      throw const FormatException('Profil invalide.');
+    }
+    if (relay.isNotEmpty) RelayClient.normalizeUrl(relay);
+    final blob = await encryptLocal(
+      key,
+      Uint8List.fromList(utf8.encode(jsonEncode(data))),
+    );
+    // A recovery journal allows interrupted cross-store writes to complete on
+    // next startup. The existing PIN still encrypts the recovered vault.
+    await _secure.write(
+      key: 'restore_pending_v1',
+      value: jsonEncode({
+        'identity': identity,
+        'blob': base64Encode(blob),
+        'relay': relay,
+        'name': name,
+      }),
+    );
+    await _completeRestore();
+  }
+
+  Future<void> _completeRestore() async {
+    final pending = await _secure.read(key: 'restore_pending_v1');
+    if (pending == null) return;
+    final recovery = jsonDecode(pending) as Map<String, dynamic>;
+    await _writePreference(_dataBlobKey, recovery['blob'] as String);
+    await _secure.write(
+      key: 'identity_bundle_v2',
+      value: jsonEncode(recovery['identity']),
+    );
+    await setRelayUrl(recovery['relay'] as String);
+    await setDisplayName(recovery['name'] as String);
+    await _secure.delete(key: 'restore_pending_v1');
   }
 }

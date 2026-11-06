@@ -25,9 +25,12 @@ class _UnlockScreenState extends State<UnlockScreen> {
     });
     final app = widget.app;
     final pin = _pinController.text.trim();
-    if (!RegExp(r'^\d{4,12}$').hasMatch(pin)) {
+    if (!RegExp(widget.app.store.hasPin ? r'^\d{4,12}$' : r'^\d{6,12}$')
+        .hasMatch(pin)) {
       setState(() {
-        _error = 'Le code PIN doit contenir au moins 4 chiffres.';
+        _error = widget.app.store.hasPin
+            ? 'Code PIN invalide.'
+            : 'Choisis de 6 à 12 chiffres pour ton nouveau PIN.';
         _busy = false;
       });
       return;
@@ -109,6 +112,32 @@ class _UnlockScreenState extends State<UnlockScreen> {
                       Text(_error!, style: const TextStyle(color: Colors.red)),
                     ],
                     const SizedBox(height: 16),
+                    if (!creating && widget.app.store.biometricsEnabled)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.fingerprint),
+                        label: const Text('Déverrouiller avec la biométrie'),
+                        onPressed: _busy
+                            ? null
+                            : () async {
+                                setState(() => _busy = true);
+                                try {
+                                  if (!await widget.app.unlockBiometrics() &&
+                                      mounted) {
+                                    setState(
+                                      () => _error = 'Utilise ton PIN pour déverrouiller le coffre.',
+                                    );
+                                  }
+                                } catch (_) {
+                                  if (mounted) {
+                                    setState(
+                                      () => _error = 'Biométrie annulée ou indisponible. Utilise ton PIN.',
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) setState(() => _busy = false);
+                                }
+                              },
+                      ),
                     FilledButton(
                       onPressed: _busy ? null : _submit,
                       child: _busy

@@ -1,0 +1,127 @@
+name: Build final TTalk 0.6 packages
+
+on:
+  push:
+    branches: ['release/0.6.0']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: final-packages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: npm ci --prefix server
+      - run: npm test --prefix server
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub
+
+  apple:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Build iPhone Release without distribution credentials
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p build/review/Payload
+          cp -R build/ios/iphoneos/Runner.app build/review/Payload/
+          (cd build/review && ditto -c -k --keepParent Payload ttalk-ios-unsigned.ipa)
+      - name: Build Mac Release without distribution credentials
+        run: |
+          flutter build macos --release --config-only
+          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath build/macos-review CODE_SIGNING_ALLOWED=NO build
+          ditto -c -k --keepParent build/macos-review/Build/Products/Release/ttalk.app build/review/ttalk-macos-unsigned.zip
+      - name: Stage Apple installation guides and hashes
+        run: |
+          cp docs/MOBILE_INSTALL.md build/review/INSTALLATION.md
+          cp docs/MACOS_INSTALL.md build/review/MACOS_INSTALL.md
+          cp docs/NEXT_VERSION.md build/review/VALIDATION.md
+          (cd build/review && shasum -a 256 *.ipa *.zip > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-apple-unsigned
+          path: |
+            build/review/*.ipa
+            build/review/*.zip
+            build/review/*.md
+            build/review/SHA256SUMS.txt
+
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - name: Install pinned native tools
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'ndk;29.0.14206865' 'cmake;3.22.1' 'platforms;android-36' 'build-tools;36.0.0'
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build apk --release
+      - name: Stage unsigned Android package for offline signing
+        run: |
+          mkdir -p build/review-android
+          cp build/app/outputs/flutter-apk/app-release.apk build/review-android/ttalk-android-unsigned.apk
+          cp docs/ANDROID_SIGN_0.6.txt build/review-android/INSTALLATION-SIGNATURE.txt
+          (cd build/review-android && sha256sum *.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-android-unsigned
+          path: build/review-android/*
+
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build windows --release
+      - name: Package Windows including runtime and smoke test
+        shell: pwsh
+        run: ./scripts/package-windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-windows-x64
+          path: |
+            ttalk-windows-x64.zip
+            ttalk-windows-x64.zip.sha256

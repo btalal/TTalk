@@ -1,5 +1,21 @@
 # Versions
 
+## 0.6.0 — 6 novembre 2026
+
+- Navigation adaptative Mac/Windows à deux colonnes, navigation basse mobile,
+  recherche locale et filtres ; épinglage et archives persistants.
+- Invitations QR et liens copiables, réponses citées et réactions chiffrées
+  conditionnées par la compatibilité des contacts.
+- Verrouillage manuel/automatique et biométrie facultative Keychain/Keystore ;
+  sauvegarde à phrase de passe indépendante et restauration dans un coffre vide.
+- Enveloppement individuel des nouvelles clés lors du retrait d’un membre ;
+  refus des rotations avec un client incompatible ou sous l’ancienne clé collective.
+- Tests de régression et vérification native des quatre plateformes dans une PR.
+- Documentation de contribution et sécurité, formulaires de signalement et de PR.
+
+Notifications push reportées. Ni Double Ratchet ni audit indépendant annoncés par ce lot. Les essais fonctionnels
+sur les quatre plateformes sont confirmés par le propriétaire. Voir [la portée](docs/NEXT_VERSION.md).
+
 ## 0.5.1 — iPhone et macOS, versions finales (6 novembre 2026)
 
 - Essais manuels confirmés par le propriétaire sur iPhone 17 Pro sous iOS 27.2

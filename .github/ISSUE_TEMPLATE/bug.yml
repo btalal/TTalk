@@ -1,0 +1,43 @@
+name: Signaler un problème
+description: Décrire un problème reproductible avec des données fictives.
+body:
+  - type: markdown
+    attributes:
+      value: "Pour une vulnérabilité, lire SECURITY.md. Ne publier aucun secret, sauvegarde, message privé ou code d’appairage."
+  - type: input
+    id: version
+    attributes:
+      label: Version ou commit TTalk
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Plateforme
+      options: [Windows, macOS, iPhone, Android, Relais]
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Modèle et version du système
+      placeholder: "Exemple : iPhone 17 Pro, iOS 27.2"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes de reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Résultat attendu et résultat observé
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Journal anonymisé ou capture facultative
+      description: Relire le contenu et retirer les informations personnelles avant publication.

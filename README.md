@@ -4,10 +4,13 @@
 
 # TTalk
 
+> **TTalk 0.6.0** : [nouveautés et essais](docs/NEXT_VERSION.md).
+> Android 0.6.0 attend la signature d’origine ; l’APK stable 0.5.1 reste disponible.
+
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
 
 **Versions finales : Windows, Android, iOS et macOS.** Sur Apple,
-[la version finale](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple)
+[la version finale](https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple)
 requiert une compilation et une signature personnelle dans Xcode.
 
 **TTalk** est une messagerie chiffrée et open source pour Windows, Android, iPhone et macOS. Échangez des messages, des fichiers
@@ -17,9 +20,9 @@ et des conversations de groupe sur un relais que vous choisissez.
 👥 Groupes chiffrés · 📂 Fichiers chiffrés pendant le transfert
 
 <p>
-  <a href="https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows"><img src="https://img.shields.io/badge/Windows_x64-0.5.1-0F172A" alt="Windows x64 0.5.1" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.0-windows"><img src="https://img.shields.io/badge/Windows_x64-0.6.0-0F172A" alt="Windows x64 0.6.0" /></a>
   <a href="https://github.com/btalal/TTalk/releases/tag/android-v0.5.1"><img src="https://img.shields.io/badge/Android-0.5.1-312E81" alt="Android 0.5.1" /></a>
-  <a href="https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple"><img src="https://img.shields.io/badge/iPhone_%26_macOS-0.5.1_finale-7C3AED" alt="iPhone et macOS 0.5.1 — versions finales" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple"><img src="https://img.shields.io/badge/iPhone_%26_macOS-0.6.0_finale-7C3AED" alt="iPhone et macOS 0.6.0 — versions finales" /></a>
   <img src="https://img.shields.io/badge/Flutter-3.47.9-02569B" alt="Flutter 3.47.9" />
   <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/AES--256--GCM-chiffrement-312E81" alt="Chiffrement AES-256-GCM" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-7C3AED" alt="Licence Apache-2.0" /></a>
@@ -41,11 +44,14 @@ contact en comparant vos numéros de sécurité par un autre canal.
 
 ## Fonctionnalités principales
 
-| | TTalk 0.5.1 |
+| | TTalk 0.6.0 |
 |---|---|
 | 💬 Conversations | Messages directs et accusés de réception et de lecture |
 | 🔒 Chiffrement | X25519 + HKDF-SHA256 pour les clés ; AES-256-GCM pour les messages |
-| 🛡 Coffre local | PIN et stockage sécurisé propre à chaque système |
+| 🛡 Coffre local | PIN, verrouillage manuel/automatique, biométrie facultative selon la plateforme |
+| 💾 Sauvegarde | Archive chiffrée à phrase indépendante ; restauration dans un coffre vide |
+| 🗂 Organisation | Recherche locale, épinglage, archives et interface adaptative |
+| ↩ Réponses et réactions | Réponses citées et réactions chiffrées entre clients compatibles |
 | 📎 Fichiers | Pièces jointes chiffrées pendant le transfert, jusqu’à 5 Mo |
 | 👥 Groupes | Invitations, gestion des membres et transfert de propriété |
 | 🔑 Contacts | Appairage par code et vérification des numéros de sécurité |
@@ -105,10 +111,10 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 
 | Plateforme | État | Où commencer |
 |---|---|---|
-| Windows 10/11 x64 | Version 0.5.1 | [ZIP Windows](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows) : extraire toute l’archive et lancer `TTalk.exe`. |
+| Windows 10/11 x64 | Version finale 0.6.0 | [ZIP Windows](https://github.com/btalal/TTalk/releases/tag/v0.6.0-windows) : extraire toute l’archive et lancer `TTalk.exe`. |
 | Android 7.0+ | Version 0.5.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1) : télécharger `ttalk-android.apk`. |
-| iPhone (iOS 15+) | Version finale 0.5.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
-| macOS 12+ | Version finale 0.5.1, validée sur M4 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI non signée, sans notarisation. |
+| iPhone (iOS 15+) | Version finale 0.6.0 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
+| macOS 12+ | Version finale 0.6.0, validée sur M4 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI non signée, sans notarisation. |
 
 ### Installer sur Windows
 
@@ -194,8 +200,9 @@ déchiffré et enregistré sur l’appareil destinataire ; sa copie enregistrée
 
 Les groupes permettent de gérer les membres, de réinviter un contact et de
 transférer la propriété. Le retrait d’un membre entraîne une nouvelle clé
-pour les messages suivants. Cette protection dépend encore de l’exclusion
-du membre par le relais : voir les [limites de sécurité](docs/SECURITY.md).
+pour les messages suivants. La 0.6 transmet la nouvelle clé séparément à chaque membre restant et refuse
+les clients incompatibles. Les époques et l’authenticité face à un membre malveillant
+restent à revoir : voir les [limites de sécurité](docs/NEXT_SECURITY.md).
 Les menus de suppression retirent les copies **locales**, sans effacer celles
 des autres participants. [Guide des groupes et conversations](docs/CHAT_MANAGEMENT.md).
 
@@ -216,9 +223,10 @@ Cette file d’attente ne remplace pas une sauvegarde des conversations.
 
 | État | Sujet |
 |---|---|
-| Disponible en 0.5.1 | Messages, groupes, pièces jointes, accusés, Windows et Android |
+| Disponible en 0.6.0 | Interface adaptative, recherche, QR, réponses/réactions, verrouillage et sauvegardes |
 | Validé le 06/11/2026 | iPhone 17 Pro (iOS 27.2) et Mac mini M4, installation personnelle via Xcode |
-| À étudier | Notifications mobiles, réception en arrière-plan, sauvegarde et restauration |
+| Prochaine révision | Double Ratchet, époques et authenticité de groupe, revue indépendante |
+| Reporté | Notifications push et réception mobile en arrière-plan |
 | Pistes futures | Appels audio/vidéo et synchronisation entre appareils |
 
 Les pistes futures ne sont pas des fonctionnalités annoncées pour une version

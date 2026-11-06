@@ -51,7 +51,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Nom et icône'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Mon collègue');
+      await tester.enterText(find.byType(TextField).last, 'Mon collègue');
       await tester.ensureVisible(find.text('🎓'));
       await tester.tap(find.text('🎓'));
       await tester.tap(find.text('Enregistrer'));
@@ -125,7 +125,7 @@ void main() {
           home: ChatScreen(app: app, conversation: app.conversations.single),
         ),
       );
-      await tester.tap(find.byTooltip('Actions du message'));
+      await tester.longPress(find.text('original.txt'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Supprimer pour moi'));
       await tester.pumpAndSettle();
@@ -160,7 +160,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Nom et icône'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Souvenirs');
+      await tester.enterText(find.byType(TextField).last, 'Souvenirs');
       await tester.ensureVisible(find.text('⭐'));
       await tester.tap(find.text('⭐'));
       await tester.tap(find.text('Enregistrer'));

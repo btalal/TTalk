@@ -83,7 +83,7 @@ void main() {
       final store = MemoryStore();
       final app = AppState(store: store, relay: MemoryRelay('alice', 'Alice'));
       addTearDown(app.dispose);
-      await app.init();
+      await app.init(pin: '123456');
       final id = await app.createGroup('Amis', ['bob']);
       final group = app.groups.single;
       app.groups[0] = group.applyControl(
@@ -307,8 +307,8 @@ void main() {
     final bob = AppState(store: bobStore, relay: bobRelay);
     addTearDown(alice.dispose);
     addTearDown(bob.dispose);
-    await alice.init();
-    await bob.init();
+    await alice.init(pin: '123456');
+    await bob.init(pin: '123456');
     final id = await alice.createGroup('Amis', ['bob']);
     await bob.acceptInvite(
       GroupInvite(

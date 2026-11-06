@@ -1,0 +1,19 @@
+name: Proposer une amélioration
+description: Expliquer un besoin concret et son bénéfice.
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Quel usage est difficile aujourd’hui ?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solution proposée et exemple d’utilisation
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Conséquences éventuelles sur la confidentialité, le protocole ou les permissions

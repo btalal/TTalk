@@ -66,6 +66,23 @@ class ChatActionsMenu extends StatelessWidget {
   Widget build(BuildContext context) => PopupMenuButton<String>(
     tooltip: isGroup ? 'Actions du groupe' : 'Actions du contact',
     onSelected: (action) async {
+      if (action == 'pin' || action == 'archive') {
+        try {
+          final s = app.settingsFor(chatId);
+          await app.setChatFlag(
+            chatId,
+            pinned: action == 'pin' ? !s.pinned : null,
+            archived: action == 'archive' ? !s.archived : null,
+          );
+        } catch (_) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Modification non enregistrée.')),
+            );
+          }
+        }
+        return;
+      }
       if (action == 'customize') {
         await showChatCustomization(context, app, chatId);
         return;
@@ -113,6 +130,26 @@ class ChatActionsMenu extends StatelessWidget {
       }
     },
     itemBuilder: (_) => [
+      PopupMenuItem(
+        value: 'pin',
+        child: ListTile(
+          leading: const Icon(Icons.push_pin_outlined),
+          title: Text(
+            app.settingsFor(chatId).pinned ? 'Désépingler' : 'Épingler',
+          ),
+          contentPadding: EdgeInsets.zero,
+        ),
+      ),
+      PopupMenuItem(
+        value: 'archive',
+        child: ListTile(
+          leading: const Icon(Icons.archive_outlined),
+          title: Text(
+            app.settingsFor(chatId).archived ? 'Désarchiver' : 'Archiver',
+          ),
+          contentPadding: EdgeInsets.zero,
+        ),
+      ),
       const PopupMenuItem(
         value: 'customize',
         child: ListTile(

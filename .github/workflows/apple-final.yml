@@ -1,4 +1,4 @@
-name: Publish final Apple release
+name: Rebuild archived Apple 0.5.1 (guarded)
 
 on:
   # Release archives are rebuilt explicitly; note edits use release-presentation.yml.
@@ -17,6 +17,9 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+      - name: Prevent replacing historical 0.5.1 assets with newer code
+        run: |
+          python3 -c "from pathlib import Path; assert 'version: 0.5.1+' in Path('pubspec.yaml').read_text(), 'Use the matching 0.5.1 source ref; newer packages use final-packages.yml'"
       - uses: actions/setup-node@v4
         with:
           node-version: '24'

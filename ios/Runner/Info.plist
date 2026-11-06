@@ -72,5 +72,9 @@
 	<false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Lire le QR code d’invitation TTalk de ton contact.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Déverrouiller la clé de ton coffre TTalk avec ton accord.</string>
 </dict>
 </plist>

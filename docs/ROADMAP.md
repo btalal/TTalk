@@ -12,6 +12,16 @@ livraison ni compatibilité avant validation sur appareils réels.
 - Relais auto-hébergeable et file d’attente des messages chiffrés.
 - Appairage et vérification des numéros de sécurité.
 
+## Lot 0.6 — essais fonctionnels confirmés le 6 novembre 2026
+
+Le propriétaire confirme les applications iPhone, macOS, Android et Windows
+fonctionnelles, ainsi que le verrouillage manuel et à 5 minutes, la sauvegarde/
+restauration, le retrait d’un membre et la biométrie sur l’appareil testé.
+Les compilations natives et 81 tests Flutter ont réussi. Ces essais ne constituent
+pas un audit. Voir [le suivi détaillé](NEXT_VERSION.md) et [les limites](NEXT_SECURITY.md).
+Les packages installés en parallèle sont des variantes de test ; leur validation
+ne transforme pas automatiquement les anciens artefacts en distributions finales.
+
 ## Prochaines étapes
 
 - Étendre les essais Apple aux groupes, pièces jointes, interruptions réseau
