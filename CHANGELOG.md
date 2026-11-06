@@ -1,6 +1,6 @@
 # Versions
 
-## 0.6.0-dev.1 — Développement, non final
+## 0.6.0 — 6 novembre 2026
 
 - Navigation adaptative Mac/Windows à deux colonnes, navigation basse mobile,
   recherche locale et filtres ; épinglage et archives persistants.
@@ -13,8 +13,8 @@
 - Tests de régression et vérification native des quatre plateformes dans une PR.
 - Documentation de contribution et sécurité, formulaires de signalement et de PR.
 
-Notifications push reportées. Ni Double Ratchet, ni audit indépendant, ni nouvelle
-qualification sur appareil réel annoncés par ce lot. Voir [la portée](docs/NEXT_VERSION.md).
+Notifications push reportées. Ni Double Ratchet ni audit indépendant annoncés par ce lot. Les essais fonctionnels
+sur les quatre plateformes sont confirmés par le propriétaire. Voir [la portée](docs/NEXT_VERSION.md).
 
 ## 0.5.1 — iPhone et macOS, versions finales (6 novembre 2026)
 

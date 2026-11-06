@@ -1,8 +1,8 @@
-# TTalk 0.6 — développement et validation
+# TTalk 0.6.0 — fonctions et validation
 
-Cette branche prépare les améliorations approuvées le 6 novembre 2026.
-Elle n’est pas une nouvelle version finale. Les versions finales 0.5.1 restent
-les références pour les installations existantes.
+La version 0.6.0 reprend les améliorations approuvées et essayées le 6 novembre 2026.
+Les packages finaux sont reconstruits avec les identifiants habituels ; les variantes
+TTalk Test restent séparées. Android exige la signature privée des versions précédentes.
 
 ## Fonctions réalisées dans cette branche
 

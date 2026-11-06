@@ -6,7 +6,7 @@ platforms:
   android:
   ios:
   macos:
-version: 0.6.0-dev.1+26
+version: 0.6.0+27
 
 environment:
   sdk: ^3.13.0
