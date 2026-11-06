@@ -39,6 +39,25 @@ Future<void> deliverLast(AppState from, AppState to) async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'session derivation rejects malformed and low-order public keys',
+    () async {
+      final identity = await IdentityKeys.generate();
+      await expectLater(
+        identity.deriveSessionKey(Uint8List(31)),
+        throwsFormatException,
+      );
+      await expectLater(
+        identity.deriveSessionKey(Uint8List(32)),
+        throwsA(isA<Exception>()),
+      );
+      final lowOrder = Uint8List(32)..[0] = 1;
+      await expectLater(
+        identity.deriveSessionKey(lowOrder),
+        throwsA(isA<Exception>()),
+      );
+    },
+  );
   test('invitation roundtrip binds relay and identity; malformed and duplicate inputs rejected', () {
     final peer = 'a' * 64;
     final invite = PairingInvitation(

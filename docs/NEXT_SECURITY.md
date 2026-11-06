@@ -24,7 +24,8 @@ sécurité équivalente à Signal, SimpleX ou MLS.
    session chiffrée de chacun des membres restants. Elle n’est jamais diffusée
    sous l’ancienne clé partagée. Sans session/capacité de chaque destinataire,
    l’action est refusée. Les clients anciens doivent être mis à jour avant ce parcours.
-5. **Identité.** Le lien QR peut épingler l’identité attendue lors de l’appairage.
+5. **Identité.** Les accords X25519 rejettent les clés publiques de mauvaise
+   longueur et les secrets partagés tout à zéro (RFC 7748). Le lien QR peut épingler l’identité attendue lors de l’appairage.
    Le marquage « vérifié » reste une action explicite après comparaison des numéros.
 6. **Persistance.** Les listes sont instantanées au moment de la mise en file d’une
    sauvegarde du coffre ; les modifications de présentation et de réaction sont

@@ -42,11 +42,18 @@ class IdentityKeys {
     Uint8List remotePublicKey, {
     String context = 'ttalk-session-v1',
   }) async {
+    if (remotePublicKey.length != 32) {
+      throw const FormatException('Clé publique X25519 invalide');
+    }
     final remote = SimplePublicKey(remotePublicKey, type: KeyPairType.x25519);
     final shared = await X25519().sharedSecretKey(
       keyPair: privateKey,
       remotePublicKey: remote,
     );
+    // Reject low-order inputs yielding an all-zero shared secret (RFC 7748).
+    if ((await shared.extractBytes()).fold<int>(0, (bits, byte) => bits | byte) == 0) {
+      throw const FormatException('Secret partagé X25519 invalide');
+    }
     final hkdf = Hkdf(hmac: Hmac(Sha256()), outputLength: aesKeyLength);
     return hkdf.deriveKey(secretKey: shared, nonce: utf8.encode(context));
   }

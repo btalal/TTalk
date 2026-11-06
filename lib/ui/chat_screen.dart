@@ -296,7 +296,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Text(
-                          DateFormat.yMMMd().format(m.timestamp),
+                          DateFormat('dd/MM/yyyy').format(m.timestamp),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.labelSmall,
                         ),
