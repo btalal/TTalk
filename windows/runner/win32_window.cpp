@@ -16,6 +16,19 @@ namespace {
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
 
+// Windows 11 caption attributes. They let TTalk keep a neutral title bar, as on
+// macOS, instead of inheriting the user's accent colour. Older Windows versions
+// ignore them.
+#ifndef DWMWA_BORDER_COLOR
+#define DWMWA_BORDER_COLOR 34
+#endif
+#ifndef DWMWA_CAPTION_COLOR
+#define DWMWA_CAPTION_COLOR 35
+#endif
+#ifndef DWMWA_TEXT_COLOR
+#define DWMWA_TEXT_COLOR 36
+#endif
+
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
 
 /// Registry key for app theme preference.
@@ -280,9 +293,16 @@ void Win32Window::UpdateTheme(HWND const window) {
                                RRF_RT_REG_DWORD, nullptr, &light_mode,
                                &light_mode_size);
 
-  if (result == ERROR_SUCCESS) {
-    BOOL enable_dark_mode = light_mode == 0;
-    DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE,
-                          &enable_dark_mode, sizeof(enable_dark_mode));
-  }
+  BOOL enable_dark_mode = result == ERROR_SUCCESS && light_mode == 0;
+  DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                        &enable_dark_mode, sizeof(enable_dark_mode));
+
+  // Same neutral title bar as the macOS window, whatever the accent colour.
+  COLORREF caption = enable_dark_mode ? RGB(0x2B, 0x2B, 0x2E)
+                                      : RGB(0xEC, 0xEB, 0xF0);
+  COLORREF text = enable_dark_mode ? RGB(0xA1, 0xA1, 0xA6)
+                                   : RGB(0x4A, 0x4A, 0x4F);
+  DwmSetWindowAttribute(window, DWMWA_CAPTION_COLOR, &caption, sizeof(caption));
+  DwmSetWindowAttribute(window, DWMWA_BORDER_COLOR, &caption, sizeof(caption));
+  DwmSetWindowAttribute(window, DWMWA_TEXT_COLOR, &text, sizeof(text));
 }

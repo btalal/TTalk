@@ -114,7 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Wrap(
+                alignment: WrapAlignment.center,
                 spacing: 6,
+                runSpacing: 6,
                 children: [
                   for (final choice in const [
                     ('all', 'Toutes'),
@@ -171,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           PopupMenuButton<String>(
             tooltip: 'Menu TTalk',
+            icon: const Icon(Icons.more_horiz),
             onSelected: (action) {
               switch (action) {
                 case 'server':
@@ -263,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             SizedBox(
-              width: 350,
+              width: 440,
               child: Scaffold(appBar: toolbar, body: list),
             ),
             const VerticalDivider(width: 1),

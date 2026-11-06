@@ -1,5 +1,6 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <flutter_windows.h>
 #include <windows.h>
 
 #include "flutter_window.h"
@@ -40,8 +41,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
   FlutterWindow window(project);
-  Win32Window::Point origin(10, 10);
-  Win32Window::Size size(1280, 720);
+  // Same default window as macOS (800 x 600, centred): the compact layout with
+  // Discussions, Contacts and Réglages at the bottom. Maximising the window
+  // switches to the two-column layout on both platforms.
+  constexpr int kWidth = 800;
+  constexpr int kHeight = 600;
+  RECT work_area;
+  ::SystemParametersInfoW(SPI_GETWORKAREA, 0, &work_area, 0);
+  HMONITOR primary = ::MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
+  const double scale = FlutterDesktopGetDpiForMonitor(primary) / 96.0;
+  const int work_width = static_cast<int>((work_area.right - work_area.left) / scale);
+  const int work_height = static_cast<int>((work_area.bottom - work_area.top) / scale);
+  Win32Window::Point origin(
+      static_cast<unsigned int>(work_area.left / scale + (work_width > kWidth ? (work_width - kWidth) / 2 : 0)),
+      static_cast<unsigned int>(work_area.top / scale + (work_height > kHeight ? (work_height - kHeight) / 2 : 0)));
+  Win32Window::Size size(kWidth, kHeight);
   if (!window.Create(L"TTalk", origin, size)) {
     ::CoUninitialize();
     ::CloseHandle(instance_mutex);

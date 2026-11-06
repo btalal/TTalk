@@ -65,6 +65,7 @@ class ChatActionsMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
     tooltip: isGroup ? 'Actions du groupe' : 'Actions du contact',
+    icon: const Icon(Icons.more_horiz),
     onSelected: (action) async {
       if (action == 'pin' || action == 'archive') {
         try {
