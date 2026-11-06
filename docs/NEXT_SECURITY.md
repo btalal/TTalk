@@ -48,8 +48,10 @@ sécurité équivalente à Signal, SimpleX ou MLS.
 - Les fichiers déjà déchiffrés hors du coffre ne sont pas effacés par le verrouillage.
 - Un appareil compromis peut accéder à des données déjà déverrouillées.
 
-## Conditions avant une nouvelle version finale
+## Prochaine révision de sécurité
 
-Revue indépendante du protocole et du stockage biométrique, tests sur les quatre
-plateformes et tests de perte réseau/stockage, refus des autorisations et migrations.
-Les changements sont maintenus dans une branche de développement pour cette validation.
+Le propriétaire reporte Double Ratchet, les époques de groupe et la revue indépendante
+à la prochaine révision, le 6 novembre 2026. Voir le [plan durable](SECURITY_NEXT_REVISION.md).
+Les essais fonctionnels rapportés sur les quatre plateformes ne valent pas audit.
+Les tests de perte réseau/stockage, refus des autorisations et migrations restent
+à approfondir ; aucune promesse de confidentialité persistante ni d’audit n’est ajoutée.

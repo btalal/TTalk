@@ -46,7 +46,7 @@ Les anciens groupes de 0.3.6 exigent une recréation : voir « Mise à niveau »
 |---|---|
 | Windows 10/11 x64 | ✅ Cette archive stable |
 | Android 7.0+ | ✅ [APK stable séparé](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1) |
-| iPhone et macOS | 🟡 [Préversions séparées](https://github.com/btalal/TTalk/releases/tag/v0.5.1-iphone-mac-preview.1) |
+| iPhone et macOS | 🟢 [Versions finales Apple 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple) — compilation et signature personnelle dans Xcode |
 
 Un relais TTalk HTTPS commun est nécessaire pour échanger entre appareils.
 Les notifications mobiles quand l’application est fermée ne sont pas intégrées.

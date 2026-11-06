@@ -12,13 +12,15 @@ livraison ni compatibilité avant validation sur appareils réels.
 - Relais auto-hébergeable et file d’attente des messages chiffrés.
 - Appairage et vérification des numéros de sécurité.
 
-## Lot 0.6 en développement
+## Lot 0.6 — essais fonctionnels confirmés le 6 novembre 2026
 
-Interface bureau à deux colonnes et navigation mobile, recherche locale, QR,
-épinglage/archives, réponses/réactions, verrouillage et sauvegarde chiffrée.
-Les compilations natives et les nouveaux parcours matériels restent à valider.
-Voir [le suivi détaillé](NEXT_VERSION.md) et [les limites de sécurité](NEXT_SECURITY.md).
-Les notifications push sont reportées à la demande du propriétaire.
+Le propriétaire confirme les applications iPhone, macOS, Android et Windows
+fonctionnelles, ainsi que le verrouillage manuel et à 5 minutes, la sauvegarde/
+restauration, le retrait d’un membre et la biométrie sur l’appareil testé.
+Les compilations natives et 81 tests Flutter ont réussi. Ces essais ne constituent
+pas un audit. Voir [le suivi détaillé](NEXT_VERSION.md) et [les limites](NEXT_SECURITY.md).
+Les packages installés en parallèle sont des variantes de test ; leur validation
+ne transforme pas automatiquement les anciens artefacts en distributions finales.
 
 ## Prochaines étapes
 
@@ -30,6 +32,14 @@ Les notifications push sont reportées à la demande du propriétaire.
 - Renforcer le modèle cryptographique des conversations directes et des groupes,
   puis rechercher un audit indépendant avant toute promesse de sécurité accrue.
 - Clarifier les sauvegardes, la restauration et la migration entre appareils.
+
+## Révision de sécurité suivante — décision du 6 novembre 2026
+
+Le chantier Double Ratchet et la refonte des rotations de groupe sont reportés
+à la révision suivant le lot 0.6, à la demande du propriétaire. Ils ne sont
+pas annoncés comme implémentés. Le [plan conservé dans le dépôt](SECURITY_NEXT_REVISION.md)
+précise les exigences de migration, de tests et de revue. Les notifications push
+restent reportées.
 
 ## Pistes à évaluer
 

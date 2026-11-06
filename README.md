@@ -1,13 +1,17 @@
 <p align="center">
-  <img src="docs/media/ttalk-banner.jpg" width="100%" alt="TTalk : messagerie chiffrée de bout en bout pour Windows, Android, iPhone et macOS, avec un relais au choix" />
+  <img src="docs/media/ttalk-banner-final.jpg" width="100%" alt="TTalk : messagerie chiffrée de bout en bout pour Windows, Android, iPhone et macOS, avec un relais au choix" />
 </p>
 
 # TTalk
 
-> **Développement 0.6** : [fonctions et validation en cours](docs/NEXT_VERSION.md).
-> Les nouvelles fonctions de cette branche ne sont pas encore une version finale.
+> **Lot 0.6** : [fonctions et validation](docs/NEXT_VERSION.md).
+> Les essais des quatre applications sont confirmés ; la publication des packages finaux reste à préparer.
 
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
+
+**Versions finales : Windows, Android, iOS et macOS.** Sur Apple,
+[la version finale](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple)
+requiert une compilation et une signature personnelle dans Xcode.
 
 **TTalk** est une messagerie chiffrée et open source pour Windows, Android, iPhone et macOS. Échangez des messages, des fichiers
 et des conversations de groupe sur un relais que vous choisissez.

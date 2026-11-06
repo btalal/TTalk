@@ -43,11 +43,23 @@ Les sauvegardes ne sont pas une synchronisation entre appareils. Cesser d’util
 l’ancien appareil avant de restaurer son identité ; aucune fusion d’historiques.
 Un renouvellement de sauvegarde n’invalide pas automatiquement les copies précédentes.
 
-## Validation avant diffusion
+## Validation rapportée le 6 novembre 2026
+
+Le propriétaire confirme les quatre applications installées et fonctionnelles.
+Il valide le verrouillage manuel et automatique à 5 minutes, sauvegarde/restauration,
+retrait d’un membre et biométrie. L’appareil de l’essai biométrique n’est pas précisé.
+Les builds Release iPhone, Mac, Android et Windows et les 81 tests Flutter passent.
+Les scénarios adversariaux, les refus d’autorisation et les interruptions de stockage
+ne sont pas déclarés couverts par cette confirmation.
+
+Le [chantier de sécurité suivant](SECURITY_NEXT_REVISION.md) est reporté à la
+révision suivante par décision du propriétaire, sans promesse de ratchet ou d’audit.
+
+## Contrôles complémentaires avant diffusion
 
 - Analyse Dart et tests automatisés : voir le workflow **Validate next TTalk clients**.
 - Vérifier les compilations Release iPhone, macOS, Android et Windows.
-- Essais réels encore nécessaires pour caméra, refus d’autorisation, Face ID/Touch ID,
+- Étendre les essais caméra, refus d’autorisation, Face ID/Touch ID,
   changement d’empreintes, PIN de secours, verrouillage après suspension, refus de
   sauvegarde, import interrompu, réinstallation sans désinstallation et compatibilité 0.5.1.
 - Essayer la rotation avec un groupe à trois appareils, un destinataire hors ligne,

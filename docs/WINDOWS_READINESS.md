@@ -1,7 +1,10 @@
 # Validation Windows et Android — 0.5.0
 
 La version 0.5.0 est publiée en finale pour Windows x64 et Android, sur le
-périmètre fonctionnel validé. iPhone reste en préversion.
+périmètre fonctionnel validé. Cette note décrit les essais du 3 novembre 2026.
+Depuis le 6 novembre, [iPhone et macOS sont également disponibles en versions
+finales](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple), avec compilation
+et signature personnelle dans Xcode.
 
 ## Essais confirmés par l’utilisateur le 3 novembre 2026
 
