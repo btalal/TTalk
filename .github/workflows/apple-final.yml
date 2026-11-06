@@ -1,0 +1,102 @@
+name: Publish final Apple release
+
+on:
+  push:
+    branches: ['main/ttalk']
+    paths:
+      - 'docs/releases/apple-0.5.1.md'
+      - '.github/workflows/apple-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-final-0.5.1
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci --prefix server
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - name: Resolve locked dependencies and check common code
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter test
+      - name: Build unsigned iPhone Release
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p dist Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          ditto -c -k --keepParent Payload dist/ttalk-ios-unsigned.ipa
+      - name: Build unsigned native Mac Release
+        run: |
+          flutter build macos --release --config-only
+          (cd macos && pod install)
+          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath build/macos-final CODE_SIGNING_ALLOWED=NO build
+          APP='build/macos-final/Build/Products/Release/ttalk.app'
+          test -d "$APP"
+          test -f "$APP/Contents/Resources/AppIcon.icns"
+          ditto -c -k --keepParent "$APP" dist/ttalk-macos-unsigned.zip
+      - name: Package installation guides and hashes
+        run: |
+          cp docs/MOBILE_INSTALL.md dist/INSTALLATION.md
+          cp docs/MACOS_INSTALL.md dist/MACOS_INSTALL.md
+          cp docs/APPLE_VALIDATION.md dist/APPLE_VALIDATION.md
+          (cd dist && shasum -a 256 ttalk-ios-unsigned.ipa > ttalk-ios-unsigned.ipa.sha256)
+          (cd dist && shasum -a 256 ttalk-macos-unsigned.zip > ttalk-macos-unsigned.zip.sha256)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apple-final
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-final
+          path: dist
+      - name: Publish final Apple 0.5.1 and preserve preview history
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          TAG='v0.5.1-apple'
+          if gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --repo "$GH_REPO" --clobber
+            gh release edit "$TAG" --repo "$GH_REPO" --prerelease=false \
+              --title 'TTalk 0.5.1 — iPhone et Mac · Versions finales' \
+              --notes-file docs/releases/apple-0.5.1.md
+          else
+            gh release create "$TAG" dist/* --repo "$GH_REPO" \
+              --target "$RELEASE_COMMIT" --prerelease=false --latest=false \
+              --title 'TTalk 0.5.1 — iPhone et Mac · Versions finales' \
+              --notes-file docs/releases/apple-0.5.1.md
+          fi
+          gh release edit v0.5.1-iphone-mac-preview.1 --repo "$GH_REPO" \
+            --title 'TTalk 0.5.1 — iPhone et macOS · Préversion historique' \
+            --notes-file docs/releases/iphone-mac-preview-0.5.1.md

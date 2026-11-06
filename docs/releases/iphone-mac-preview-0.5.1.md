@@ -1,4 +1,9 @@
-# 🔒 TTalk 0.5.1 — iPhone et macOS
+# TTalk 0.5.1 — iPhone et macOS · Préversion historique
+
+Cette publication est conservée comme archive historique. Utiliser désormais
+la [version finale Apple 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple),
+validée sur iPhone 17 Pro (iOS 27.2) et Mac mini M4 le 6 novembre 2026.
+Les informations ci-dessous décrivent l’état de la préversion à sa publication.
 
 🟡 **Préversion de test** · Ces archives ne constituent pas une distribution
 signée et prête à installer sur tous les appareils.

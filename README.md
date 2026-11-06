@@ -1,13 +1,12 @@
 <p align="center">
-  <img src="docs/media/ttalk-banner.jpg" width="100%" alt="TTalk : messagerie chiffrée de bout en bout pour Windows, Android et iOS en préversion, avec un relais au choix" />
+  <img src="docs/media/ttalk-banner.jpg" width="100%" alt="TTalk : messagerie chiffrée de bout en bout pour Windows, Android, iPhone et macOS, avec un relais au choix" />
 </p>
 
 # TTalk
 
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
 
-**TTalk** est une messagerie chiffrée et open source pour Windows et Android,
-avec des préversions pour iPhone et macOS. Échangez des messages, des fichiers
+**TTalk** est une messagerie chiffrée et open source pour Windows, Android, iPhone et macOS. Échangez des messages, des fichiers
 et des conversations de groupe sur un relais que vous choisissez.
 
 🔒 Chiffrement de bout en bout · 🌍 Relais auto-hébergeable ·
@@ -16,7 +15,7 @@ et des conversations de groupe sur un relais que vous choisissez.
 <p>
   <a href="https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows"><img src="https://img.shields.io/badge/Windows_x64-0.5.1-0F172A" alt="Windows x64 0.5.1" /></a>
   <a href="https://github.com/btalal/TTalk/releases/tag/android-v0.5.1"><img src="https://img.shields.io/badge/Android-0.5.1-312E81" alt="Android 0.5.1" /></a>
-  <a href="https://github.com/btalal/TTalk/releases/tag/v0.5.1-iphone-mac-preview.1"><img src="https://img.shields.io/badge/iPhone_%26_macOS-pr%C3%A9version-7C3AED" alt="iPhone et macOS en préversion" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple"><img src="https://img.shields.io/badge/iPhone_%26_macOS-0.5.1_finale-7C3AED" alt="iPhone et macOS 0.5.1 — versions finales" /></a>
   <img src="https://img.shields.io/badge/Flutter-3.47.9-02569B" alt="Flutter 3.47.9" />
   <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/AES--256--GCM-chiffrement-312E81" alt="Chiffrement AES-256-GCM" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-7C3AED" alt="Licence Apache-2.0" /></a>
@@ -49,7 +48,12 @@ contact en comparant vos numéros de sécurité par un autre canal.
 | 🌍 Hébergement | Relais HTTPS au choix, y compris auto-hébergé |
 
 Les échanges Windows et Android ont été essayés sur deux PC et un téléphone.
-**iPhone et macOS restent des préversions à tester sur appareil réel.**
+**Les versions finales iPhone et Mac ont été validées le 6 novembre 2026**
+sur iPhone 17 Pro sous iOS 27.2 et Mac mini M4 : serveur, contacts et
+messages envoyés/reçus. Le lancement autonome fonctionne sur les deux ;
+la conservation des messages après fermeture et réouverture a aussi été
+vérifiée sur Mac. Installation Apple avec signature personnelle dans Xcode.
+[Détail des essais et limites](docs/APPLE_VALIDATION.md).
 
 ## Aperçu
 
@@ -99,8 +103,8 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 |---|---|---|
 | Windows 10/11 x64 | Version 0.5.1 | [ZIP Windows](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows) : extraire toute l’archive et lancer `TTalk.exe`. |
 | Android 7.0+ | Version 0.5.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1) : télécharger `ttalk-android.apk`. |
-| iPhone (iOS 15+) | Préversion | [IPA non signé](https://github.com/btalal/TTalk/releases/tag/v0.5.1-iphone-mac-preview.1) : signature personnelle nécessaire avant installation. |
-| macOS | Préversion | [Archive de test](https://github.com/btalal/TTalk/releases/tag/v0.5.1-iphone-mac-preview.1) non signée et non notarisée ; voir le guide de la release. |
+| iPhone (iOS 15+) | Version finale 0.5.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
+| macOS 12+ | Version finale 0.5.1, validée sur M4 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.5.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI non signée, sans notarisation. |
 
 ### Installer sur Windows
 
@@ -116,8 +120,9 @@ app/
 
 Sur Android, installer l’APK **signé** `ttalk-android.apk` sans désinstaller
 une version précédente si vous souhaitez conserver les données locales.
-Sur iPhone, l’IPA de préversion doit être signé avec un compte Apple avant
-installation. Voir le [guide mobile](docs/MOBILE_INSTALL.md).
+Sur iPhone et Mac, utiliser Xcode avec votre compte Apple et la configuration
+**Release**. Les archives CI ne sont pas des installateurs Apple signés. Voir le
+[guide mobile](docs/MOBILE_INSTALL.md) et le [guide Mac](docs/MACOS_INSTALL.md).
 
 Un **relais HTTPS** est nécessaire pour communiquer entre appareils. Son adresse
 se saisit dans **Configurer le serveur** ; elle n’est pas imposée par TTalk.
@@ -208,7 +213,7 @@ Cette file d’attente ne remplace pas une sauvegarde des conversations.
 | État | Sujet |
 |---|---|
 | Disponible en 0.5.1 | Messages, groupes, pièces jointes, accusés, Windows et Android |
-| En validation | Préversions iPhone et macOS sur appareils réels et parcours de signature |
+| Validé le 06/11/2026 | iPhone 17 Pro (iOS 27.2) et Mac mini M4, installation personnelle via Xcode |
 | À étudier | Notifications mobiles, réception en arrière-plan, sauvegarde et restauration |
 | Pistes futures | Appels audio/vidéo et synchronisation entre appareils |
 
@@ -227,8 +232,10 @@ relais de votre choix. [Guide de déploiement](server/README.md).
 **Les notifications mobiles fonctionnent-elles ?** Pas encore. Les messages
 en attente sont récupérés à la réouverture de l’application.
 
-**L’iPhone et le Mac sont-ils prêts pour tous ?** Non. L’IPA iPhone doit être
-signé et l’archive macOS n’est ni signée ni notarisée.
+**Comment installer les versions finales iPhone et Mac ?** Le parcours validé
+est la compilation Release et la signature personnelle dans Xcode. Les archives
+CI nécessitent une signature ; aucune distribution App Store, TestFlight ou
+Mac Developer ID notarisée n’est fournie.
 
 ## Documentation
 
@@ -236,6 +243,8 @@ signé et l’archive macOS n’est ni signée ni notarisée.
 |---|---|
 | Démarrage et appairage | [Commencer avec TTalk](docs/GETTING_STARTED.md) |
 | Installation mobile | [Android et iPhone](docs/MOBILE_INSTALL.md) |
+| Installation Mac | [Mac Apple Silicon et signature Xcode](docs/MACOS_INSTALL.md) |
+| Validation Apple | [Essais sur iPhone 17 Pro et Mac mini M4](docs/APPLE_VALIDATION.md) |
 | Sécurité et limites | [Modèle de sécurité](docs/SECURITY.md) |
 | Conversations et groupes | [Gestion des conversations](docs/CHAT_MANAGEMENT.md) |
 | Relais | [Déploiement et exploitation](server/README.md) |

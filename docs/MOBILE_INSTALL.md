@@ -1,9 +1,11 @@
-# TTalk 0.5.1 — Android final et iPhone en préversion
+# TTalk 0.5.1 — versions finales Android et iPhone
 
 Android et iOS utilisent le même relais **0.4 / protocole 2** que Windows
 0.4 / 0.5.1. Chaque téléphone possède sa propre identité : appairer chaque appareil
 séparément, saisir le même serveur HTTPS, puis comparer les numéros de sécurité.
-L’hébergement du relais reste à créer ; aucune adresse n’est préconfigurée.
+Le relais utilisé lors des essais est `https://ttalk.fly.dev` ; saisir cette
+adresse dans **Configurer le serveur**, ou celle de votre propre relais HTTPS.
+Aucune adresse n’est préconfigurée.
 
 ## Android 0.5.1 — APK signé (version finale)
 
@@ -41,32 +43,69 @@ un APK signé. Sans ces variables, la CI produit volontairement un APK non sign�
 Une autre possibilité est `zipalign` puis `apksigner sign` des Android Build Tools,
 suivi de `apksigner verify --verbose`.
 
-## iPhone — préversion, sans Mac et sans abonnement Apple Developer
+## iPhone — version finale, installation personnelle via Xcode
 
-iOS **15 minimum**. La CI compile sur un Mac GitHub et prépare
-`ttalk-ios-unsigned.ipa`. Ce fichier **n’est pas directement installable** : Apple
-exige une signature et un profil d’installation.
+iOS **15 minimum**. Parcours validé le **6 novembre 2026** sur **iPhone 17 Pro
+sous iOS 27.2**, avec un Mac mini M4, Xcode 27.2, Flutter 3.47.9 et CocoaPods
+1.17.0. Installation, lancement autonome, serveur, contact et messages sont
+confirmés dans le [compte rendu](APPLE_VALIDATION.md).
 
-Une piste pour un test personnel depuis Windows est [Sideloadly](https://sideloadly.io/) :
+1. Installer Xcode depuis l’App Store, l’ouvrir et accepter la licence et les
+   composants de premier lancement. Sélectionner Xcode complet :
 
-1. Installer l’outil depuis son site officiel et suivre ses prérequis Apple sous Windows.
-2. Connecter et autoriser l’iPhone, puis ouvrir l’IPA dans l’outil.
-3. Effectuer la signature et l’installation avec votre propre compte Apple.
-   Ne communiquer aucun identifiant Apple dans ce dépôt ou à l’assistant.
-4. Si iOS le demande, approuver le profil dans Réglages et activer le mode
-   développeur selon les instructions d’iOS et de l’outil.
+   ```sh
+   sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+   sudo xcodebuild -runFirstLaunch
+   ```
 
-Avec un compte gratuit, la signature est généralement limitée à **7 jours** et
-le nombre d’applications à installer est limité par Apple. Renouveler la signature
-avec le même compte et le même identifiant d’application pour conserver les données.
-Cette installation reste à valider sur un véritable iPhone : ce n’est ni une
-publication App Store ni une livraison TestFlight.
+2. Installer Flutter **3.47.9 ARM64** et CocoaPods. Si Homebrew est utilisé,
+   `brew install cocoapods` l’installe. Ajouter `/opt/homebrew/bin` et le dossier
+   `bin` de Flutter au PATH dans `~/.zprofile`. Vérifier `flutter --version`,
+   `pod --version` et `flutter doctor -v`. Android et Chrome ne sont pas requis.
+3. Préparer le projet :
 
-Une distribution TestFlight ou App Store nécessitera un abonnement Apple Developer,
-la configuration de la signature et une validation des règles Apple. Le projet utilise CocoaPods pour ses plugins et XCTest pour ses tests natifs.
-Pour compiler
-sur son propre Mac : `flutter build ios --release --no-codesign`, puis ouvrir
-`ios/Runner.xcworkspace` dans Xcode et configurer sa signature personnelle.
+   ```sh
+   git clone --branch main/ttalk https://github.com/btalal/TTalk.git
+   cd TTalk
+   flutter pub get --enforce-lockfile
+   flutter precache --ios
+   (cd ios && pod install)
+   open ios/Runner.xcworkspace
+   ```
+
+4. Dans **Xcode > Settings > Accounts**, ajouter votre compte Apple. Sélectionner
+   le projet bleu **Runner**, puis **TARGETS > Runner > Signing & Capabilities**.
+   Cocher **Automatically manage signing**, choisir la **Personal Team** et
+   conserver `com.talal.ttalk` s’il est disponible pour votre compte.
+5. Brancher et déverrouiller l’iPhone, accepter la confiance du Mac et activer le
+   **Mode développeur** dans Réglages > Confidentialité et sécurité si demandé.
+6. Dans **Product > Scheme > Edit Scheme… > Run > Info**, choisir **Release**.
+   Le mode Debug peut fonctionner depuis Xcode et échouer depuis l’icône sur
+   l’iPhone : **Release est nécessaire pour le parcours de lancement autonome**.
+7. Choisir l’iPhone comme destination, puis **Product > Run**. Xcode signe et
+   installe l’application. Arrêter la session Xcode, débrancher et vérifier
+   l’ouverture depuis l’icône TTalk.
+8. Dans **Configurer le serveur**, saisir `https://ttalk.fly.dev`. Appairer ce
+   téléphone séparément et comparer les numéros de sécurité des contacts.
+
+Avec un compte Apple gratuit, renouveler la signature après **7 jours** en
+relançant **Run en Release**, avec le même compte et le même identifiant.
+**Ne pas désinstaller TTalk** : la désinstallation efface les données locales.
+
+La CI fournit aussi `ttalk-ios-unsigned.ipa`, un résultat de compilation qui
+**ne s’installe pas directement** sans signature. Le parcours validé est celui
+des sources dans Xcode ci-dessus. Les installations par des outils tiers ne sont
+pas couvertes par ces essais. Aucune publication App Store ou TestFlight n’est
+fournie ; elle nécessite une distribution Apple appropriée.
+
+## Mac — version finale
+
+Le projet natif `macos/` est inclus avec l’icône TTalk, le réseau et le Trousseau.
+Sur Mac mini M4, la compilation et signature personnelle Xcode en Release sont
+validées, ainsi que le lancement depuis Applications et la conservation des
+messages après réouverture. Suivre le [guide Mac](MACOS_INSTALL.md).
+`ttalk-macos-unsigned.zip` reste non signé et non notarisé : compiler et signer
+localement, sans désactiver les protections de macOS.
 
 ## Fonctionnement et limites à tester
 

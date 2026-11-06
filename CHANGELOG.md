@@ -1,5 +1,23 @@
 # Versions
 
+## 0.5.1 — iPhone et macOS, versions finales (6 novembre 2026)
+
+- Essais manuels confirmés par le propriétaire sur iPhone 17 Pro sous iOS 27.2
+  et Mac mini M4 : connexion au relais, ajout de contacts, envoi et réception
+  des messages ; lancement autonome après installation Release.
+- Sur Mac : application copiée dans Applications et messages reçus conservés
+  après fermeture et réouverture.
+- Ajout du projet natif macOS validé : icône TTalk commune à iPhone, accès réseau
+  sortant et configuration du Trousseau ; aucun compte Apple personnel versionné.
+- Guides Xcode pour les deux plateformes, sélection de la Personal Team et du
+  mode Release, résolution des outils Flutter Intel sur Mac Apple Silicon.
+- Publication finale pour installation avec signature personnelle. Les archives
+  CI restent non signées ; pas de notarisation Mac, App Store ou TestFlight.
+
+Le protocole 2 et le code de messagerie restent inchangés. Les groupes, fichiers,
+notifications et autres scénarios non essayés sur Apple ne sont pas annoncés
+comme validés par ces essais. Voir [le compte rendu](docs/APPLE_VALIDATION.md).
+
 ## 0.5.1 — Gestion des conversations et personnalisation
 
 - Suppression locale des messages, conversations et contacts avec confirmation.

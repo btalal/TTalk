@@ -47,8 +47,10 @@ nouveau relais : celui de 0.3.6 n’est pas compatible.
   arrière-plan.
 - Les conversations directes n’utilisent pas de ratchet ; la confidentialité
   future des groupes après retrait d’un membre dépend encore du relais.
-- Les préversions iPhone et macOS doivent être validées sur appareils réels et
-  disposer d’un parcours de distribution signé avant d’être annoncées stables.
+- Les versions finales iPhone et macOS sont validées pour la signature
+  personnelle Xcode en Release, sur iPhone 17 Pro (iOS 27.2) et Mac mini M4.
+  Les archives CI restent non signées. Voir [les essais](APPLE_VALIDATION.md)
+  avant de généraliser ces résultats à d’autres appareils ou scénarios.
 
 Lire les [revues techniques](PROJECT_REVIEW.md) et le [modèle de sécurité](SECURITY.md)
 avant de modifier le protocole.

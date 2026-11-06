@@ -7,7 +7,7 @@ Télécharger la version adaptée à votre appareil depuis les
 extraire toute l’archive `ttalk-windows-x64.zip`, puis lancer `TTalk.exe` ; le
 dossier `app` doit rester à côté de ce lanceur. Sous Android, installer l’APK
 **signé** `ttalk-android.apk`. Pour iPhone et macOS, consulter le
-[guide mobile](MOBILE_INSTALL.md) et les instructions de la préversion : leurs
+[guide mobile](MOBILE_INSTALL.md) et le [guide Mac](MACOS_INSTALL.md) : leurs
 archives ne sont pas prêtes à installer directement.
 
 ## Configurer un relais
