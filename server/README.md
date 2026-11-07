@@ -22,28 +22,27 @@ Vérifier ensuite `https://votre-relais/healthz` : la réponse attendue est
 l’adresse HTTPS dans **Configurer le serveur**. Le chemin WebSocket `/ws` est
 ajouté par le client.
 
-## Exemple de configuration : Render
+## Exemple de configuration : Fly.io
 
-Le fichier `render.yaml` à la racine prépare un service Node.js **permanent** avec
-un disque persistant de 1 Go. Le service gratuit qui s’endort n’est pas utilisé.
-Les prix et taxes doivent être vérifiés sur l’écran de création de Render ; ne
-validez une commande que si son montant mensuel vous convient.
+Le fichier [`fly.toml`](fly.toml) prépare une machine **permanente**
+(`shared-cpu-1x`, 512 Mo, région Paris) avec un volume persistant de 1 Go monté
+sur `/data`. Les prix doivent être vérifiés sur la page tarifaire de Fly.io ;
+ne validez que si le montant mensuel vous convient.
 
-1. Créer un compte sur https://render.com et choisir **New → Blueprint**.
-2. Connecter le dépôt public `btalal/TTalk`, branche
-   la branche par défaut du dépôt (`main/ttalk`), puis sélectionner le fichier `render.yaml`.
-3. Vérifier le service Starter, le disque de 1 Go et le montant facturé, puis
-   lancer le déploiement. Aucun secret d’application n’est à saisir.
-4. Render fournit une adresse `https://…onrender.com`. Ouvrir `/healthz` sur cette
-   adresse : la réponse attendue est `{"status":"ok","protocol":2}`.
-5. Dans TTalk, ouvrir **Configurer le serveur**, coller l’adresse HTTPS et
+1. Installer `flyctl` et se connecter : `fly auth login`.
+2. Depuis le dossier `server`, créer l’application avec la configuration du
+   dépôt : `fly launch --copy-config --no-deploy` (choisir un nom d’application
+   libre si `ttalk` est déjà pris, et l’indiquer dans `fly.toml`).
+3. Créer le volume : `fly volumes create ttalk_messages --size 1 --region cdg`.
+4. Déployer : `fly deploy`.
+5. Fly.io fournit une adresse `https://<application>.fly.dev`. Ouvrir `/healthz`
+   sur cette adresse : la réponse attendue est `{"status":"ok","protocol":2}`.
+6. Dans TTalk, ouvrir **Configurer le serveur**, coller l’adresse HTTPS et
    enregistrer sur chaque appareil avant de les appairer.
 
-Les connexions WSS sont terminées par Render : aucun certificat à gérer sur les PC.
-Les mises à jour du service sont manuelles pour éviter de changer le protocole
-sans mettre à jour les applications. **Le blueprint préparé n’est pas la preuve
-d’un déploiement réussi** : l’accès public et les deux PC restent à valider une
-fois le compte et le service créés.
+Les connexions WSS sont terminées par Fly.io : aucun certificat à gérer sur les
+appareils. Les mises à jour du relais sont manuelles (`fly deploy`) pour éviter
+de changer le protocole sans mettre à jour les applications.
 
 ## Développement local
 
