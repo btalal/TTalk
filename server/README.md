@@ -25,9 +25,16 @@ ajouté par le client.
 ## Exemple de configuration : Fly.io
 
 Le fichier [`fly.toml`](fly.toml) prépare une machine **permanente**
-(`shared-cpu-1x`, 512 Mo, région Paris) avec un volume persistant de 1 Go monté
-sur `/data`. Les prix doivent être vérifiés sur la page tarifaire de Fly.io ;
-ne validez que si le montant mensuel vous convient.
+(`shared-cpu-1x`, 256 Mo + 256 Mo de swap, région Paris) avec un volume
+persistant de 1 Go monté sur `/data`. C’est la plus petite machine Fly.io,
+suffisante pour un relais personnel ou familial. Les prix doivent être vérifiés
+sur la page tarifaire de Fly.io ; ne validez que si le montant mensuel vous convient.
+
+**Relais déjà déployé en 512 Mo ?** Depuis `server`, `fly deploy` applique la
+nouvelle taille (même adresse, même volume, messages en attente conservés).
+Sans redéployer : `fly scale memory 256`. Vérifier ensuite `/healthz` et
+`fly status`. En cas de manque de mémoire (`fly logs` signale *Out of memory*),
+revenir à `fly scale memory 512`.
 
 1. Installer `flyctl` et se connecter : `fly auth login`.
 2. Depuis le dossier `server`, créer l’application avec la configuration du
@@ -63,7 +70,7 @@ même PC. Les serveurs distants doivent utiliser HTTPS/WSS.
 - `PORT` : port du service, 8080 par défaut.
 - `HOST` : interface d’écoute, `127.0.0.1` par défaut, `0.0.0.0` chez l’hébergeur.
 - `DATA_DIR` : disque persistant, `server/data` si le serveur est lancé depuis
-  `server`, `/var/data` dans le blueprint.
+  `server`, `/data` dans l’exemple Fly.io et l’image Docker.
 - SQLite conserve les paquets chiffrés jusqu’à confirmation de stockage par
   l’application destinataire, ou expiration **7 jours** après leur dépôt.
 - Une reconnexion ne change pas l’identité, qui est liée à la clé de l’appareil.

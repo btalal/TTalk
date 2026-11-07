@@ -1,10 +1,14 @@
 app = "ttalk"
 primary_region = "cdg"
+# Filet de sécurité si la mémoire de 256 Mo est ponctuellement dépassée.
+swap_size_mb = 256
 
 [env]
   HOST = "0.0.0.0"
   PORT = "8080"
   DATA_DIR = "/data"
+  # Garde le tas JavaScript sous la mémoire de la machine (256 Mo).
+  NODE_OPTIONS = "--max-old-space-size=160"
 
 [http_service]
   internal_port = 8080
@@ -27,4 +31,4 @@ primary_region = "cdg"
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "512MB"
+  memory = "256MB"
