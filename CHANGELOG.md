@@ -102,7 +102,7 @@ ci-dessous. L’hébergement réel et les échanges entre deux PC restent à val
   déduplication et expiration à 7 jours, avec quotas de stockage.
 - Métadonnées et accusés chiffrés ; protection contre le réétiquetage des paquets.
 - Compteur de propriété pour rejeter les anciens transferts rejoués.
-- Blueprint Render avec service permanent, HTTPS et disque persistant.
+- Configuration d’hébergement avec service permanent, HTTPS et disque persistant.
 
 Préversion : l’hébergement réel et l’échange entre deux PC distants restent à valider.
 Les applications et le relais 0.3.6 ne sont pas compatibles avec le nouveau transport.

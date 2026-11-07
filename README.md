@@ -219,7 +219,7 @@ des autres participants. [Guide des groupes et conversations](docs/CHAT_MANAGEME
 
 Le [serveur TTalk](server/README.md) peut être exécuté sur un hébergement qui
 fournit Node.js 24, un disque persistant et HTTPS/WSS. Un
-[Dockerfile](server/Dockerfile) est fourni ; un VPS ou le blueprint Render du
+[Dockerfile](server/Dockerfile) est fourni ; un VPS ou la configuration Fly.io du
 dépôt sont aussi possibles. Le choix de l’hébergeur et ses coûts vous
 appartiennent.
 
