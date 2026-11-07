@@ -71,25 +71,25 @@ vérifiée sur Mac. Installation Apple avec signature personnelle dans Xcode.
 
 ## Aperçu
 
-> Captures de l’interface précédente ; celles de la nouvelle interface 0.6.1
-> seront ajoutées prochainement.
+### Bureau (Windows, version 0.6.1)
 
-### Bureau (Windows)
-
-**Conversation chiffrée** — échanges directs et accusés de lecture.
-
-![Conversation TTalk sur Windows avec des messages de test](docs/media/windows-chat.png)
-
-**Appairage** — saisir le code transmis par un contact, puis comparer les
-numéros de sécurité par un autre canal.
-
-![Fenêtre d’appairage d’un contact dans TTalk sur Windows](docs/media/windows-pairing.png)
+La même interface est utilisée sur Windows, macOS, Android et iPhone.
 
 **Coffre local** — le PIN déverrouille les messages enregistrés sur cet appareil.
 
-![Écran de déverrouillage du coffre TTalk sur Windows](docs/media/windows-unlock.png)
+![Écran de déverrouillage du coffre TTalk 0.6.1 sur Windows](docs/media/windows-unlock.png)
 
-Les vues Android et de groupes seront ajoutées dès que des captures réelles
+**Discussions** — logo, version et état de connexion en en-tête, filtres sur
+une ligne, avatars illustrés et menu Discussions, Contacts, Réglages en bas.
+
+![Liste des discussions de TTalk 0.6.1 sur Windows](docs/media/windows-home.png)
+
+**Conversation chiffrée** — messages, pièces jointes chiffrées pendant le
+transfert et accusés de lecture.
+
+![Conversation TTalk 0.6.1 sur Windows avec des messages de test et une pièce jointe](docs/media/windows-chat.png)
+
+Les vues Android, iPhone et Mac seront ajoutées dès que des captures réelles
 et anonymisées seront disponibles.
 
 ## Comparaison
