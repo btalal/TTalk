@@ -4,8 +4,8 @@
 
 ## Téléchargements
 
-- [APK à signer](https://github.com/btalal/TTalk/releases/download/android-v0.6.0/ttalk-android-unsigned.apk)
-- [Consignes de signature](https://github.com/btalal/TTalk/releases/download/android-v0.6.0/INSTALLATION-SIGNATURE.txt)
+- [APK à signer](https://github.com/btalal/TTalk/releases/download/v0.6.0-android/ttalk-android-unsigned.apk)
+- [Consignes de signature](https://github.com/btalal/TTalk/releases/download/v0.6.0-android/INSTALLATION-SIGNATURE.txt)
 
 Publication en attente de la clé de signature d’origine. Cet APK non signé ne s’installe pas directement. La version finale Android 0.5.1 reste la référence installable.
 

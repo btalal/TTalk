@@ -2,12 +2,12 @@
 
 🟢 **Version stable historique** · Première version Android stable de TTalk.
 Pour une nouvelle installation, préférer
-[TTalk Android 0.5.1](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1).
+[TTalk Android 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-android).
 
 ## Téléchargements
 
-- 📦 [APK Android signé 0.5.0](https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android.apk)
-- 🔐 [Empreinte SHA256 de l’APK signé](https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android.apk.sha256)
+- 📦 [APK Android signé 0.5.0](https://github.com/btalal/TTalk/releases/download/v0.5.0-android/ttalk-android.apk)
+- 🔐 [Empreinte SHA256 de l’APK signé](https://github.com/btalal/TTalk/releases/download/v0.5.0-android/ttalk-android.apk.sha256)
 - 🖥️ [Windows 0.5.0](https://github.com/btalal/TTalk/releases/tag/v0.5.0-windows)
 
 `ttalk-android-unsigned.apk` est une archive de compilation, pas le package
@@ -28,7 +28,7 @@ Pour les utilisateurs qui doivent rester sur la version 0.5.0. La version
 ## Corrections
 
 Les correctifs d’appairage et de gestion des conversations sont publiés dans
-la [version 0.5.1](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1).
+la [version 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-android).
 
 ## Compatibilité
 
@@ -58,7 +58,7 @@ métadonnées et TTalk n’a pas été audité indépendamment.
 ## Vérification SHA256
 
 Comparer l’empreinte de `ttalk-android.apk` avec le fichier
-[`ttalk-android.apk.sha256`](https://github.com/btalal/TTalk/releases/download/android-v0.5.0/ttalk-android.apk.sha256).
+[`ttalk-android.apk.sha256`](https://github.com/btalal/TTalk/releases/download/v0.5.0-android/ttalk-android.apk.sha256).
 La somme de contrôle ne remplace pas la vérification de la signature Android.
 
 ## Documentation

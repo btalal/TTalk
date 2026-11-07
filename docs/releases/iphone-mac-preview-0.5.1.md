@@ -20,7 +20,7 @@ Flutter native pour Mac. Les essais sur iPhone et Mac réels restent à complét
 
 Pour une installation prête à l’emploi, choisir plutôt
 [Windows stable](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows)
-ou [Android stable](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1).
+ou [Android stable](https://github.com/btalal/TTalk/releases/tag/v0.5.1-android).
 
 ## Pour qui ?
 
