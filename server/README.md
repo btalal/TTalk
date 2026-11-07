@@ -4,6 +4,9 @@ Ce serveur Node.js est fourni dans le dépôt. Les appareils qui échangent
 utilisent la même adresse HTTPS. Le relais transporte des paquets chiffrés et
 leurs métadonnées de routage ; voir le [modèle de sécurité](../docs/SECURITY.md).
 
+> **Sur un NAS à la maison** (Asustor, Synology, QNAP…), sans ouvrir de port :
+> voir le [guide NAS avec Tailscale Funnel](NAS.md).
+
 ## Déployer sur un hébergement au choix
 
 Il faut **Node.js 24**, un disque persistant pour la base SQLite, une terminaison
