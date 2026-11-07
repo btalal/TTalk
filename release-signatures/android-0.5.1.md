@@ -7,8 +7,8 @@ Cette version améliore les conversations, les contacts et les groupes. Elle
 
 ## Téléchargements
 
-- 📦 **[Télécharger l’APK Android signé](https://github.com/btalal/TTalk/releases/download/android-v0.5.1/ttalk-android.apk)** — `ttalk-android.apk`
-- 🔐 [Empreinte SHA256 de l’APK signé](https://github.com/btalal/TTalk/releases/download/android-v0.5.1/ttalk-android.apk.sha256)
+- 📦 **[Télécharger l’APK Android signé](https://github.com/btalal/TTalk/releases/download/v0.5.1-android/ttalk-android.apk)** — `ttalk-android.apk`
+- 🔐 [Empreinte SHA256 de l’APK signé](https://github.com/btalal/TTalk/releases/download/v0.5.1-android/ttalk-android.apk.sha256)
 - 🖥️ [Version Windows stable 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows)
 
 Le fichier `ttalk-android-unsigned.apk` présent parmi les Assets est une
@@ -68,7 +68,7 @@ TTalk n’a pas fait l’objet d’un audit cryptographique indépendant.
 ## Vérification SHA256
 
 Comparer l’empreinte de l’APK téléchargé avec
-[`ttalk-android.apk.sha256`](https://github.com/btalal/TTalk/releases/download/android-v0.5.1/ttalk-android.apk.sha256).
+[`ttalk-android.apk.sha256`](https://github.com/btalal/TTalk/releases/download/v0.5.1-android/ttalk-android.apk.sha256).
 La somme de contrôle ne remplace pas la vérification de la signature Android.
 
 ## Documentation
