@@ -65,7 +65,7 @@ faire un clic droit sur **ttalk.app > Show in Finder**, puis copier l’applicat
 compilée dans **Applications**. Remplacer l’ancienne copie si nécessaire, sans
 effacer les données de l’application ni son Trousseau.
 
-Ouvrir TTalk depuis Applications et saisir `https://ttalk.fly.dev` dans
+Ouvrir TTalk depuis Applications et saisir l'url de votre relais privé dans
 **Configurer le serveur**, ou l’adresse de votre propre relais HTTPS.
 Chaque appareil a sa propre identité : appairer le Mac séparément et comparer
 les numéros de sécurité des contacts.
