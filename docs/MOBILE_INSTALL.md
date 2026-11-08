@@ -3,8 +3,8 @@
 Android et iOS utilisent le même relais **0.4 / protocole 2** que Windows
 0.4 / 0.5.1. Chaque téléphone possède sa propre identité : appairer chaque appareil
 séparément, saisir le même serveur HTTPS, puis comparer les numéros de sécurité.
-Le relais actuel est `https://ttalk.fly.dev` ; saisir cette adresse dans
-**Configurer le serveur** sur chaque nouvel appareil. Elle n’est pas préconfigurée.
+Saisir l'url de votre relais privé dans **Configurer le serveur**
+sur chaque nouvel appareil. Aucune adresse n’est préconfigurée.
 
 ## Android 0.5.1 — APK signé (version finale)
 
@@ -67,7 +67,7 @@ laisser Xcode **signer et installer directement** l’application sur son iPhone
    le **Mode développeur** dans Réglages > Confidentialité et sécurité si demandé.
 5. Choisir l’iPhone comme destination dans Xcode et lancer **Product > Run**.
    Xcode crée le profil de développement, signe et installe l’application.
-   Une fois TTalk ouvert, saisir `https://ttalk.fly.dev` dans **Configurer le serveur**.
+   Une fois TTalk ouvert, saisir l'url de votre relais privé dans **Configurer le serveur**.
 
 Un compte gratuit permet les essais personnels mais les profils expirent après
 **7 jours** : reconstruire et réinstaller depuis Xcode avec le même compte et le

@@ -3,7 +3,7 @@
 Cette préversion utilise le même code Flutter que TTalk pour Windows, Android et
 iPhone. Elle crée une identité propre au Mac ; appairer ce nouvel appareil avec
 chaque contact et vérifier les numéros de sécurité. Dans **Configurer le serveur**,
-saisir `https://ttalk.fly.dev`.
+saisir l'url de votre relais privé.
 
 L'archive `ttalk-macos-preview.zip` contient l'application macOS. Elle a été
 compilée sur macOS 15 par GitHub Actions, mais n'est pas signée avec un certificat

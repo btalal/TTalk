@@ -106,7 +106,7 @@ test/e2e_crypto_test.dart    # tests unitaires crypto
 
 1. Extraire tout le ZIP Windows x64, puis lancer **`TTalk.exe`** à la racine.
 2. Créer ou saisir son PIN. Les données existantes sont conservées.
-3. Ouvrir **Configurer le serveur** et saisir `https://ttalk.fly.dev`.
+3. Ouvrir **Configurer le serveur** et saisir l'url de votre relais privé.
    Les deux PC doivent utiliser la même adresse. Aucune recompilation n’est nécessaire.
 4. Choisir **Mon nom**, puis échanger un code d’appairage et comparer les numéros
    de sécurité par un autre canal.

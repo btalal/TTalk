@@ -330,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen>
                   autofocus: true,
                   decoration: InputDecoration(
                     labelText: 'Adresse du serveur',
-                    hintText: 'https://ttalk.fly.dev',
+                    hintText: "l'url de votre relais privé",
                     errorText: error,
                   ),
                 ),
