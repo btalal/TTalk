@@ -34,7 +34,14 @@ if (-not (Test-Path (Join-Path $ReleasePath 'data/flutter_assets') -PathType Con
 }
 Assert-Architecture (Join-Path $ReleasePath 'ttalk.exe')
 Assert-Architecture (Join-Path $ReleasePath 'flutter_windows.dll')
-Assert-Architecture (Join-Path $ReleasePath 'data/app.so')
+# Dart AOT snapshots use ELF on Windows too, rather than the PE DLL format.
+$aotBytes = [System.IO.File]::ReadAllBytes((Resolve-Path (Join-Path $ReleasePath 'data/app.so')))
+$expectedElf = if ($Architecture -eq 'arm64') { 183 } else { 62 }
+if ($aotBytes.Length -lt 20 -or [BitConverter]::ToUInt32($aotBytes, 0) -ne 0x464C457F -or
+    $aotBytes[4] -ne 2 -or $aotBytes[5] -ne 1 -or
+    [BitConverter]::ToUInt16($aotBytes, 18) -ne $expectedElf) {
+    throw "Snapshot AOT $Architecture invalide"
+}
 
 # Bundle the matching redistributable CRT from the Visual Studio installation.
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
