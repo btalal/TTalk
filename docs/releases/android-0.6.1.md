@@ -4,6 +4,16 @@
 
 ## Téléchargements
 
+**Icônes couleur, build 29 : APK à signer avec la clé habituelle.**
+
+- [Nouvel APK avec les 24 icônes, non signé](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/ttalk-android-icons-unsigned.apk)
+- [Instructions de signature et certificat attendu](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/SIGNATURE-ICONES.txt)
+
+L’APK signé ci-dessous reste le build précédent, sans les 24 nouvelles icônes.
+Il sera remplacé après signature et vérification du build 29. Ne pas désinstaller
+TTalk pour cette mise à jour.
+
+
 - [ttalk-android.apk](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/ttalk-android.apk)
 - [Sommes SHA256](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/SHA256SUMS.txt)
 
@@ -15,6 +25,8 @@
 Empreinte SHA-256 du certificat : `a843a0168c52c76a040f34bf8234603a93e24c6d75ea28e8438f62c376a66e5c`
 
 ## Nouveautés de la 0.6.1 — nouvelle interface
+
+- **24 nouvelles icônes couleur** pour les profils et les groupes : appareils, lieux, systèmes, fabricants et distributions Linux. Sélection dans « Nom et icône » ; anciens choix conservés.
 
 - **Même interface sur Windows, Mac, Android et iPhone** : menu Discussions, Contacts et Réglages en bas de l’écran, y compris en fenêtre agrandie.
 - **En-tête** : logo TTalk, numéro de version et badge « Connecté ». Le bandeau du serveur n’apparaît plus qu’en cas de problème ou d’envois en attente.
@@ -40,4 +52,4 @@ Signalez les problèmes dans les issues, sans publier de PIN, de clé ni de cont
 
 ## Version Linux
 
-[TTalk 0.6.1 pour Linux — RPM Fedora 45 et DEB Ubuntu/Zorin](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3), disponible en Intel/AMD 64 bits. Les paquets Linux sont distincts des téléchargements ci-dessus.
+[TTalk 0.6.1 pour Linux — RPM Fedora 45 et DEB Ubuntu/Zorin](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r4), disponible en Intel/AMD 64 bits. Les paquets Linux sont distincts des téléchargements ci-dessus.

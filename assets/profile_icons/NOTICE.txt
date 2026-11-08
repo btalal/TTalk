@@ -1,0 +1,6 @@
+TTalk profile icons — approved proposal 01, 24 icons.
+Devices, places, Linux illustration and four-color Windows symbol: original TTalk proposal, Apache-2.0.
+Other glyphs adapted from Simple Icons: https://github.com/simple-icons/simple-icons
+Simple Icons SVG glyphs are CC0-1.0: https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md
+Brand names and logos belong to their owners; no affiliation or endorsement.
+The source/ folder contains the vector masters used to render the shipped PNGs.

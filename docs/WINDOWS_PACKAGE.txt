@@ -46,6 +46,10 @@ messages chiffrés en attente pendant 7 jours au maximum.
 
 NOUVEAUTÉS DE LA VERSION 0.6.1
 
+- Build 29 : 24 nouvelles icônes couleur pour profils et groupes, dans
+  « Nom et icône » : appareils, lieux, systèmes, fabricants et distributions Linux.
+  Les anciens avatars, emojis et choix enregistrés sont conservés.
+
 - Nouvelle interface, identique sur Windows, Mac, Android et iPhone :
   menu Discussions, Contacts et Réglages en bas de la fenêtre.
 - Logo, version et état « Connecté » visibles en haut de la fenêtre.

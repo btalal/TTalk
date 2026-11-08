@@ -1,10 +1,14 @@
 name: Native ARM64 desktop packages
 on:
   push:
-    branches: ['feature/desktop-arm64']
+    branches: ['feature/desktop-arm64', 'feature/profile-icons']
   pull_request:
     branches: ['main/ttalk']
     paths:
+      - 'lib/**'
+      - 'assets/profile_icons/**'
+      - 'pubspec.*'
+      - 'test/profile_icons_test.dart'
       - 'linux/**'
       - 'packaging/linux/**'
       - 'scripts/*linux*'
