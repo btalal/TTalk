@@ -28,6 +28,10 @@ def validate_bundle(bundle, architecture):
     if not os.access(bundle / 'ttalk', os.X_OK):
         raise ValueError('Executable permission missing')
     for p in bundle.rglob('*'):
+        if p.is_file() and p.read_bytes()[:4] == b'\x7fELF':
+            header = p.read_bytes()[:20]
+            if header[:6] != b'\x7fELF\x02\x01' or struct.unpack('<H', header[18:20])[0] != {'x64': 62, 'arm64': 183}[architecture]:
+                raise ValueError(f'Wrong ELF architecture: {p}')
         if p.is_symlink() and not p.resolve().is_relative_to(bundle.resolve()):
             raise ValueError(f'Bundle link escapes its root: {p}')
     missing = run('ldd', bundle / 'ttalk', capture_output=True, text=True).stdout

@@ -1,8 +1,15 @@
-TTalk 0.6.1 pour Windows — version finale (Windows 10 et 11, 64 bits)
+TTalk 0.6.1 pour Windows — version finale — architectures x64 et ARM64
 
 Avant de lancer cette version, fermez toute version précédente de TTalk.
 N'utilisez jamais deux versions en même temps avec le même profil.
 
+
+ARCHITECTURE
+
+Intel and AMD x86_64 : ttalk-windows-x64.zip (Windows 10/11).
+ARM® aarch64 : ttalk-windows-arm64.zip (Windows 11 ARM64).
+Choisissez le ZIP correspondant au processeur indiqué dans Paramètres >
+Système > Informations système. Chaque ZIP contient ses DLL natives.
 
 INSTALLATION
 

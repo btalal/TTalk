@@ -34,6 +34,7 @@ if (-not (Test-Path (Join-Path $ReleasePath 'data/flutter_assets') -PathType Con
 }
 Assert-Architecture (Join-Path $ReleasePath 'ttalk.exe')
 Assert-Architecture (Join-Path $ReleasePath 'flutter_windows.dll')
+Assert-Architecture (Join-Path $ReleasePath 'data/app.so')
 
 # Bundle the matching redistributable CRT from the Visual Studio installation.
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
@@ -46,8 +47,20 @@ $runtime = Get-ChildItem $redist -Directory |
     ForEach-Object { Join-Path $_.FullName "$Architecture/Microsoft.VC143.CRT" } |
     Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $runtime) { $runtime = Join-Path $redist "v143/$Architecture/Microsoft.VC143.CRT" }
-if (-not (Test-Path $runtime)) { throw 'Runtime Microsoft VC143 $Architecture introuvable' }
+if (-not (Test-Path $runtime)) { throw "Runtime Microsoft VC143 $Architecture introuvable" }
+# Microsoft's ARM64 redist also carries the x64-only EH4 runtime for emulation.
+# Native ARM64 code uses vcruntime140.dll; do not bundle that x64 DLL.
 foreach ($dll in Get-ChildItem $runtime -Filter '*.dll' -File) {
+    if ($Architecture -eq 'arm64' -and $dll.Name -eq 'vcruntime140_1.dll') {
+        $runtimeBytes = [System.IO.File]::ReadAllBytes($dll.FullName)
+        $peOffset = [BitConverter]::ToInt32($runtimeBytes, 0x3c)
+        $machine = [BitConverter]::ToUInt16($runtimeBytes, $peOffset + 4)
+        Write-Host ("EH4 runtime machine: 0x{0:X4}" -f $machine)
+        if ($machine -eq 0x8664) {
+            Remove-Item (Join-Path $ReleasePath $dll.Name) -ErrorAction SilentlyContinue
+            continue
+        }
+    }
     Copy-Item $dll.FullName $ReleasePath -Force
     Assert-Architecture (Join-Path $ReleasePath $dll.Name)
 }
@@ -86,9 +99,10 @@ try {
     }
     Assert-Architecture (Join-Path $extracted 'TTalk.exe')
     $appPath = Join-Path $extracted 'app'
-    foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'data/app.so', 'data/icudtl.dat')) {
+    foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'msvcp140.dll', 'vcruntime140.dll', 'data/app.so', 'data/icudtl.dat')) {
         if (-not (Test-Path (Join-Path $appPath $file))) { throw "ZIP incomplet : $file" }
     }
+    if ($Architecture -eq 'x64' -and -not (Test-Path (Join-Path $appPath 'vcruntime140_1.dll'))) { throw 'Runtime x64 EH4 absent' }
     # Start from an unrelated working directory, with spaces in the extracted path.
     $launcher = Start-Process (Join-Path $extracted 'TTalk.exe') -WorkingDirectory $env:SystemRoot -PassThru
     Start-Sleep -Seconds 8

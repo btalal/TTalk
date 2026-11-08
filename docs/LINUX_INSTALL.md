@@ -1,25 +1,44 @@
 # TTalk 0.6.1 — installation Linux
 
-Paquets x86_64 (Intel/AMD 64 bits) : DEB construit sur Ubuntu 24.04 LTS,
-également cible de base pour Zorin OS Pro 18.1 ; installation testée aussi sous
-Ubuntu 26.04. RPM pour Fedora 45.
-Ubuntu 22.04 et les machines ARM64 ne sont pas annoncés compatibles avec ce lot.
+Deux architectures natives sont proposées :
+
+| Architecture | DEB | RPM |
+|---|---|---|
+| Intel and AMD x86_64 | `amd64` — Ubuntu 24.04/26.04 et Zorin OS Pro 18.1 | `x86_64` — Fedora 45 |
+| ARM® aarch64 | `arm64` — Ubuntu 24.04/26.04 ARM64 | `aarch64` — Fedora 45 ARM64 |
+
+Choisir selon le processeur et le système installé (`uname -m`). Le DEB est
+construit sur Ubuntu 24.04 ; Ubuntu 22.04 n’est pas couvert. Zorin OS Pro 18.1
+est couvert par le paquet Intel/AMD, sans annonce de version Zorin ARM64.
+
 Le propriétaire confirme l’installation et le fonctionnement général sous Fedora 45
 et Zorin OS Pro 18.1 le 8 novembre 2026. Les contrôles automatisés couvrent aussi
 Ubuntu 24.04 et 26.04. Voir [le compte rendu](LINUX_VALIDATION.md).
 
 ## Installation
 
-Ubuntu 24.04 et Zorin OS 18.1 :
+Intel/AMD — Ubuntu 24.04/26.04 et Zorin OS 18.1 :
 
 ```sh
 sudo apt install ./ttalk_0.6.1-3_amd64.deb
 ```
 
-Fedora 45 :
+Intel/AMD — Fedora 45 :
 
 ```sh
 sudo dnf install ./ttalk-0.6.1-3*.x86_64.rpm
+```
+
+ARM® aarch64 — Ubuntu 24.04/26.04 :
+
+```sh
+sudo apt install ./ttalk_0.6.1-3_arm64.deb
+```
+
+ARM® aarch64 — Fedora 45 :
+
+```sh
+sudo dnf install ./ttalk-0.6.1-3*.aarch64.rpm
 ```
 
 Les paquets sont accompagnés de SHA256, mais ne sont pas signés par une clé GPG
