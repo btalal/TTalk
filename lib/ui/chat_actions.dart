@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/chat_settings.dart';
+import '../models/profile_icons.dart';
 import '../state/app_state.dart';
 import 'avatar_art.dart';
 import 'emoji_symbol.dart';
@@ -27,7 +28,15 @@ class ChatAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final index = ChatSettings.avatarIndex(symbol);
-    final Widget picture = symbol != null && index == null
+    final profileIcon = ProfileIcons.find(symbol);
+    final Widget picture = profileIcon != null
+        ? Image.asset(
+            profileIcon.asset,
+            width: size,
+            height: size,
+            excludeFromSemantics: true,
+          )
+        : symbol != null && index == null && !symbol!.startsWith('icon:')
         ? CircleAvatar(
             radius: size / 2,
             child: EmojiSymbol(symbol!, fontSize: size * .5),
@@ -281,6 +290,82 @@ Future<void> showChatCustomization(
                   ),
                 ),
                 const SizedBox(height: 12),
+                for (final category in ProfileIcons.categories) ...[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      category,
+                      style: Theme.of(ctx).textTheme.titleSmall,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final icon in ProfileIcons.all.where(
+                        (icon) => icon.category == category,
+                      ))
+                        Semantics(
+                          button: true,
+                          selected: symbol == icon.symbol,
+                          label: icon.label,
+                          child: Tooltip(
+                            message: icon.label,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: busy
+                                  ? null
+                                  : () => update(() => symbol = icon.symbol),
+                              child: Container(
+                                width: 76,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6,
+                                  horizontal: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    width: 2,
+                                    color: symbol == icon.symbol
+                                        ? Theme.of(ctx).colorScheme.primary
+                                        : Colors.transparent,
+                                  ),
+                                ),
+                                child: ExcludeSemantics(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        icon.asset,
+                                        width: 48,
+                                        height: 48,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        icon.label,
+                                        style: Theme.of(ctx)
+                                            .textTheme
+                                            .labelSmall,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Symboles et emojis'),
+                ),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -320,7 +405,8 @@ Future<void> showChatCustomization(
                       Semantics(
                         button: true,
                         selected: symbol == ChatSettings.avatarIcon(i),
-                        label: '${isGroup ? 'Avatar de groupe' : 'Avatar'} ${i + 1}',
+                        label:
+                            '${isGroup ? 'Avatar de groupe' : 'Avatar'} ${i + 1}',
                         child: InkWell(
                           customBorder: const CircleBorder(),
                           onTap: busy

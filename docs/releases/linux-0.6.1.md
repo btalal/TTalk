@@ -1,23 +1,23 @@
 # 🔒 TTalk 0.6.1 — Linux x86_64 et ARM64
 
-🟢 **Version finale — RPM et DEB, révision 3**
+🟢 **Version finale — RPM et DEB, révision 4**
 
 ## Téléchargements
 
 ### Intel and AMD x86_64
 
-- 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.x86_64.rpm)
-- 🔐 [SHA256 du RPM](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.x86_64.rpm.sha256)
-- 📦 [DEB Ubuntu 24.04/26.04 et Zorin OS Pro 18.1](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_amd64.deb)
-- 🔐 [SHA256 du DEB](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_amd64.deb.sha256)
+- 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk-0.6.1-4.fc45.x86_64.rpm)
+- 🔐 [SHA256 du RPM](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk-0.6.1-4.fc45.x86_64.rpm.sha256)
+- 📦 [DEB Ubuntu 24.04/26.04 et Zorin OS Pro 18.1](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk_0.6.1-4_amd64.deb)
+- 🔐 [SHA256 du DEB](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk_0.6.1-4_amd64.deb.sha256)
 ### ARM® aarch64
 
-- 🐧 [RPM Fedora 45 ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.aarch64.rpm)
-- 🔐 [SHA256 du RPM ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.aarch64.rpm.sha256)
-- 📦 [DEB Ubuntu 24.04/26.04 ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_arm64.deb)
-- 🔐 [SHA256 du DEB ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_arm64.deb.sha256)
+- 🐧 [RPM Fedora 45 ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk-0.6.1-4.fc45.aarch64.rpm)
+- 🔐 [SHA256 du RPM ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk-0.6.1-4.fc45.aarch64.rpm.sha256)
+- 📦 [DEB Ubuntu 24.04/26.04 ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk_0.6.1-4_arm64.deb)
+- 🔐 [SHA256 du DEB ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk_0.6.1-4_arm64.deb.sha256)
 
-- 📖 [Installation et mise à jour](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/INSTALLATION.md)
+- 📖 [Installation et mise à jour](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/INSTALLATION.md)
 
 ## Pour qui ?
 
@@ -27,6 +27,8 @@ Ubuntu 22.04 n’est pas couvert. Zorin est couvert uniquement en Intel/AMD.
 Aucun abonnement ni compilation locale n’est nécessaire pour installer ces RPM/DEB.
 
 ## Nouveautés
+
+- **24 nouvelles icônes couleur** pour les profils et les groupes : appareils, lieux, systèmes, fabricants et distributions Linux. Sélection dans « Nom et icône » ; anciens choix conservés.
 
 - Paquets natifs ARM® aarch64 en complément des paquets Intel and AMD x86_64.
 
@@ -70,21 +72,21 @@ Fermer TTalk, puis installer le nouveau paquet par-dessus la version précédent
 Intel/AMD — Ubuntu/Zorin :
 
 ```sh
-sudo apt install ./ttalk_0.6.1-3_amd64.deb
+sudo apt install ./ttalk_0.6.1-4_amd64.deb
 ```
 
 Intel/AMD — Fedora :
 
 ```sh
-sudo dnf install ./ttalk-0.6.1-3.fc45.x86_64.rpm
+sudo dnf install ./ttalk-0.6.1-4.fc45.x86_64.rpm
 ```
 
 ARM® aarch64 — Ubuntu / Fedora :
 
 ```sh
-sudo apt install ./ttalk_0.6.1-3_arm64.deb
+sudo apt install ./ttalk_0.6.1-4_arm64.deb
 # ou, sur Fedora 45 ARM64 :
-sudo dnf install ./ttalk-0.6.1-3.fc45.aarch64.rpm
+sudo dnf install ./ttalk-0.6.1-4.fc45.aarch64.rpm
 ```
 
 Lancer TTalk depuis le menu, sans sudo. Le trousseau de session doit être disponible
@@ -105,9 +107,9 @@ Les fichiers déjà déchiffrés hors du coffre ne sont pas effacés par le verr
 Avant l’installation, comparer le paquet à son fichier `.sha256` :
 
 ```sh
-sha256sum -c ttalk_0.6.1-3_amd64.deb.sha256
+sha256sum -c ttalk_0.6.1-4_amd64.deb.sha256
 # ou
-sha256sum -c ttalk-0.6.1-3.fc45.x86_64.rpm.sha256
+sha256sum -c ttalk-0.6.1-4.fc45.x86_64.rpm.sha256
 ```
 
 Le résultat doit être `OK`. Les paquets ne portent pas de signature GPG de distribution ;

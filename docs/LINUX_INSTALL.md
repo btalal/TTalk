@@ -20,25 +20,25 @@ Ubuntu 24.04 et 26.04. Voir [le compte rendu](LINUX_VALIDATION.md).
 Intel/AMD — Ubuntu 24.04/26.04 et Zorin OS 18.1 :
 
 ```sh
-sudo apt install ./ttalk_0.6.1-3_amd64.deb
+sudo apt install ./ttalk_0.6.1-4_amd64.deb
 ```
 
 Intel/AMD — Fedora 45 :
 
 ```sh
-sudo dnf install ./ttalk-0.6.1-3*.x86_64.rpm
+sudo dnf install ./ttalk-0.6.1-4*.x86_64.rpm
 ```
 
 ARM® aarch64 — Ubuntu 24.04/26.04 :
 
 ```sh
-sudo apt install ./ttalk_0.6.1-3_arm64.deb
+sudo apt install ./ttalk_0.6.1-4_arm64.deb
 ```
 
 ARM® aarch64 — Fedora 45 :
 
 ```sh
-sudo dnf install ./ttalk-0.6.1-3*.aarch64.rpm
+sudo dnf install ./ttalk-0.6.1-4*.aarch64.rpm
 ```
 
 Les paquets sont accompagnés de SHA256, mais ne sont pas signés par une clé GPG
@@ -105,3 +105,9 @@ La mise à jour conserve contacts, historique et choix d’icônes.
 Les guides utilisent désormais l'url de votre relais privé au lieu d’une adresse personnelle.
 Le protocole, le coffre et les emojis couleur sont inchangés. Installer la révision 3
 par-dessus la précédente sans désinstaller TTalk.
+
+## Révision 4 — icônes couleur
+
+24 icônes supplémentaires pour les profils et les groupes, identiques sur toutes
+les plateformes. Choisir une icône dans « Nom et icône ». Les anciens avatars et
+emojis restent disponibles et les choix existants sont conservés.

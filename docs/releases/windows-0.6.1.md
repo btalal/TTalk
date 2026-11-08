@@ -22,6 +22,8 @@ Le paquet n’est pas signé Authenticode : Windows peut afficher un avertisseme
 
 ## Nouveautés de la 0.6.1 — nouvelle interface
 
+- **24 nouvelles icônes couleur** pour les profils et les groupes : appareils, lieux, systèmes, fabricants et distributions Linux. Sélection dans « Nom et icône » ; anciens choix conservés.
+
 - **Même interface sur Windows, Mac, Android et iPhone** : menu Discussions, Contacts et Réglages en bas de l’écran, y compris en fenêtre agrandie.
 - **En-tête** : logo TTalk, numéro de version et badge « Connecté ». Le bandeau du serveur n’apparaît plus qu’en cas de problème ou d’envois en attente.
 - **Avatars illustrés** : 20 pour les contacts et 20 pour les groupes, à choisir dans « Nom et icône ». Sans choix, chaque contact reçoit automatiquement une illustration, la même sur tous ses appareils. Les emojis déjà choisis sont conservés.
@@ -46,4 +48,4 @@ Signalez les problèmes dans les issues, sans publier de PIN, de clé ni de cont
 
 ## Version Linux
 
-[TTalk 0.6.1 pour Linux — RPM Fedora 45 et DEB Ubuntu/Zorin](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3), disponible en Intel and AMD x86_64 et ARM® aarch64. Les paquets Linux sont distincts des téléchargements ci-dessus.
+[TTalk 0.6.1 pour Linux — RPM Fedora 45 et DEB Ubuntu/Zorin](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r4), disponible en Intel and AMD x86_64 et ARM® aarch64. Les paquets Linux sont distincts des téléchargements ci-dessus.

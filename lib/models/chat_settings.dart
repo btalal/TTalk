@@ -1,3 +1,5 @@
+import 'profile_icons.dart';
+
 /// Personal presentation and deletion markers; never sent to the relay.
 class ChatSettings {
   ChatSettings({
@@ -58,7 +60,9 @@ class ChatSettings {
   }
 
   static bool isValidIcon(String icon) =>
-      icons.contains(icon) || avatarIndex(icon) != null;
+      icons.contains(icon) ||
+      avatarIndex(icon) != null ||
+      ProfileIcons.find(icon) != null;
 
   /// Stable default illustration for a chat: same id, same avatar on every
   /// device (FNV-1a, independent of Dart's hashCode).
