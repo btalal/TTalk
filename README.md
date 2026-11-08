@@ -5,7 +5,7 @@
 # TTalk
 
 > **TTalk 0.6.1** : nouvelle interface, identique sur Windows, Android, iPhone, macOS et Linux
-> (menu en bas, 85 choix illustrés pour profils et groupes, police Inter). [Nouveautés et essais](docs/NEXT_VERSION.md).
+> (menu en bas, 85 choix illustrés pour profils et groupes, police Inter). [Nouveautés et essais](docs/NEXT_VERSION.md) · [Planche des 85 choix](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ICONES.png).
 
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
 
@@ -47,7 +47,7 @@ contact en comparant vos numéros de sécurité par un autre canal.
 
 | | TTalk 0.6.1 |
 |---|---|
-| 🎨 Interface | Identique sur les quatre plateformes : menu Discussions, Contacts, Réglages en bas ; logo, version et état « Connecté » en en-tête |
+| 🎨 Interface | Identique sur les cinq plateformes : menu Discussions, Contacts, Réglages en bas ; logo, version et état « Connecté » en en-tête |
 | 🧑‍🎨 Avatars | 20 profils variés, 20 groupes thématiques, 20 symboles modernisés et 25 icônes d’appareils/OS/marques ; pastille verte sur les contacts vérifiés |
 | 💬 Conversations | Messages directs et accusés de réception et de lecture |
 | 🔒 Chiffrement | X25519 + HKDF-SHA256 pour les clés ; AES-256-GCM pour les messages |
@@ -120,7 +120,7 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 | Plateforme | État | Où commencer |
 |---|---|---|
 | Windows 10/11 x64 ; Windows 11 ARM64 | Version finale 0.6.1 | [ZIP Windows](https://github.com/btalal/TTalk/releases/tag/v0.6.1-windows) : extraire toute l’archive et lancer `TTalk.exe`. |
-| Android 7.0+ | Version finale 0.6.1 | [Release Android](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : APK signé précédent et nouveau build 30 à signer avec la clé habituelle. |
+| Android 7.0+ | Version finale 0.6.1 | [APK signé, build 30](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : mise à jour avec la même clé que la 0.6.1. |
 | iPhone (iOS 15+) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
 | macOS 12+ (Apple Silicon et Intel) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI universelle, non signée, sans notarisation. |
 | Fedora 45 x86_64 et aarch64 | Version finale 0.6.1, paquet révision 4 | [RPM Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r4) ; [guide Linux](docs/LINUX_INSTALL.md). |
@@ -235,7 +235,7 @@ Cette file d’attente ne remplace pas une sauvegarde des conversations.
 
 | État | Sujet |
 |---|---|
-| Disponible en 0.6.1 | Interface commune aux quatre plateformes, menu en bas, avatars illustrés, police Inter |
+| Disponible en 0.6.1 | Interface commune aux cinq plateformes, menu en bas, avatars illustrés, police Inter |
 | Disponible en 0.6.0 | Interface adaptative, recherche, QR, réponses/réactions, verrouillage et sauvegardes |
 | Validé le 06/11/2026 | iPhone 17 Pro (iOS 27.2) et Mac mini M4, installation personnelle via Xcode |
 | Prochaine révision | Double Ratchet, époques et authenticité de groupe, revue indépendante |

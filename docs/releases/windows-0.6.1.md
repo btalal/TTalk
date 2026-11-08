@@ -4,6 +4,8 @@
 
 ## Téléchargements
 
+[Sources du build 30](https://github.com/btalal/TTalk/tree/v0.6.1-build30) · [Planche des 85 choix](https://github.com/btalal/TTalk/releases/download/v0.6.1-windows/ICONES.png)
+
 ### Intel and AMD x86_64 — Windows 10/11
 
 - [ttalk-windows-x64.zip](https://github.com/btalal/TTalk/releases/download/v0.6.1-windows/ttalk-windows-x64.zip) — extraire tout le dossier puis lancer `TTalk.exe` (voir `LISEZ-MOI.txt`)

@@ -4,6 +4,8 @@
 
 ## Téléchargements
 
+[Sources du build 30](https://github.com/btalal/TTalk/tree/v0.6.1-build30) · [Planche des 85 choix](https://github.com/btalal/TTalk/releases/download/v0.6.1-apple/ICONES.png)
+
 - [ttalk-ios-unsigned.ipa](https://github.com/btalal/TTalk/releases/download/v0.6.1-apple/ttalk-ios-unsigned.ipa) — à signer avec votre compte développeur (voir INSTALLATION.md)
 - [ttalk-macos-unsigned.zip](https://github.com/btalal/TTalk/releases/download/v0.6.1-apple/ttalk-macos-unsigned.zip) — voir MACOS_INSTALL.md
 - [Sommes SHA256](https://github.com/btalal/TTalk/releases/download/v0.6.1-apple/SHA256SUMS.txt)

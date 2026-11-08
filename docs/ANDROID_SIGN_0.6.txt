@@ -1,19 +1,17 @@
-TTalk Android 0.6.0 — signature hors ligne
+TTalk Android 0.6.1 — signature de production
 
-L'APK ttalk-android-unsigned.apk ne s'installe pas directement.
-Il utilise com.talal.ttalk et doit être signé avec le keystore original de 0.5.1.
-Ne pas utiliser la clé éphémère de TTalk Test ni créer une nouvelle clé.
+L’APK ttalk-android.apk publié sur GitHub est déjà signé. Le build 30 apporte
+les 85 choix illustrés. Installer par-dessus la 0.6.0/0.6.1, sans désinstaller.
 
-Sur l'ordinateur qui conserve le keystore et Android SDK Build Tools :
+Pour signer un nouveau build local, utiliser la clé de production de la 0.6,
+conservée hors du dépôt et de GitHub Actions. Ne pas utiliser une clé Test.
 
-apksigner sign --ks CHEMIN_DU_KEYSTORE --ks-key-alias VOTRE_ALIAS --out ttalk-android.apk ttalk-android-unsigned.apk
+apksigner sign --ks CHEMIN_DU_KEYSTORE --ks-key-alias VOTRE_ALIAS --out ttalk-android.apk app-release.apk
 apksigner verify --verbose --print-certs ttalk-android.apk
 
-Le mot de passe est demandé localement par apksigner. Ne jamais le communiquer.
-L'empreinte SHA256 du certificat doit être exactement :
-36e670dd15277af14036eca6c8d9f35d88b4d7ced95b308f6465f40ea2232f27
+Le mot de passe est demandé localement par apksigner. Ne pas le communiquer.
+L’empreinte SHA256 du certificat attendue pour la 0.6.0/0.6.1 est :
+a843a0168c52c76a040f34bf8234603a93e24c6d75ea28e8438f62c376a66e5c
 
-Fournir uniquement l'APK signé à la publication. Ne pas transférer le keystore,
-le mot de passe ou un fichier de configuration privé au dépôt ni à GitHub Actions.
-Ne pas désinstaller la version finale 0.5.1 : la mise à jour doit conserver ses données.
-TTalk Test utilise un autre identifiant et conserve son coffre séparé.
+Les versions 0.5.1 utilisaient un autre certificat ; suivre les notes de version
+pour une migration depuis cette ancienne version.

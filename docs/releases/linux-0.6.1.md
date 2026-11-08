@@ -4,6 +4,8 @@
 
 ## Téléchargements
 
+[Sources du build 30](https://github.com/btalal/TTalk/tree/v0.6.1-build30) · [Planche des 85 choix](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ICONES.png)
+
 ### Intel and AMD x86_64
 
 - 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r4/ttalk-0.6.1-4.fc45.x86_64.rpm)
