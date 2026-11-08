@@ -33,11 +33,11 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: server/package-lock.json
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.9'
-          channel: stable
-          cache: true
+      - name: Bootstrap pinned Flutter with native ARM64 Dart
+        run: |
+          git clone --depth 1 --branch 3.47.9 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/flutter/bin/flutter" --version
       - run: flutter pub get --enforce-lockfile
       - run: npm ci --prefix server
       - run: npm test --prefix server
@@ -142,12 +142,12 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.9'
-          channel: stable
-          architecture: arm64
-          cache: true
+      - name: Bootstrap pinned Flutter with native ARM64 Dart
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch 3.47.9 https://github.com/flutter/flutter.git "$env:RUNNER_TEMP/flutter"
+          "$env:RUNNER_TEMP/flutter/bin" >> $env:GITHUB_PATH
+          & "$env:RUNNER_TEMP/flutter/bin/flutter.bat" --version
       - run: flutter pub get --enforce-lockfile
       - run: flutter build windows --release
       - name: Package native ARM64 executable and validate launch
