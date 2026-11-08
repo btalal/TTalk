@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ['main/ttalk']
   push:
-    branches: ['feature/ttalk-next', 'feature/profile-icons']
+    branches: ['feature/ttalk-next', 'feature/profile-icons', 'feature/illustrated-avatars']
   workflow_dispatch:
 
 permissions:

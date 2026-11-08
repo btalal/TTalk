@@ -42,10 +42,10 @@ n’est attribué au propriétaire. Zorin est couvert uniquement en amd64.
 
 La révision 3 retire aussi l’adresse personnelle du relais des guides intégrés.
 
-## Révision 4 — 24 icônes couleur
+## Révision 4 — 85 choix illustrés
 
-Les mêmes PNG embarqués sont utilisés pour les profils et les groupes sur toutes
+Les mêmes 85 PNG embarqués sont utilisés pour les profils et les groupes sur toutes
 les plateformes ; leur rendu ne dépend pas des polices installées. Des tests
-vérifient le chargement des 24 images, les identifiants conservés dans les
+vérifient le chargement des 85 images, les identifiants conservés dans les
 préférences et le choix d’une icône depuis le sélecteur sur petit écran.
-Les anciens avatars et emojis sont conservés sans changement d’identifiant.
+Les anciens avatars et emojis sont redessinés sans changement d’identifiant.

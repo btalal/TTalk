@@ -108,6 +108,6 @@ par-dessus la précédente sans désinstaller TTalk.
 
 ## Révision 4 — icônes couleur
 
-24 icônes supplémentaires pour les profils et les groupes, identiques sur toutes
-les plateformes. Choisir une icône dans « Nom et icône ». Les anciens avatars et
-emojis restent disponibles et les choix existants sont conservés.
+85 choix illustrés pour les profils et les groupes, identiques sur toutes
+les plateformes. Choisir une icône dans « Nom et icône ». Les identifiants des anciens avatars et emojis restent compatibles ; les choix
+existants utilisent les illustrations correspondantes.

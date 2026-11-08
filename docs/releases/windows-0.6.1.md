@@ -22,7 +22,9 @@ Le paquet n’est pas signé Authenticode : Windows peut afficher un avertisseme
 
 ## Nouveautés de la 0.6.1 — nouvelle interface
 
-- **24 nouvelles icônes couleur** pour les profils et les groupes : appareils, lieux, systèmes, fabricants et distributions Linux. Sélection dans « Nom et icône » ; anciens choix conservés.
+- **Build 30 : 85 choix illustrés** — 20 profils variés, 20 groupes thématiques, 20 symboles modernisés et 25 icônes d’appareils, lieux, systèmes et marques. PC de bureau ajouté ; « Fichiers » remplace visuellement l’ancien choix ordinateur.
+
+- **25 nouvelles icônes couleur** pour les profils et les groupes : appareils, lieux, systèmes, fabricants et distributions Linux. Sélection dans « Nom et icône » ; anciens choix conservés.
 
 - **Même interface sur Windows, Mac, Android et iPhone** : menu Discussions, Contacts et Réglages en bas de l’écran, y compris en fenêtre agrandie.
 - **En-tête** : logo TTalk, numéro de version et badge « Connecté ». Le bandeau du serveur n’apparaît plus qu’en cas de problème ou d’envois en attente.

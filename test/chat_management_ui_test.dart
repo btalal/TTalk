@@ -6,6 +6,7 @@ import 'package:ttalk/models/group.dart';
 import 'package:ttalk/models/message.dart';
 import 'package:ttalk/state/app_state.dart';
 import 'package:ttalk/ui/chat_screen.dart';
+import 'package:ttalk/ui/appearance_symbol.dart';
 import 'package:ttalk/ui/home_screen.dart';
 
 import 'support/group_fakes.dart';
@@ -52,16 +53,28 @@ void main() {
       await tester.tap(find.text('Nom et icône'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).last, 'Mon collègue');
-      await tester.ensureVisible(find.text('🎓'));
-      await tester.tap(find.text('🎓'));
+      await tester.ensureVisible(find.byTooltip('Études'));
+      await tester.tap(find.byTooltip('Études'));
       await tester.tap(find.text('Enregistrer'));
       await tester.pumpAndSettle();
       expect(find.text('Mon collègue'), findsOneWidget);
-      expect(find.text('🎓'), findsOneWidget);
+      expect(app.chatIcon('chat'), '🎓');
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is AppearanceSymbol && w.symbol == '🎓',
+        ),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Mon collègue'));
       await tester.pumpAndSettle();
       expect(find.text('Mon collègue'), findsOneWidget);
-      expect(find.text('🎓'), findsOneWidget);
+      expect(app.chatIcon('chat'), '🎓');
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is AppearanceSymbol && w.symbol == '🎓',
+        ),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
       await close(tester, app);
     },
@@ -161,12 +174,16 @@ void main() {
       await tester.tap(find.text('Nom et icône'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).last, 'Souvenirs');
-      await tester.ensureVisible(find.text('⭐'));
-      await tester.tap(find.text('⭐'));
+      await tester.ensureVisible(find.byTooltip('Favoris'));
+      await tester.tap(find.byTooltip('Favoris'));
       await tester.tap(find.text('Enregistrer'));
       await tester.pumpAndSettle();
       expect(find.text('Souvenirs'), findsOneWidget);
-      expect(find.text('⭐'), findsOneWidget);
+      expect(app.chatIcon('old'), '⭐');
+      expect(
+        find.byWidgetPredicate((w) => w is AppearanceSymbol && w.symbol == '⭐'),
+        findsOneWidget,
+      );
       await tester.tap(find.byTooltip('Actions du groupe'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Quitter et supprimer'));

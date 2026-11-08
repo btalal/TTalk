@@ -5,7 +5,7 @@
 # TTalk
 
 > **TTalk 0.6.1** : nouvelle interface, identique sur Windows, Android, iPhone, macOS et Linux
-> (menu en bas, avatars illustrés, police Inter). [Nouveautés et essais](docs/NEXT_VERSION.md).
+> (menu en bas, 85 choix illustrés pour profils et groupes, police Inter). [Nouveautés et essais](docs/NEXT_VERSION.md).
 
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
 
@@ -48,7 +48,7 @@ contact en comparant vos numéros de sécurité par un autre canal.
 | | TTalk 0.6.1 |
 |---|---|
 | 🎨 Interface | Identique sur les quatre plateformes : menu Discussions, Contacts, Réglages en bas ; logo, version et état « Connecté » en en-tête |
-| 🧑‍🎨 Avatars | 20 illustrations pour les contacts et 20 pour les groupes ; pastille verte sur les contacts vérifiés |
+| 🧑‍🎨 Avatars | 20 profils variés, 20 groupes thématiques, 20 symboles modernisés et 25 icônes d’appareils/OS/marques ; pastille verte sur les contacts vérifiés |
 | 💬 Conversations | Messages directs et accusés de réception et de lecture |
 | 🔒 Chiffrement | X25519 + HKDF-SHA256 pour les clés ; AES-256-GCM pour les messages |
 | 🛡 Coffre local | PIN, verrouillage manuel/automatique, biométrie facultative selon la plateforme |
@@ -120,7 +120,7 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 | Plateforme | État | Où commencer |
 |---|---|---|
 | Windows 10/11 x64 ; Windows 11 ARM64 | Version finale 0.6.1 | [ZIP Windows](https://github.com/btalal/TTalk/releases/tag/v0.6.1-windows) : extraire toute l’archive et lancer `TTalk.exe`. |
-| Android 7.0+ | Version finale 0.6.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : télécharger `ttalk-android.apk`. |
+| Android 7.0+ | Version finale 0.6.1 | [Release Android](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : APK signé précédent et nouveau build 30 à signer avec la clé habituelle. |
 | iPhone (iOS 15+) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
 | macOS 12+ (Apple Silicon et Intel) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI universelle, non signée, sans notarisation. |
 | Fedora 45 x86_64 et aarch64 | Version finale 0.6.1, paquet révision 4 | [RPM Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r4) ; [guide Linux](docs/LINUX_INSTALL.md). |
