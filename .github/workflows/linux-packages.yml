@@ -95,7 +95,8 @@ jobs:
           FORMAT: ${{ matrix.format }}
         run: |
           mkdir -p smoke-output
-          docker run --rm -v "$PWD:/src" -w /src -e FORMAT -e TTALK_SMOKE_OUTPUT=/src/smoke-output "$IMAGE" bash -euc '
+          # Secret Service uses locked memory; grant this only to the test container.
+          docker run --rm --cap-add IPC_LOCK -v "$PWD:/src" -w /src -e FORMAT -e TTALK_SMOKE_OUTPUT=/src/smoke-output "$IMAGE" bash -euc '
             if [ "$FORMAT" = deb ]; then
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y /src/dist/linux/*.deb xvfb xauth xdotool dbus-x11 libgl1-mesa-dri libegl1 imagemagick util-linux passwd
