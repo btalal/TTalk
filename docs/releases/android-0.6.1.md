@@ -4,6 +4,16 @@
 
 ## Téléchargements
 
+**Icônes couleur, build 29 : APK à signer avec la clé habituelle.**
+
+- [Nouvel APK avec les 24 icônes, non signé](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/ttalk-android-icons-unsigned.apk)
+- [Instructions de signature et certificat attendu](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/SIGNATURE-ICONES.txt)
+
+L’APK signé ci-dessous reste le build précédent, sans les 24 nouvelles icônes.
+Il sera remplacé après signature et vérification du build 29. Ne pas désinstaller
+TTalk pour cette mise à jour.
+
+
 - [ttalk-android.apk](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/ttalk-android.apk)
 - [Sommes SHA256](https://github.com/btalal/TTalk/releases/download/v0.6.1-android/SHA256SUMS.txt)
 
