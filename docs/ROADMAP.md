@@ -22,6 +22,12 @@ pas un audit. Voir [le suivi détaillé](NEXT_VERSION.md) et [les limites](NEXT_
 Les packages installés en parallèle sont des variantes de test ; leur validation
 ne transforme pas automatiquement les anciens artefacts en distributions finales.
 
+## Linux 0.6.1 — publié le 8 novembre 2026
+
+RPM Fedora 45 et DEB Ubuntu 24.04/26.04/Zorin OS Pro 18.1, en Intel/AMD 64 bits.
+Fonctionnement rapporté sur Fedora et Zorin ; révision 2 pour les emojis couleur.
+Voir [les essais et limites](LINUX_VALIDATION.md).
+
 ## Prochaines étapes
 
 - Étendre les essais Apple aux groupes, pièces jointes, interruptions réseau

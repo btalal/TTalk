@@ -1,5 +1,14 @@
 # Versions
 
+## 0.6.1 — Linux (8 novembre 2026)
+
+- Portage Linux natif x86_64, RPM Fedora 45 et DEB Ubuntu/Zorin.
+- Intégration du trousseau système, lanceur et icône, instance unique.
+- Révision de paquet 2 : police Noto Color Emoji pour les profils en couleur.
+- Installation/démarrage et contrôle natif des couleurs sur Ubuntu 24.04/26.04 et Fedora 45.
+- Installation et fonctionnement rapportés sur Fedora 45 et Zorin OS Pro 18.1.
+
+
 ## 0.6.0 — 6 novembre 2026
 
 - Navigation adaptative Mac/Windows à deux colonnes, navigation basse mobile,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/chat_settings.dart';
 import '../state/app_state.dart';
 import 'avatar_art.dart';
+import 'emoji_symbol.dart';
 
 /// Illustrated avatar of a contact or group. A legacy emoji icon is still
 /// shown as an emoji; without any choice the illustration comes from [seed].
@@ -29,7 +30,7 @@ class ChatAvatar extends StatelessWidget {
     final Widget picture = symbol != null && index == null
         ? CircleAvatar(
             radius: size / 2,
-            child: Text(symbol!, style: TextStyle(fontSize: size * .5)),
+            child: EmojiSymbol(symbol!, fontSize: size * .5),
           )
         : AvatarArt(
             index: index ?? ChatSettings.defaultAvatarFor(seed ?? name),
@@ -293,7 +294,7 @@ Future<void> showChatCustomization(
                     ),
                     ...ChatSettings.icons.map(
                       (icon) => ChoiceChip(
-                        label: Text(icon, style: const TextStyle(fontSize: 22)),
+                        label: EmojiSymbol(icon, fontSize: 22),
                         selected: symbol == icon,
                         onSelected: busy
                             ? null

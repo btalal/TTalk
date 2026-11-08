@@ -1,11 +1,12 @@
 name: ttalk
-description: TTalk - simple and encrypted messages — messagerie texte chiffrée de bout en bout pour Windows, Android, iOS et macOS.
+description: TTalk - simple and encrypted messages — messagerie texte chiffrée de bout en bout pour Windows, Android, iOS, macOS et Linux.
 publish_to: "none"
 platforms:
   windows:
   android:
   ios:
   macos:
+  linux:
 version: 0.6.1+28
 
 environment:

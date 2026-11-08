@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=TTalk
+GenericName=Encrypted messenger
+GenericName[fr]=Messagerie chiffrée
+Comment=Encrypted messages with a relay of your choice
+Comment[fr]=Messagerie chiffrée avec un relais à votre choix
+Exec=ttalk
+Icon=com.talal.ttalk
+Terminal=false
+Categories=Network;InstantMessaging;
+StartupNotify=true
+StartupWMClass=com.talal.ttalk
