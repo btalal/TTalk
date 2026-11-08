@@ -12,13 +12,13 @@ réels Fedora et Zorin (Wayland/X11, fichiers, verrouillage et échanges).
 Ubuntu 24.04 et Zorin OS 18.1 :
 
 ```sh
-sudo apt install ./ttalk_0.6.1-1_amd64.deb
+sudo apt install ./ttalk_0.6.1-2_amd64.deb
 ```
 
 Fedora 45 :
 
 ```sh
-sudo dnf install ./ttalk-0.6.1-1*.x86_64.rpm
+sudo dnf install ./ttalk-0.6.1-2*.x86_64.rpm
 ```
 
 Les paquets sont accompagnés de SHA256, mais ne sont pas signés par une clé GPG
@@ -68,3 +68,14 @@ Ne rapporter aucun PIN, secret, phrase de passe ou message privé dans les issue
 
 Sources : [Flutter Linux](https://docs.flutter.dev/platform-integration/linux/setup),
 [base de Zorin 18.1](https://zorin.com/os/details/).
+
+## Révision 2 — emojis en couleur
+
+Le propriétaire confirme l’installation et le fonctionnement sous Fedora 45 et
+Zorin OS Pro 18.1. Il signale uniquement les symboles/anciens avatars emojis en
+noir et blanc ; les portraits dessinés restent en couleur. La révision 2 utilise
+explicitement Noto Color Emoji pour ces symboles et installe la police système
+(`fonts-noto-color-emoji` sur Ubuntu/Zorin, `google-noto-color-emoji-fonts` sur Fedora).
+Installer le nouveau paquet avec apt/dnf par-dessus le précédent, puis fermer et
+rouvrir TTalk. Ne pas désinstaller et ne pas supprimer le coffre ni le trousseau.
+La mise à jour conserve contacts, historique et choix d’icônes.

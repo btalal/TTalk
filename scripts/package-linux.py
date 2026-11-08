@@ -79,6 +79,9 @@ def main():
     if not version:
         raise ValueError('A stable semantic version and build number are required')
     version = version[1]
+    revision = (ROOT / 'packaging/linux/revision').read_text().strip()
+    if not revision.isdigit() or int(revision) < 1:
+        raise ValueError('Invalid package revision')
     bundle, output = Path(args.bundle).resolve(), Path(args.output).resolve()
     validate_bundle(bundle)
     output.mkdir(parents=True, exist_ok=True)
@@ -99,8 +102,8 @@ def main():
             control = payload / 'DEBIAN'
             control.mkdir()
             size = sum(p.stat().st_size for p in payload.rglob('*') if p.is_file()) // 1024
-            (control / 'control').write_text(f'Package: ttalk\nVersion: {version}-1\nArchitecture: amd64\nMaintainer: TTalk contributors <noreply@github.com>\nSection: net\nPriority: optional\nHomepage: https://github.com/btalal/TTalk\nInstalled-Size: {size}\nDepends: {dependencies}, gnome-keyring, dbus-user-session, xdg-utils, xdg-desktop-portal, xdg-desktop-portal-gtk\nDescription: Encrypted messenger with a relay of your choice\n Native Flutter application. Local vault requires an unlocked Secret Service keyring.\n')
-            package = output / f'ttalk_{version}-1_amd64.deb'
+            (control / 'control').write_text(f'Package: ttalk\nVersion: {version}-{revision}\nArchitecture: amd64\nMaintainer: TTalk contributors <noreply@github.com>\nSection: net\nPriority: optional\nHomepage: https://github.com/btalal/TTalk\nInstalled-Size: {size}\nDepends: {dependencies}, gnome-keyring, dbus-user-session, xdg-utils, xdg-desktop-portal, xdg-desktop-portal-gtk, fonts-noto-color-emoji\nDescription: Encrypted messenger with a relay of your choice\n Native Flutter application. Local vault requires an unlocked Secret Service keyring.\n')
+            package = output / f'ttalk_{version}-{revision}_amd64.deb'
             run('dpkg-deb', '--root-owner-group', '--build', payload, package)
             run('dpkg-deb', '--info', package)
         else:
@@ -111,12 +114,12 @@ def main():
             spec.write_text(f'''%global debug_package %{{nil}}
 Name: ttalk
 Version: {version}
-Release: 1%{{?dist}}
+Release: {revision}%{{?dist}}
 Summary: Encrypted messenger with a relay of your choice
 License: Apache-2.0
 URL: https://github.com/btalal/TTalk
 ExclusiveArch: x86_64
-Requires: gtk3, libsecret, gnome-keyring, dbus, xdg-utils, xdg-desktop-portal, xdg-desktop-portal-gtk
+Requires: gtk3, libsecret, gnome-keyring, dbus, xdg-utils, xdg-desktop-portal, xdg-desktop-portal-gtk, google-noto-color-emoji-fonts
 
 %description
 Native Flutter application. Local vault requires an unlocked Secret Service keyring.
@@ -138,7 +141,7 @@ cp -a "{payload}/." "%{{buildroot}}/"
 %license /usr/share/doc/ttalk/Inter-LICENSE.txt
 
 %changelog
-* Sun Nov 08 2026 TTalk contributors <noreply@github.com> - {version}-1
+* Sun Nov 08 2026 TTalk contributors <noreply@github.com> - {version}-{revision}
 - Initial Linux packages.
 ''')
             run('rpmbuild', '-bb', '--define', '_topdir ' + str(top), spec)

@@ -25,7 +25,7 @@ jobs:
       - name: Install native build and keyring test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libstdc++-12-dev dpkg-dev patchelf desktop-file-utils xvfb xauth dbus-x11 gnome-keyring libgl1-mesa-dri libegl1
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libstdc++-12-dev dpkg-dev patchelf fonts-noto-color-emoji desktop-file-utils xvfb xauth dbus-x11 gnome-keyring libgl1-mesa-dri libegl1
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -61,6 +61,16 @@ jobs:
             dnf -y install python3 rpm-build patchelf gtk3 libsecret
             python3 scripts/package-linux.py rpm
           '
+      - name: Build a separate native emoji rendering probe
+        run: |
+          flutter build linux --release --target test_driver/linux_emoji_probe.dart
+          cp -a build/linux/x64/release/bundle build/emoji-probe
+          find build/emoji-probe/lib -name '*_plugin.so' -exec patchelf --set-rpath '$ORIGIN' {} +
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-emoji-probe
+          path: build/emoji-probe/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: ttalk-linux-0.6.1-x86_64
@@ -89,6 +99,10 @@ jobs:
         with:
           name: ttalk-linux-0.6.1-x86_64
           path: dist/linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-emoji-probe
+          path: emoji-probe
       - name: Install and launch actual package in clean runtime
         env:
           IMAGE: ${{ matrix.image }}
@@ -107,9 +121,11 @@ jobs:
             fi
             cd /src/dist/linux
             sha256sum -c *.$FORMAT.sha256
+            chmod +x /src/emoji-probe/ttalk
             useradd --create-home --uid 2000 ttalk-ci
             chown -R ttalk-ci:ttalk-ci /src/smoke-output
             runuser -u ttalk-ci -- dbus-run-session -- xvfb-run -a bash /src/scripts/linux-smoke.sh
+            runuser -u ttalk-ci -- env LIBGL_ALWAYS_SOFTWARE=1 GDK_BACKEND=x11 TTALK_PROBE_OUTPUT=/src/smoke-output dbus-run-session -- xvfb-run -a timeout 30 /src/emoji-probe/ttalk
             if [ "$FORMAT" = deb ]; then apt-get remove -y ttalk; else dnf remove -y ttalk; fi
             test ! -e /usr/bin/ttalk
           '
