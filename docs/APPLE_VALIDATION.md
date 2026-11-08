@@ -2,7 +2,7 @@
 
 Essais manuels effectués et confirmés par le propriétaire le **6 novembre 2026**.
 Ce compte rendu porte sur des applications compilées en **Release**, signées
-personnellement avec Xcode, et le relais `https://ttalk.fly.dev`.
+personnellement avec Xcode, et un relais HTTPS privé. Pour configurer le serveur, saisir l'url de votre relais privé.
 
 | Appareil | Environnement | Résultats confirmés |
 |---|---|---|

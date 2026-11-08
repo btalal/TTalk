@@ -123,8 +123,8 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 | Android 7.0+ | Version finale 0.6.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : télécharger `ttalk-android.apk`. |
 | iPhone (iOS 15+) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
 | macOS 12+ (Apple Silicon et Intel) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI universelle, non signée, sans notarisation. |
-| Fedora 45 x86_64 | Version finale 0.6.1, paquet révision 2 | [RPM Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; [guide Linux](docs/LINUX_INSTALL.md). |
-| Ubuntu 24.04/26.04 et Zorin OS Pro 18.1, amd64 | Version finale 0.6.1, paquet révision 2 | [DEB Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; Ubuntu/Zorin utilisent le même paquet. |
+| Fedora 45 x86_64 | Version finale 0.6.1, paquet révision 3 | [RPM Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; [guide Linux](docs/LINUX_INSTALL.md). |
+| Ubuntu 24.04/26.04 et Zorin OS Pro 18.1, amd64 | Version finale 0.6.1, paquet révision 3 | [DEB Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; Ubuntu/Zorin utilisent le même paquet. |
 
 ### Installer sur Windows
 

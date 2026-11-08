@@ -13,13 +13,13 @@ Ubuntu 24.04 et 26.04. Voir [le compte rendu](LINUX_VALIDATION.md).
 Ubuntu 24.04 et Zorin OS 18.1 :
 
 ```sh
-sudo apt install ./ttalk_0.6.1-2_amd64.deb
+sudo apt install ./ttalk_0.6.1-3_amd64.deb
 ```
 
 Fedora 45 :
 
 ```sh
-sudo dnf install ./ttalk-0.6.1-2*.x86_64.rpm
+sudo dnf install ./ttalk-0.6.1-3*.x86_64.rpm
 ```
 
 Les paquets sont accompagnés de SHA256, mais ne sont pas signés par une clé GPG
@@ -41,7 +41,7 @@ xdg-desktop-portal et son backend GTK. Sous GNOME/KDE, conserver aussi le backen
 prévu par votre distribution et se reconnecter après une première installation.
 `xdg-open` sert à ouvrir une pièce jointe dans l’application associée.
 
-Créer un PIN, configurer `https://ttalk.fly.dev` ou votre relais, et appairer les
+Créer un PIN, configurer l'url de votre relais privé, et appairer les
 contacts séparément. Chaque installation possède son identité et son historique.
 Ni synchronisation automatique avec les autres appareils, ni migration implicite.
 Les limites du protocole 0.6.1 restent celles documentées dans NEXT_SECURITY.md.
@@ -80,3 +80,9 @@ explicitement Noto Color Emoji pour ces symboles et installe la police système
 Installer le nouveau paquet avec apt/dnf par-dessus le précédent, puis fermer et
 rouvrir TTalk. Ne pas désinstaller et ne pas supprimer le coffre ni le trousseau.
 La mise à jour conserve contacts, historique et choix d’icônes.
+
+## Révision 3 — documentation du relais
+
+Les guides utilisent désormais l'url de votre relais privé au lieu d’une adresse personnelle.
+Le protocole, le coffre et les emojis couleur sont inchangés. Installer la révision 3
+par-dessus la précédente sans désinstaller TTalk.

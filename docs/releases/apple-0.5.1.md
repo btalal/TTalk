@@ -75,8 +75,7 @@ Les groupes, pièces jointes, pertes réseau, migrations et renouvellements de
 signature ne sont pas couverts par ces nouveaux essais. Les notifications push
 et la réception mobile permanente en arrière-plan ne sont pas intégrées.
 
-Un relais HTTPS est nécessaire. Saisir `https://ttalk.fly.dev`, utilisé lors des
-essais, dans **Configurer le serveur**, ou l’adresse de votre propre relais.
+Un relais HTTPS est nécessaire. Saisir l'url de votre relais privé dans **Configurer le serveur**.
 
 ## Mise à niveau et installation
 

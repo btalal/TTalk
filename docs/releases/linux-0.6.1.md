@@ -1,13 +1,13 @@
 # 🔒 TTalk 0.6.1 — Linux x86_64
 
-🟢 **Version finale — RPM et DEB, révision 2**
+🟢 **Version finale — RPM et DEB, révision 3**
 
 ## Téléchargements
 
-- 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk-0.6.1-2.fc45.x86_64.rpm)
-- 🔐 [SHA256 du RPM](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk-0.6.1-2.fc45.x86_64.rpm.sha256)
-- 📦 [DEB Ubuntu 24.04/26.04 et Zorin OS Pro 18.1](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk_0.6.1-2_amd64.deb)
-- 🔐 [SHA256 du DEB](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk_0.6.1-2_amd64.deb.sha256)
+- 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk-0.6.1-3.fc45.x86_64.rpm)
+- 🔐 [SHA256 du RPM](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk-0.6.1-3.fc45.x86_64.rpm.sha256)
+- 📦 [DEB Ubuntu 24.04/26.04 et Zorin OS Pro 18.1](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk_0.6.1-3_amd64.deb)
+- 🔐 [SHA256 du DEB](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk_0.6.1-3_amd64.deb.sha256)
 - 📖 [Installation et mise à jour](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/INSTALLATION.md)
 
 ## Pour qui ?
@@ -26,6 +26,9 @@ Aucun abonnement ni compilation locale n’est nécessaire pour installer ces RP
 - Intégration au menu d’applications avec icône, fenêtre 800×600 et instance unique.
 
 ## Corrections
+
+- Révision 3 : retrait de l’adresse du relais privé des guides intégrés aux paquets.
+  Aucun changement du protocole, des données ni du rendu des emojis.
 
 - Révision 2 : les symboles/avatars emojis utilisent explicitement Noto Color Emoji ;
   la police couleur est installée automatiquement comme dépendance.
@@ -54,17 +57,17 @@ Fermer TTalk, puis installer le nouveau paquet par-dessus la version précédent
 Ubuntu/Zorin :
 
 ```sh
-sudo apt install ./ttalk_0.6.1-2_amd64.deb
+sudo apt install ./ttalk_0.6.1-3_amd64.deb
 ```
 
 Fedora :
 
 ```sh
-sudo dnf install ./ttalk-0.6.1-2.fc45.x86_64.rpm
+sudo dnf install ./ttalk-0.6.1-3.fc45.x86_64.rpm
 ```
 
 Lancer TTalk depuis le menu, sans sudo. Le trousseau de session doit être disponible
-et déverrouillé. Configurer `https://ttalk.fly.dev` ou votre relais HTTPS et appairer
+et déverrouillé. Configurer l'url de votre relais privé (HTTPS) et appairer
 chaque appareil séparément. Les historiques ne sont pas synchronisés automatiquement.
 La restauration d’une identité exige d’arrêter son utilisation sur l’appareil d’origine.
 
@@ -81,9 +84,9 @@ Les fichiers déjà déchiffrés hors du coffre ne sont pas effacés par le verr
 Avant l’installation, comparer le paquet à son fichier `.sha256` :
 
 ```sh
-sha256sum -c ttalk_0.6.1-2_amd64.deb.sha256
+sha256sum -c ttalk_0.6.1-3_amd64.deb.sha256
 # ou
-sha256sum -c ttalk-0.6.1-2.fc45.x86_64.rpm.sha256
+sha256sum -c ttalk-0.6.1-3.fc45.x86_64.rpm.sha256
 ```
 
 Le résultat doit être `OK`. Les paquets ne portent pas de signature GPG de distribution ;

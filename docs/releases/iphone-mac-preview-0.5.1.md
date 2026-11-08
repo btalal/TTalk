@@ -50,7 +50,7 @@ Cette préversion reprend le code commun de la 0.5.1 ; aucun correctif propre
 
 Les notifications push et la réception garantie lorsque l’application mobile
 est fermée ne sont pas intégrées. Un relais TTalk HTTPS est nécessaire ;
-`https://ttalk.fly.dev` a servi aux essais de cette préversion.
+configurer l'url de votre relais privé.
 
 ## Mise à niveau et installation
 
