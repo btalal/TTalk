@@ -1,11 +1,12 @@
-# TTalk 0.6.1 — portage Linux en validation
+# TTalk 0.6.1 — installation Linux
 
-Premiers paquets x86_64 (Intel/AMD 64 bits) : DEB construit sur Ubuntu 24.04 LTS,
+Paquets x86_64 (Intel/AMD 64 bits) : DEB construit sur Ubuntu 24.04 LTS,
 également cible de base pour Zorin OS Pro 18.1 ; installation testée aussi sous
 Ubuntu 26.04. RPM pour Fedora 45.
 Ubuntu 22.04 et les machines ARM64 ne sont pas annoncés compatibles avec ce lot.
-Les essais automatiques en conteneur ne remplacent pas des essais sur les bureaux
-réels Fedora et Zorin (Wayland/X11, fichiers, verrouillage et échanges).
+Le propriétaire confirme l’installation et le fonctionnement général sous Fedora 45
+et Zorin OS Pro 18.1 le 8 novembre 2026. Les contrôles automatisés couvrent aussi
+Ubuntu 24.04 et 26.04. Voir [le compte rendu](LINUX_VALIDATION.md).
 
 ## Installation
 
@@ -58,7 +59,7 @@ ces données ; ne pas effacer le trousseau pour tenter de réparer un démarrage
 Les sauvegardes chiffrées existantes peuvent être restaurées uniquement dans un
 coffre vide ; arrêter l’identité d’origine avant de la restaurer sur Linux.
 
-## Validation à effectuer sur vos machines
+## Vérifications conseillées après installation
 
 Installation, icône de menu, démarrage, seconde instance, redémarrage avec le même
 PIN, identité conservée, trousseau verrouillé/absent, messages et fichiers avec

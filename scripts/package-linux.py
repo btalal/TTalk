@@ -48,6 +48,7 @@ def stage(bundle, root):
         ('NOTICE', 'usr/share/doc/ttalk/NOTICE'),
         ('assets/fonts/Inter-LICENSE.txt', 'usr/share/doc/ttalk/Inter-LICENSE.txt'),
         ('docs/LINUX_INSTALL.md', 'usr/share/doc/ttalk/LINUX_INSTALL.md'),
+        ('docs/LINUX_VALIDATION.md', 'usr/share/doc/ttalk/LINUX_VALIDATION.md'),
     ]:
         p = root / destination
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -136,6 +137,7 @@ cp -a "{payload}/." "%{{buildroot}}/"
 /usr/share/applications/com.talal.ttalk.desktop
 /usr/share/pixmaps/com.talal.ttalk.png
 %doc /usr/share/doc/ttalk/LINUX_INSTALL.md
+%doc /usr/share/doc/ttalk/LINUX_VALIDATION.md
 %license /usr/share/doc/ttalk/LICENSE
 %license /usr/share/doc/ttalk/NOTICE
 %license /usr/share/doc/ttalk/Inter-LICENSE.txt

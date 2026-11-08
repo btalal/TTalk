@@ -1,19 +1,19 @@
 <p align="center">
-  <img src="docs/media/ttalk-banner-final.jpg" width="100%" alt="TTalk : messagerie chiffrée de bout en bout pour Windows, Android, iPhone et macOS, avec un relais au choix" />
+  <img src="docs/media/ttalk-banner-linux.jpg" width="100%" alt="TTalk : messagerie chiffrée de bout en bout pour Windows, Android, iPhone, macOS et Linux, avec un relais au choix" />
 </p>
 
 # TTalk
 
-> **TTalk 0.6.1** : nouvelle interface, identique sur Windows, Android, iPhone et macOS
+> **TTalk 0.6.1** : nouvelle interface, identique sur Windows, Android, iPhone, macOS et Linux
 > (menu en bas, avatars illustrés, police Inter). [Nouveautés et essais](docs/NEXT_VERSION.md).
 
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
 
-**Versions finales 0.6.1 : Windows, Android, iOS et macOS.** Sur Apple,
+**Versions finales 0.6.1 : Windows, Android, iOS, macOS et Linux.** Sur Apple,
 [la version finale](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple)
 requiert une compilation et une signature personnelle dans Xcode.
 
-**TTalk** est une messagerie chiffrée et open source pour Windows, Android, iPhone et macOS. Échangez des messages, des fichiers
+**TTalk** est une messagerie chiffrée et open source pour Windows, Android, Linux, iOS et macOS. Échangez des messages, des fichiers
 et des conversations de groupe sur un relais que vous choisissez.
 
 🔒 Chiffrement de bout en bout · 🌍 Relais auto-hébergeable ·
@@ -23,6 +23,7 @@ et des conversations de groupe sur un relais que vous choisissez.
   <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-windows"><img src="https://img.shields.io/badge/Windows_x64-0.6.1-0F172A" alt="Windows x64 0.6.1" /></a>
   <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-android"><img src="https://img.shields.io/badge/Android-0.6.1-312E81" alt="Android 0.6.1" /></a>
   <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple"><img src="https://img.shields.io/badge/iPhone_%26_macOS-0.6.1_finale-7C3AED" alt="iPhone et macOS 0.6.1 — versions finales" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux"><img src="https://img.shields.io/badge/Linux_RPM_%26_DEB-0.6.1-1793D1" alt="Linux x86_64 0.6.1 — RPM et DEB" /></a>
   <img src="https://img.shields.io/badge/Flutter-3.47.9-02569B" alt="Flutter 3.47.9" />
   <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/AES--256--GCM-chiffrement-312E81" alt="Chiffrement AES-256-GCM" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-7C3AED" alt="Licence Apache-2.0" /></a>
@@ -122,6 +123,8 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 | Android 7.0+ | Version finale 0.6.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : télécharger `ttalk-android.apk`. |
 | iPhone (iOS 15+) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
 | macOS 12+ (Apple Silicon et Intel) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI universelle, non signée, sans notarisation. |
+| Fedora 45 x86_64 | Version finale 0.6.1, paquet révision 2 | [RPM Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; [guide Linux](docs/LINUX_INSTALL.md). |
+| Ubuntu 24.04/26.04 et Zorin OS Pro 18.1, amd64 | Version finale 0.6.1, paquet révision 2 | [DEB Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; Ubuntu/Zorin utilisent le même paquet. |
 
 ### Installer sur Windows
 
@@ -283,9 +286,15 @@ d’appairage ou des données personnelles dans une issue publique.
 
 **TTalk : vos clés restent sur vos appareils, et vous choisissez votre relais.** 🔒
 
-## Portage Linux 0.6.1
+## Linux — RPM et DEB
 
-Le support Linux et les paquets DEB (Ubuntu 24.04/26.04, base Zorin OS 18.1)
-et RPM (Fedora 45), en x86_64, sont en cours de validation dans cette branche.
-Voir [installation et limites Linux](docs/LINUX_INSTALL.md). Aucun statut final
-Linux n’est annoncé avant les essais sur les machines cibles.
+La [release Linux 0.6.1](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux)
+contient un RPM pour Fedora 45 et un DEB pour Ubuntu 24.04/26.04 et Zorin OS Pro 18.1,
+en Intel/AMD 64 bits. Installation et fonctionnement confirmés par le propriétaire
+sous Fedora 45 et Zorin OS Pro 18.1 le 8 novembre 2026 ; contrôles automatisés sur
+Ubuntu 24.04, Ubuntu 26.04 et Fedora 45. [Détail des essais](docs/LINUX_VALIDATION.md).
+
+La révision 2 corrige les emojis de profils en noir et blanc avec Noto Color Emoji.
+Le coffre utilise le trousseau de session Linux ; pas de biométrie ni de scan QR
+par caméra dans cette révision. Les paquets ne sont pas signés GPG ; les SHA256
+accompagnent chaque téléchargement. [Installation et mise à jour](docs/LINUX_INSTALL.md).
