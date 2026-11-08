@@ -13,7 +13,7 @@
 [la version finale](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple)
 requiert une compilation et une signature personnelle dans Xcode.
 
-**TTalk** est une messagerie chiffrée et open source pour Windows, Android, iPhone et macOS. Échangez des messages, des fichiers
+**TTalk** est une messagerie chiffrée et open source pour Windows, Android, Linux, iOS et macOS. Échangez des messages, des fichiers
 et des conversations de groupe sur un relais que vous choisissez.
 
 🔒 Chiffrement de bout en bout · 🌍 Relais auto-hébergeable ·
