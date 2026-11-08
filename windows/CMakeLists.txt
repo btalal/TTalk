@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 project(ttalk LANGUAGES CXX)
 
-# The application is distributed exclusively for Windows x64.
+# Support native 64-bit Intel/AMD and ARM Windows builds.
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8 OR
-   (CMAKE_GENERATOR_PLATFORM AND NOT CMAKE_GENERATOR_PLATFORM STREQUAL "x64"))
-  message(FATAL_ERROR "TTalk requires a Windows x64 toolchain.")
+   (CMAKE_GENERATOR_PLATFORM AND NOT CMAKE_GENERATOR_PLATFORM MATCHES "^(x64|ARM64)$"))
+  message(FATAL_ERROR "TTalk requires a Windows x64 or ARM64 toolchain.")
 endif()
 
 # The name of the executable created for the application. Change this to change

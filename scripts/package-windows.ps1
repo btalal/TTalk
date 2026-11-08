@@ -1,12 +1,17 @@
 param(
-    [string]$ReleasePath = 'build/windows/x64/runner/Release',
-    [string]$OutputPath = 'ttalk-windows-x64.zip',
-    [string]$LauncherPath = 'build/windows/x64/launcher/Release/TTalk.exe'
+    [ValidateSet('x64', 'arm64')][string]$Architecture = 'x64',
+    [string]$ReleasePath,
+    [string]$OutputPath,
+    [string]$LauncherPath
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+if (-not $ReleasePath) { $ReleasePath = "build/windows/$Architecture/runner/Release" }
+if (-not $LauncherPath) { $LauncherPath = "build/windows/$Architecture/launcher/Release/TTalk.exe" }
+if (-not $OutputPath) { $OutputPath = "ttalk-windows-$Architecture.zip" }
+$expectedMachine = if ($Architecture -eq 'arm64') { 0xAA64 } else { 0x8664 }
 
-function Assert-X64([string]$Path) {
+function Assert-Architecture([string]$Path) {
     $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $Path))
     if ($bytes.Length -lt 64 -or $bytes[0] -ne 0x4d -or $bytes[1] -ne 0x5a) {
         throw "Fichier PE invalide : $Path"
@@ -14,8 +19,8 @@ function Assert-X64([string]$Path) {
     $offset = [BitConverter]::ToInt32($bytes, 0x3c)
     if ($offset -lt 0 -or $offset + 6 -gt $bytes.Length -or
         [BitConverter]::ToUInt32($bytes, $offset) -ne 0x4550 -or
-        [BitConverter]::ToUInt16($bytes, $offset + 4) -ne 0x8664) {
-        throw "Binaire Windows x64 attendu : $Path"
+        [BitConverter]::ToUInt16($bytes, $offset + 4) -ne $expectedMachine) {
+        throw "Binaire Windows $Architecture attendu : $Path"
     }
 }
 
@@ -27,26 +32,47 @@ foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'data/icudtl.dat', 'data
 if (-not (Test-Path (Join-Path $ReleasePath 'data/flutter_assets') -PathType Container)) {
     throw 'Assets Flutter absents'
 }
-Assert-X64 (Join-Path $ReleasePath 'ttalk.exe')
-Assert-X64 (Join-Path $ReleasePath 'flutter_windows.dll')
+Assert-Architecture (Join-Path $ReleasePath 'ttalk.exe')
+Assert-Architecture (Join-Path $ReleasePath 'flutter_windows.dll')
+# Dart AOT snapshots use ELF on Windows too, rather than the PE DLL format.
+$aotBytes = [System.IO.File]::ReadAllBytes((Resolve-Path (Join-Path $ReleasePath 'data/app.so')))
+$expectedElf = if ($Architecture -eq 'arm64') { 183 } else { 62 }
+if ($aotBytes.Length -lt 20 -or [BitConverter]::ToUInt32($aotBytes, 0) -ne 0x464C457F -or
+    $aotBytes[4] -ne 2 -or $aotBytes[5] -ne 1 -or
+    [BitConverter]::ToUInt16($aotBytes, 18) -ne $expectedElf) {
+    throw "Snapshot AOT $Architecture invalide"
+}
 
-# Bundle the redistributable x64 CRT from the Visual Studio installation.
+# Bundle the matching redistributable CRT from the Visual Studio installation.
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
-$vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+$vs = & $vswhere -latest -products '*' -property installationPath
 if ($LASTEXITCODE -ne 0 -or -not $vs) { throw 'Installation MSVC introuvable' }
 $redist = Join-Path $vs 'VC/Redist/MSVC'
 $runtime = Get-ChildItem $redist -Directory |
     Where-Object { $_.Name -match '^\d+(\.\d+){1,3}$' } |
     Sort-Object { [version]$_.Name } -Descending |
-    ForEach-Object { Join-Path $_.FullName 'x64/Microsoft.VC143.CRT' } |
+    ForEach-Object { Join-Path $_.FullName "$Architecture/Microsoft.VC143.CRT" } |
     Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $runtime) { $runtime = Join-Path $redist 'v143/x64/Microsoft.VC143.CRT' }
-if (-not (Test-Path $runtime)) { throw 'Runtime Microsoft VC143 x64 introuvable' }
+if (-not $runtime) { $runtime = Join-Path $redist "v143/$Architecture/Microsoft.VC143.CRT" }
+if (-not (Test-Path $runtime)) { throw "Runtime Microsoft VC143 $Architecture introuvable" }
+# Microsoft's ARM64 redist also carries the x64-only EH4 runtime for emulation.
+# Native ARM64 code uses vcruntime140.dll; do not bundle that x64 DLL.
 foreach ($dll in Get-ChildItem $runtime -Filter '*.dll' -File) {
+    if ($Architecture -eq 'arm64' -and $dll.Name -eq 'vcruntime140_1.dll') {
+        $runtimeBytes = [System.IO.File]::ReadAllBytes($dll.FullName)
+        $peOffset = [BitConverter]::ToInt32($runtimeBytes, 0x3c)
+        $machine = [BitConverter]::ToUInt16($runtimeBytes, $peOffset + 4)
+        Write-Host ("EH4 runtime machine: 0x{0:X4}" -f $machine)
+        if ($machine -eq 0x8664) {
+            Remove-Item (Join-Path $ReleasePath $dll.Name) -ErrorAction SilentlyContinue
+            continue
+        }
+    }
     Copy-Item $dll.FullName $ReleasePath -Force
-    Assert-X64 (Join-Path $ReleasePath $dll.Name)
+    Assert-Architecture (Join-Path $ReleasePath $dll.Name)
 }
-Assert-X64 $LauncherPath
+Get-ChildItem $ReleasePath -Recurse -File | Where-Object { $_.Extension -in '.dll', '.exe' } | ForEach-Object { Assert-Architecture $_.FullName }
+Assert-Architecture $LauncherPath
 # Stage separately: leave Flutter's build/run layout intact for development.
 $staging = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
 try {
@@ -78,11 +104,12 @@ try {
     if (($rootEntries -join '|') -ne 'app|LISEZ-MOI.txt|TTalk.exe') {
         throw "Racine du ZIP inattendue : $rootEntries"
     }
-    Assert-X64 (Join-Path $extracted 'TTalk.exe')
+    Assert-Architecture (Join-Path $extracted 'TTalk.exe')
     $appPath = Join-Path $extracted 'app'
-    foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'data/app.so', 'data/icudtl.dat')) {
+    foreach ($file in @('ttalk.exe', 'flutter_windows.dll', 'msvcp140.dll', 'vcruntime140.dll', 'data/app.so', 'data/icudtl.dat')) {
         if (-not (Test-Path (Join-Path $appPath $file))) { throw "ZIP incomplet : $file" }
     }
+    if ($Architecture -eq 'x64' -and -not (Test-Path (Join-Path $appPath 'vcruntime140_1.dll'))) { throw 'Runtime x64 EH4 absent' }
     # Start from an unrelated working directory, with spaces in the extracted path.
     $launcher = Start-Process (Join-Path $extracted 'TTalk.exe') -WorkingDirectory $env:SystemRoot -PassThru
     Start-Sleep -Seconds 8
@@ -101,7 +128,7 @@ try {
         throw 'Une deuxième instance peut accéder au même coffre'
     }
     if ($second.ExitCode -ne 0) { throw 'Le contrôle de seconde instance a échoué' }
-    Write-Host "Package x64 vérifié ; fenêtre ouverte hors ligne. SHA256 : $hash"
+    Write-Host "Package $Architecture vérifié ; fenêtre ouverte hors ligne. SHA256 : $hash"
 } finally {
     foreach ($owned in @($second, $process, $launcher)) {
         if ($null -eq $owned) { continue }
