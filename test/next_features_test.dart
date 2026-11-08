@@ -62,13 +62,13 @@ void main() {
     final peer = 'a' * 64;
     final invite = PairingInvitation(
       code: 'ABC234',
-      relay: 'https://ttalk.fly.dev',
+      relay: 'https://relais.example.invalid',
       peerId: peer,
     );
     final parsed = PairingInvitation.parse(invite.link);
     expect(parsed.code, 'ABC234');
     expect(parsed.peerId, peer);
-    expect(parsed.relay, 'wss://ttalk.fly.dev/ws');
+    expect(parsed.relay, 'wss://relais.example.invalid/ws');
     expect(PairingInvitation.parse('abc234').code, 'ABC234');
     for (final value in [
       '${invite.link}&code=DEF567',
