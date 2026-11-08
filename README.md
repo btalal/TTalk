@@ -272,3 +272,10 @@ problème de sécurité, éviter de publier des clés privées, des codes
 d’appairage ou des données personnelles dans une issue publique.
 
 **TTalk : vos clés restent sur vos appareils, et vous choisissez votre relais.** 🔒
+
+## Portage Linux 0.6.1
+
+Le support Linux et les paquets DEB (Ubuntu 24.04/26.04, base Zorin OS 18.1)
+et RPM (Fedora 45), en x86_64, sont en cours de validation dans cette branche.
+Voir [installation et limites Linux](docs/LINUX_INSTALL.md). Aucun statut final
+Linux n’est annoncé avant les essais sur les machines cibles.

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,15 +9,23 @@ import 'services/secure_store.dart';
 import 'state/app_state.dart';
 import 'ui/home_screen.dart';
 import 'ui/unlock_screen.dart';
+import 'ui/linux_startup_failure.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final store = await SecureStore.create();
-  final relay = RelayClient();
-  final app = AppState(store: store, relay: relay);
-  await app.init();
-  runApp(TTalkApp(app: app));
-  unawaited(app.connectSavedRelay());
+  AppState? app;
+  try {
+    final store = await SecureStore.create();
+    final relay = RelayClient();
+    app = AppState(store: store, relay: relay);
+    await app.init();
+    runApp(TTalkApp(app: app));
+    unawaited(app.connectSavedRelay());
+  } catch (error, stack) {
+    app?.dispose();
+    if (!Platform.isLinux) Error.throwWithStackTrace(error, stack);
+    runApp(const LinuxStartupFailure(onRetry: main));
+  }
 }
 
 class TTalkApp extends StatefulWidget {
