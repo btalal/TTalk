@@ -1,0 +1,38 @@
+# Relais TTalk sur un NAS (Asustor, Synology, QNAP, Linux…) avec Docker.
+# Tailscale Funnel fournit l'adresse HTTPS publique https://ttalk.<tailnet>.ts.net :
+# aucun port à ouvrir sur la box, et le relais n'écoute que dans son conteneur.
+# Guide pas à pas : server/NAS.md
+
+services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    hostname: ttalk
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY:?Renseigner TS_AUTHKEY dans le fichier .env}
+      - TS_HOSTNAME=ttalk
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve.json
+      # Mode sans interface réseau virtuelle : pas besoin de /dev/net/tun ni de
+      # privilèges ; Funnel transmet le trafic au relais dans le même conteneur réseau.
+      - TS_USERSPACE=true
+    volumes:
+      - ./tailscale-state:/var/lib/tailscale
+      - ./serve.json:/config/serve.json:ro
+    restart: unless-stopped
+
+  relay:
+    build:
+      # Compilé directement depuis le dépôt GitHub (dossier server/).
+      context: https://github.com/btalal/TTalk.git#main/ttalk:server
+    image: ttalk-relay:local
+    # Partage le réseau du conteneur Tailscale : Funnel joint le relais sur 127.0.0.1.
+    network_mode: service:tailscale
+    environment:
+      - HOST=127.0.0.1
+      - PORT=8080
+      - DATA_DIR=/data
+    volumes:
+      - ./data:/data
+    depends_on:
+      - tailscale
+    restart: unless-stopped
