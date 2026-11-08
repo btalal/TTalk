@@ -4,7 +4,7 @@ import '../models/chat_settings.dart';
 import '../models/profile_icons.dart';
 import '../state/app_state.dart';
 import 'avatar_art.dart';
-import 'emoji_symbol.dart';
+import 'appearance_symbol.dart';
 
 /// Illustrated avatar of a contact or group. A legacy emoji icon is still
 /// shown as an emoji; without any choice the illustration comes from [seed].
@@ -39,7 +39,7 @@ class ChatAvatar extends StatelessWidget {
         : symbol != null && index == null && !symbol!.startsWith('icon:')
         ? CircleAvatar(
             radius: size / 2,
-            child: EmojiSymbol(symbol!, fontSize: size * .5),
+            child: AppearanceSymbol(symbol!, size: size),
           )
         : AvatarArt(
             index: index ?? ChatSettings.defaultAvatarFor(seed ?? name),
@@ -363,7 +363,7 @@ Future<void> showChatCustomization(
                 ],
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Symboles et emojis'),
+                  child: Text('Symboles illustrés'),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -379,7 +379,11 @@ Future<void> showChatCustomization(
                     ),
                     ...ChatSettings.icons.map(
                       (icon) => ChoiceChip(
-                        label: EmojiSymbol(icon, fontSize: 22),
+                        label: Tooltip(
+                          message: AppearanceSymbol
+                              .labels[ChatSettings.icons.indexOf(icon)],
+                          child: AppearanceSymbol(icon, size: 40),
+                        ),
                         selected: symbol == icon,
                         onSelected: busy
                             ? null

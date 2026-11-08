@@ -28,7 +28,9 @@ Aucun abonnement ni compilation locale n’est nécessaire pour installer ces RP
 
 ## Nouveautés
 
-- **24 nouvelles icônes couleur** pour les profils et les groupes : appareils, lieux, systèmes, fabricants et distributions Linux. Sélection dans « Nom et icône » ; anciens choix conservés.
+- **Build 30 : 85 choix illustrés** — 20 profils variés, 20 groupes thématiques, 20 symboles modernisés et 25 icônes d’appareils, lieux, systèmes et marques. PC de bureau ajouté ; « Fichiers » remplace visuellement l’ancien choix ordinateur.
+
+- **25 nouvelles icônes couleur** pour les profils et les groupes : appareils, lieux, systèmes, fabricants et distributions Linux. Sélection dans « Nom et icône » ; anciens choix conservés.
 
 - Paquets natifs ARM® aarch64 en complément des paquets Intel and AMD x86_64.
 

@@ -1,12 +1,14 @@
 name: Linux 0.6.1 DEB and RPM
 on:
   push:
-    branches: ['feature/linux-0.6.1', 'feature/profile-icons']
+    branches: ['feature/linux-0.6.1', 'feature/profile-icons', 'feature/illustrated-avatars']
   pull_request:
     branches: ['main/ttalk']
     paths:
       - 'lib/**'
       - 'assets/profile_icons/**'
+      - 'assets/avatars/**'
+      - 'assets/symbols/**'
       - 'pubspec.*'
       - 'test/profile_icons_test.dart'
       - 'linux/**'

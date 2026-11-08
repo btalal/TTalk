@@ -8,8 +8,8 @@ import 'chat_management_ui_test.dart' as fixture;
 
 void main() {
   test('approved IDs survive appearance serialization without replacing legacy icons', () {
-    expect(ProfileIcons.all.length, 24);
-    expect(ProfileIcons.all.map((i) => i.symbol).toSet().length, 24);
+    expect(ProfileIcons.all.length, 25);
+    expect(ProfileIcons.all.map((i) => i.symbol).toSet().length, 25);
     for (final icon in ProfileIcons.all) {
       expect(ChatSettings.isValidIcon(icon.symbol), isTrue);
       expect(
@@ -41,7 +41,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byType(Image), findsNWidgets(24));
+      expect(find.byType(Image), findsNWidgets(25));
       expect(tester.takeException(), isNull);
     }
   });

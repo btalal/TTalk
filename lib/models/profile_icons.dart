@@ -18,6 +18,7 @@ class ProfileIcons {
     ProfileIcon('mini-pc', 'Mini PC', 'Appareils et lieux'),
     ProfileIcon('tablet', 'Tablette', 'Appareils et lieux'),
     ProfileIcon('laptop', 'Portable', 'Appareils et lieux'),
+    ProfileIcon('desktop-pc', 'PC de bureau', 'Appareils et lieux'),
     ProfileIcon('home', 'Maison', 'Appareils et lieux'),
     ProfileIcon('work', 'Travail', 'Appareils et lieux'),
     ProfileIcon('linux', 'Linux', 'Systèmes'),

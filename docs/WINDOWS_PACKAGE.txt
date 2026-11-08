@@ -46,7 +46,7 @@ messages chiffrés en attente pendant 7 jours au maximum.
 
 NOUVEAUTÉS DE LA VERSION 0.6.1
 
-- Build 29 : 24 nouvelles icônes couleur pour profils et groupes, dans
+- Build 30 : 85 choix illustrés pour les profils et groupes, dont 25 icônes pour profils et groupes, dans
   « Nom et icône » : appareils, lieux, systèmes, fabricants et distributions Linux.
   Les anciens avatars, emojis et choix enregistrés sont conservés.
 
