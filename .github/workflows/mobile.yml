@@ -2,7 +2,9 @@ name: Mobile Android and iOS packages
 
 on:
   push:
-    tags: ['mobile-v*', 'android-v*']
+    # vX.Y.Z-android / vX.Y.Z-preview.N-mobile sort with the other platforms of
+    # the same version on the Releases page; the old prefixes stay accepted.
+    tags: ['v*-android', 'v*-mobile', 'mobile-v*', 'android-v*']
   workflow_dispatch:
 
 permissions:
@@ -92,7 +94,7 @@ jobs:
           script: python3 scripts/run-mobile-test.py emulator-5554
 
   ios:
-    if: ${{ !startsWith(github.ref, 'refs/tags/android-v') }}
+    if: ${{ !startsWith(github.ref, 'refs/tags/android-v') && !(startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-android')) }}
     needs: prepare
     runs-on: macos-15
     timeout-minutes: 45
@@ -119,12 +121,46 @@ jobs:
           path: dist/*
       - name: Test Keychain and mobile UI on iPhone simulator
         run: |
-          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if x["name"].startswith("iPhone")))')
-          open -a Simulator --args -CurrentDeviceUDID "$DEVICE_ID"
+          # The image's default Xcode offers no usable iOS Simulator destination,
+          # and the newest Xcode may lack its iOS platform. Use the newest Xcode
+          # with an *eligible* iOS Simulator destination for Runner; otherwise
+          # download the iOS platform for the newest Xcode 26.
+          eligible() {
+            DEVELOPER_DIR="$1/Contents/Developer" xcodebuild -showsdks 2>/dev/null | grep -q -- '-sdk iphonesimulator' &&
+            DEVELOPER_DIR="$1/Contents/Developer" xcodebuild -project ios/Runner.xcodeproj -scheme Runner -showdestinations 2>/dev/null \
+              | awk '/Ineligible destinations/ {exit} {print}' | grep -q 'platform:iOS Simulator'
+          }
+          SELECTED=""
+          for XCODE in $(ls -d /Applications/Xcode_26*.app /Applications/Xcode_16*.app 2>/dev/null | sort -rV); do
+            echo "Essai de $XCODE"
+            if eligible "$XCODE"; then SELECTED="$XCODE"; break; fi
+          done
+          if [ -z "$SELECTED" ]; then
+            SELECTED=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)
+            echo "Aucun simulateur utilisable : téléchargement de la plateforme iOS pour $SELECTED"
+            DEVELOPER_DIR="$SELECTED/Contents/Developer" xcodebuild -downloadPlatform iOS
+          fi
+          # Flutter follows xcode-select, not only DEVELOPER_DIR: switch both.
+          sudo xcode-select -s "$SELECTED/Contents/Developer"
+          export DEVELOPER_DIR="$SELECTED/Contents/Developer"
+          xcode-select -p
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i 'simulator' || true
+          xcodebuild -project ios/Runner.xcodeproj -scheme Runner -showdestinations | awk '/Ineligible destinations/ {exit} {print}' | grep 'iOS Simulator' | head -n 3
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,re,sys; d=json.load(sys.stdin)["devices"]; v=lambda k: tuple(int(n) for n in re.findall(r"iOS-(\d+)-(\d+)", k)[0]) if re.search(r"iOS-\d+-\d+", k) else None; keys=sorted((k for k in d if v(k)), key=v, reverse=True); print(next(x["udid"] for k in keys for x in d[k] if x["name"].startswith("iPhone")))')
+          echo "Simulateur : $DEVICE_ID"
+          # Configure Flutter and CocoaPods before any simulator starts: once the
+          # default Simulator app boots a device, xcodebuild no longer lists the
+          # iOS Simulator destinations. xcodebuild test boots the device itself.
+          mkdir -p build
+          if ! flutter build ios --config-only --debug --simulator --target integration_test/mobile_smoke_test.dart -v > build/flutter-ios-config.log 2>&1; then
+            grep -n -i -E 'error|unable|xcodebuild' build/flutter-ios-config.log | tail -n 40
+            tail -n 40 build/flutter-ios-config.log
+            exit 1
+          fi
+          (cd ios && pod install)
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
-          flutter build ios --config-only --debug --simulator --target integration_test/mobile_smoke_test.dart
-          (cd ios && pod install)
           python3 scripts/run-logged.py xcodebuild test \
             -workspace ios/Runner.xcworkspace -scheme Runner -configuration Debug \
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
@@ -135,7 +171,7 @@ jobs:
           python3 -c 'import json; s=json.load(open("build/ios/mobile-test-summary.json")); print(s); assert s.get("passedTests", 0) >= 1 and s.get("failedTests", 0) == 0, "Aucun test Dart natif réussi"'
 
   publish:
-    if: ${{ always() && needs.android.result == 'success' && (startsWith(github.ref, 'refs/tags/android-v') || (startsWith(github.ref, 'refs/tags/mobile-v') && needs.ios.result == 'success')) }}
+    if: ${{ always() && needs.android.result == 'success' && (startsWith(github.ref, 'refs/tags/android-v') || (startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-android')) || ((startsWith(github.ref, 'refs/tags/mobile-v') || (startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-mobile'))) && needs.ios.result == 'success')) }}
     needs: [android, ios]
     runs-on: ubuntu-24.04
     permissions:
@@ -153,7 +189,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           MOBILE_TAG: ${{ github.ref_name }}
         run: |
-          if [[ "$MOBILE_TAG" == android-v* ]]; then
+          if [[ "$MOBILE_TAG" == android-v* || "$MOBILE_TAG" == v*-android ]]; then
             gh release create "$MOBILE_TAG" --prerelease --latest=false --title "TTalk Android — $MOBILE_TAG — signature en cours" --notes-file docs/ANDROID_RELEASE.md dist/*
           else
             gh release create "$MOBILE_TAG" --prerelease --latest=false --title "TTalk mobile — $MOBILE_TAG — archives à signer" --notes-file docs/MOBILE_INSTALL.md dist/*

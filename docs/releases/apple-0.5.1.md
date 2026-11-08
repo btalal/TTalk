@@ -21,7 +21,7 @@ de compilation destinés aux développeurs, pas des installateurs Apple signés.
 L’archive « Source code » contient le projet à compiler, pas une application installable.
 
 [Windows stable](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows) et
-[Android stable](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1)
+[Android stable](https://github.com/btalal/TTalk/releases/tag/v0.5.1-android)
 restent disponibles dans leurs publications séparées.
 
 ## Pour qui ?
@@ -62,7 +62,7 @@ elles ne modifient pas le protocole ni le code de messagerie.
 | iPhone, iOS 15+ | 🟢 Parcours Release validé sur **iPhone 17 Pro, iOS 27.2** ; autres modèles et versions non couverts par ces essais |
 | Mac Apple Silicon, macOS 12+ | 🟢 Parcours Release validé sur **Mac mini M4, macOS 27.2** ; M1, M2, M3 et M5 non testés pendant cette validation |
 | Mac Intel | Compilation universelle disponible ; aucun essai matériel Intel consigné |
-| Windows et Android | 🟢 [Windows 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows) et [Android 0.5.1](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1), versions stables séparées |
+| Windows et Android | 🟢 [Windows 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows) et [Android 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-android), versions stables séparées |
 
 Outils utilisés lors des essais : **Flutter 3.47.9, CocoaPods 1.17.0 et Xcode 27.2**.
 

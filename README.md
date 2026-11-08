@@ -4,13 +4,13 @@
 
 # TTalk
 
-> **TTalk 0.6.0** : [nouveautés et essais](docs/NEXT_VERSION.md).
-> Android 0.6.0 attend la signature d’origine ; l’APK stable 0.5.1 reste disponible.
+> **TTalk 0.6.1** : nouvelle interface, identique sur Windows, Android, iPhone et macOS
+> (menu en bas, avatars illustrés, police Inter). [Nouveautés et essais](docs/NEXT_VERSION.md).
 
 ### Messagerie privée. Chiffrement de bout en bout. Relais à votre choix.
 
-**Versions finales : Windows, Android, iOS et macOS.** Sur Apple,
-[la version finale](https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple)
+**Versions finales 0.6.1 : Windows, Android, iOS et macOS.** Sur Apple,
+[la version finale](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple)
 requiert une compilation et une signature personnelle dans Xcode.
 
 **TTalk** est une messagerie chiffrée et open source pour Windows, Android, iPhone et macOS. Échangez des messages, des fichiers
@@ -20,9 +20,9 @@ et des conversations de groupe sur un relais que vous choisissez.
 👥 Groupes chiffrés · 📂 Fichiers chiffrés pendant le transfert
 
 <p>
-  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.0-windows"><img src="https://img.shields.io/badge/Windows_x64-0.6.0-0F172A" alt="Windows x64 0.6.0" /></a>
-  <a href="https://github.com/btalal/TTalk/releases/tag/android-v0.5.1"><img src="https://img.shields.io/badge/Android-0.5.1-312E81" alt="Android 0.5.1" /></a>
-  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple"><img src="https://img.shields.io/badge/iPhone_%26_macOS-0.6.0_finale-7C3AED" alt="iPhone et macOS 0.6.0 — versions finales" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-windows"><img src="https://img.shields.io/badge/Windows_x64-0.6.1-0F172A" alt="Windows x64 0.6.1" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-android"><img src="https://img.shields.io/badge/Android-0.6.1-312E81" alt="Android 0.6.1" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple"><img src="https://img.shields.io/badge/iPhone_%26_macOS-0.6.1_finale-7C3AED" alt="iPhone et macOS 0.6.1 — versions finales" /></a>
   <img src="https://img.shields.io/badge/Flutter-3.47.9-02569B" alt="Flutter 3.47.9" />
   <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/AES--256--GCM-chiffrement-312E81" alt="Chiffrement AES-256-GCM" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-7C3AED" alt="Licence Apache-2.0" /></a>
@@ -44,8 +44,10 @@ contact en comparant vos numéros de sécurité par un autre canal.
 
 ## Fonctionnalités principales
 
-| | TTalk 0.6.0 |
+| | TTalk 0.6.1 |
 |---|---|
+| 🎨 Interface | Identique sur les quatre plateformes : menu Discussions, Contacts, Réglages en bas ; logo, version et état « Connecté » en en-tête |
+| 🧑‍🎨 Avatars | 20 illustrations pour les contacts et 20 pour les groupes ; pastille verte sur les contacts vérifiés |
 | 💬 Conversations | Messages directs et accusés de réception et de lecture |
 | 🔒 Chiffrement | X25519 + HKDF-SHA256 pour les clés ; AES-256-GCM pour les messages |
 | 🛡 Coffre local | PIN, verrouillage manuel/automatique, biométrie facultative selon la plateforme |
@@ -58,31 +60,36 @@ contact en comparant vos numéros de sécurité par un autre canal.
 | 🌍 Hébergement | Relais HTTPS au choix, y compris auto-hébergé |
 
 Les échanges Windows et Android ont été essayés sur deux PC et un téléphone.
-**Les versions finales iPhone et Mac ont été validées le 6 novembre 2026**
+**Les versions finales iPhone et Mac 0.6.0 ont été validées le 6 novembre 2026**
 sur iPhone 17 Pro sous iOS 27.2 et Mac mini M4 : serveur, contacts et
-messages envoyés/reçus. Le lancement autonome fonctionne sur les deux ;
+messages envoyés/reçus. La 0.6.1 change l’interface, pas le chiffrement ni le
+relais ; ses paquets ont passé les tests automatiques (Windows, Android sur
+émulateur, iPhone sur simulateur). Le lancement autonome fonctionne sur les deux ;
 la conservation des messages après fermeture et réouverture a aussi été
 vérifiée sur Mac. Installation Apple avec signature personnelle dans Xcode.
 [Détail des essais et limites](docs/APPLE_VALIDATION.md).
 
 ## Aperçu
 
-### Bureau (Windows)
+### Bureau (Windows, version 0.6.1)
 
-**Conversation chiffrée** — échanges directs et accusés de lecture.
-
-![Conversation TTalk sur Windows avec des messages de test](docs/media/windows-chat.png)
-
-**Appairage** — saisir le code transmis par un contact, puis comparer les
-numéros de sécurité par un autre canal.
-
-![Fenêtre d’appairage d’un contact dans TTalk sur Windows](docs/media/windows-pairing.png)
+La même interface est utilisée sur Windows, macOS, Android et iPhone.
 
 **Coffre local** — le PIN déverrouille les messages enregistrés sur cet appareil.
 
-![Écran de déverrouillage du coffre TTalk sur Windows](docs/media/windows-unlock.png)
+![Écran de déverrouillage du coffre TTalk 0.6.1 sur Windows](docs/media/windows-unlock.png)
 
-Les vues Android et de groupes seront ajoutées dès que des captures réelles
+**Discussions** — logo, version et état de connexion en en-tête, filtres sur
+une ligne, avatars illustrés et menu Discussions, Contacts, Réglages en bas.
+
+![Liste des discussions de TTalk 0.6.1 sur Windows](docs/media/windows-home.png)
+
+**Conversation chiffrée** — messages, pièces jointes chiffrées pendant le
+transfert et accusés de lecture.
+
+![Conversation TTalk 0.6.1 sur Windows avec des messages de test et une pièce jointe](docs/media/windows-chat.png)
+
+Les vues Android, iPhone et Mac seront ajoutées dès que des captures réelles
 et anonymisées seront disponibles.
 
 ## Comparaison
@@ -111,10 +118,10 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 
 | Plateforme | État | Où commencer |
 |---|---|---|
-| Windows 10/11 x64 | Version finale 0.6.0 | [ZIP Windows](https://github.com/btalal/TTalk/releases/tag/v0.6.0-windows) : extraire toute l’archive et lancer `TTalk.exe`. |
-| Android 7.0+ | Version 0.5.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/android-v0.5.1) : télécharger `ttalk-android.apk`. |
-| iPhone (iOS 15+) | Version finale 0.6.0 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
-| macOS 12+ | Version finale 0.6.0, validée sur M4 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.0-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI non signée, sans notarisation. |
+| Windows 10/11 x64 | Version finale 0.6.1 | [ZIP Windows](https://github.com/btalal/TTalk/releases/tag/v0.6.1-windows) : extraire toute l’archive et lancer `TTalk.exe`. |
+| Android 7.0+ | Version finale 0.6.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : télécharger `ttalk-android.apk`. |
+| iPhone (iOS 15+) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
+| macOS 12+ (Apple Silicon et Intel) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI universelle, non signée, sans notarisation. |
 
 ### Installer sur Windows
 
@@ -124,12 +131,14 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 
 ```text
 TTalk.exe
-LIRE-MOI.txt
+LISEZ-MOI.txt
 app/
 ```
 
-Sur Android, installer l’APK **signé** `ttalk-android.apk` sans désinstaller
-une version précédente si vous souhaitez conserver les données locales.
+Sur Android, installer l’APK **signé** `ttalk-android.apk` par-dessus la 0.6.0
+pour conserver les données locales. Depuis la 0.5.1, la clé de signature a
+changé : désinstaller d’abord la 0.5.1 (ses données locales sont effacées),
+puis appairer de nouveau vos contacts.
 Sur iPhone et Mac, utiliser Xcode avec votre compte Apple et la configuration
 **Release**. Les archives CI ne sont pas des installateurs Apple signés. Voir le
 [guide mobile](docs/MOBILE_INSTALL.md) et le [guide Mac](docs/MACOS_INSTALL.md).
@@ -210,7 +219,7 @@ des autres participants. [Guide des groupes et conversations](docs/CHAT_MANAGEME
 
 Le [serveur TTalk](server/README.md) peut être exécuté sur un hébergement qui
 fournit Node.js 24, un disque persistant et HTTPS/WSS. Un
-[Dockerfile](server/Dockerfile) est fourni ; un VPS ou le blueprint Render du
+[Dockerfile](server/Dockerfile) est fourni ; un VPS ou la configuration Fly.io du
 dépôt sont aussi possibles. Le choix de l’hébergeur et ses coûts vous
 appartiennent.
 
@@ -223,6 +232,7 @@ Cette file d’attente ne remplace pas une sauvegarde des conversations.
 
 | État | Sujet |
 |---|---|
+| Disponible en 0.6.1 | Interface commune aux quatre plateformes, menu en bas, avatars illustrés, police Inter |
 | Disponible en 0.6.0 | Interface adaptative, recherche, QR, réponses/réactions, verrouillage et sauvegardes |
 | Validé le 06/11/2026 | iPhone 17 Pro (iOS 27.2) et Mac mini M4, installation personnelle via Xcode |
 | Prochaine révision | Double Ratchet, époques et authenticité de groupe, revue indépendante |

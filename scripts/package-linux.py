@@ -51,6 +51,17 @@ def stage(bundle, root):
         p = root / destination
         p.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / source, p)
+    # Flutter installs plugin libraries as files, retaining their build RPATH.
+    # Replace those paths with bundle-relative lookup before either packaging format.
+    for p in target.rglob('*'):
+        if not p.is_file() or p.read_bytes()[:4] != b'\x7fELF':
+            continue
+        result = subprocess.run(['patchelf', '--print-rpath', str(p)], capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            run('patchelf', '--set-rpath', '$ORIGIN/lib' if p == target / 'ttalk' else '$ORIGIN', p)
+            expected = '$ORIGIN/lib' if p == target / 'ttalk' else '$ORIGIN'
+            if run('patchelf', '--print-rpath', p, capture_output=True, text=True).stdout.strip() != expected:
+                raise ValueError(f'Unsafe runtime path: {p}')
     for p in root.rglob('*'):
         if not p.is_symlink():
             p.chmod(0o755 if p.is_dir() or p == target / 'ttalk' else 0o644)
@@ -123,6 +134,10 @@ cp -a "{payload}/." "%{{buildroot}}/"
 %doc /usr/share/doc/ttalk/LINUX_INSTALL.md
 %license /usr/share/doc/ttalk/LICENSE
 %license /usr/share/doc/ttalk/NOTICE
+
+%changelog
+* Sun Nov 08 2026 TTalk contributors <noreply@github.com> - {version}-1
+- Initial Linux packages.
 ''')
             run('rpmbuild', '-bb', '--define', '_topdir ' + str(top), spec)
             built = list((top / 'RPMS/x86_64').glob('ttalk-*.rpm'))

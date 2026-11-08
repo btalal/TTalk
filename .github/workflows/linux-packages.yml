@@ -25,7 +25,7 @@ jobs:
       - name: Install native build and keyring test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libstdc++-12-dev dpkg-dev desktop-file-utils xvfb xauth dbus-x11 gnome-keyring libgl1-mesa-dri libegl1
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libstdc++-12-dev dpkg-dev patchelf desktop-file-utils xvfb xauth dbus-x11 gnome-keyring libgl1-mesa-dri libegl1
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -58,7 +58,7 @@ jobs:
       - name: Build RPM metadata on Fedora 45
         run: |
           docker run --rm -v "$PWD:/src" -w /src fedora:45 bash -euc '
-            dnf -y install python3 rpm-build gtk3 libsecret
+            dnf -y install python3 rpm-build patchelf gtk3 libsecret
             python3 scripts/package-linux.py rpm
           '
       - uses: actions/upload-artifact@v4

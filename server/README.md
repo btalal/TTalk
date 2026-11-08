@@ -22,28 +22,34 @@ Vérifier ensuite `https://votre-relais/healthz` : la réponse attendue est
 l’adresse HTTPS dans **Configurer le serveur**. Le chemin WebSocket `/ws` est
 ajouté par le client.
 
-## Exemple de configuration : Render
+## Exemple de configuration : Fly.io
 
-Le fichier `render.yaml` à la racine prépare un service Node.js **permanent** avec
-un disque persistant de 1 Go. Le service gratuit qui s’endort n’est pas utilisé.
-Les prix et taxes doivent être vérifiés sur l’écran de création de Render ; ne
-validez une commande que si son montant mensuel vous convient.
+Le fichier [`fly.toml`](fly.toml) prépare une machine **permanente**
+(`shared-cpu-1x`, 256 Mo + 256 Mo de swap, région Paris) avec un volume
+persistant de 1 Go monté sur `/data`. C’est la plus petite machine Fly.io,
+suffisante pour un relais personnel ou familial. Les prix doivent être vérifiés
+sur la page tarifaire de Fly.io ; ne validez que si le montant mensuel vous convient.
 
-1. Créer un compte sur https://render.com et choisir **New → Blueprint**.
-2. Connecter le dépôt public `btalal/TTalk`, branche
-   la branche par défaut du dépôt (`main/ttalk`), puis sélectionner le fichier `render.yaml`.
-3. Vérifier le service Starter, le disque de 1 Go et le montant facturé, puis
-   lancer le déploiement. Aucun secret d’application n’est à saisir.
-4. Render fournit une adresse `https://…onrender.com`. Ouvrir `/healthz` sur cette
-   adresse : la réponse attendue est `{"status":"ok","protocol":2}`.
-5. Dans TTalk, ouvrir **Configurer le serveur**, coller l’adresse HTTPS et
+**Relais déjà déployé en 512 Mo ?** Depuis `server`, `fly deploy` applique la
+nouvelle taille (même adresse, même volume, messages en attente conservés).
+Sans redéployer : `fly scale memory 256`. Vérifier ensuite `/healthz` et
+`fly status`. En cas de manque de mémoire (`fly logs` signale *Out of memory*),
+revenir à `fly scale memory 512`.
+
+1. Installer `flyctl` et se connecter : `fly auth login`.
+2. Depuis le dossier `server`, créer l’application avec la configuration du
+   dépôt : `fly launch --copy-config --no-deploy` (choisir un nom d’application
+   libre si `ttalk` est déjà pris, et l’indiquer dans `fly.toml`).
+3. Créer le volume : `fly volumes create ttalk_messages --size 1 --region cdg`.
+4. Déployer : `fly deploy`.
+5. Fly.io fournit une adresse `https://<application>.fly.dev`. Ouvrir `/healthz`
+   sur cette adresse : la réponse attendue est `{"status":"ok","protocol":2}`.
+6. Dans TTalk, ouvrir **Configurer le serveur**, coller l’adresse HTTPS et
    enregistrer sur chaque appareil avant de les appairer.
 
-Les connexions WSS sont terminées par Render : aucun certificat à gérer sur les PC.
-Les mises à jour du service sont manuelles pour éviter de changer le protocole
-sans mettre à jour les applications. **Le blueprint préparé n’est pas la preuve
-d’un déploiement réussi** : l’accès public et les deux PC restent à valider une
-fois le compte et le service créés.
+Les connexions WSS sont terminées par Fly.io : aucun certificat à gérer sur les
+appareils. Les mises à jour du relais sont manuelles (`fly deploy`) pour éviter
+de changer le protocole sans mettre à jour les applications.
 
 ## Développement local
 
@@ -64,7 +70,7 @@ même PC. Les serveurs distants doivent utiliser HTTPS/WSS.
 - `PORT` : port du service, 8080 par défaut.
 - `HOST` : interface d’écoute, `127.0.0.1` par défaut, `0.0.0.0` chez l’hébergeur.
 - `DATA_DIR` : disque persistant, `server/data` si le serveur est lancé depuis
-  `server`, `/var/data` dans le blueprint.
+  `server`, `/data` dans l’exemple Fly.io et l’image Docker.
 - SQLite conserve les paquets chiffrés jusqu’à confirmation de stockage par
   l’application destinataire, ou expiration **7 jours** après leur dépôt.
 - Une reconnexion ne change pas l’identité, qui est liée à la clé de l’appareil.

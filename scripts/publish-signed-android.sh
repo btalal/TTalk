@@ -5,9 +5,10 @@ for MANIFEST in release-signatures/android-*.json; do
   MOBILE_TAG=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["release_tag"])' "$MANIFEST")
   NOTES_FILE=$(python3 -c 'import json,sys; print("release-signatures/"+json.load(open(sys.argv[1]))["notes_file"])' "$MANIFEST")
   case "$MOBILE_TAG" in
-    android-v0.5.0) RELEASE_TITLE='TTalk 0.5.0 — Android · Stable historique'; RELEASE_STATUS='--prerelease=false' ;;
+    v0.5.0-android) RELEASE_TITLE='TTalk 0.5.0 — Android · Stable historique'; RELEASE_STATUS='--prerelease=false' ;;
+    v*-android) VERSION=${MOBILE_TAG#v}; RELEASE_TITLE="TTalk ${VERSION%-android} — Android · Stable"; RELEASE_STATUS='--prerelease=false' ;;
     android-v*) RELEASE_TITLE="TTalk ${MOBILE_TAG#android-v} — Android · Stable"; RELEASE_STATUS='--prerelease=false' ;;
-    mobile-v0.5.0-preview.11) RELEASE_TITLE='TTalk 0.5.0 Preview 11 — Android et iPhone'; RELEASE_STATUS='--prerelease' ;;
+    v0.5.0-preview.11-mobile) RELEASE_TITLE='TTalk 0.5.0 Preview 11 — Android et iPhone'; RELEASE_STATUS='--prerelease' ;;
     *) RELEASE_TITLE="TTalk $MOBILE_TAG — Android et iPhone · Préversion"; RELEASE_STATUS='--prerelease' ;;
   esac
   # Keep previously verified releases untouched. In particular, publishing a new

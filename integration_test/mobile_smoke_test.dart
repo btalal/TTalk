@@ -47,9 +47,11 @@ void main() {
       }
       await tester.pumpAndSettle();
       expect(app.unlocked, isTrue);
+      // Pairing is the header button since 0.6; the menu keeps the rest.
+      expect(find.byTooltip('Appairer un contact'), findsOneWidget);
       await tester.tap(find.byTooltip('Menu TTalk'));
       await tester.pumpAndSettle();
-      expect(find.text('Appairer un contact'), findsOneWidget);
+      expect(find.text('Mon code d’appairage'), findsOneWidget);
       await tester.tap(find.text('Mon nom'));
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);

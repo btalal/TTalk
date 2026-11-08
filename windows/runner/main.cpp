@@ -7,7 +7,7 @@
 #include "utils.h"
 
 // Window title; TTalk itself is shown next to the logo inside the window.
-constexpr const wchar_t kWindowTitle[] = L"Messagerie chiffrée & gratuite";
+constexpr const wchar_t kWindowTitle[] = L"Messagerie chiffr\u00E9e & gratuite";
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
@@ -45,7 +45,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   FlutterWindow window(project);
   // Same default window as macOS (800 x 600, centred): the compact layout with
-  // Discussions, Contacts and Réglages at the bottom. Maximising the window
+  // Discussions, Contacts and Reglages at the bottom. Maximising the window
   // switches to the two-column layout on both platforms.
   constexpr int kWidth = 800;
   constexpr int kHeight = 600;

@@ -625,7 +625,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   autofocus: true,
                   decoration: InputDecoration(
                     labelText: 'Adresse du serveur',
-                    hintText: 'https://votre-relais.onrender.com',
+                    hintText: 'https://votre-relais.example.com',
                     errorText: error,
                   ),
                 ),

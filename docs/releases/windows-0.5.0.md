@@ -8,7 +8,7 @@ avec le client Android stable. Pour une nouvelle installation, préférer
 
 - 📦 [Archive Windows x64 0.5.0](https://github.com/btalal/TTalk/releases/download/v0.5.0-windows/ttalk-windows-x64.zip)
 - 🔐 [Empreinte SHA256 du ZIP](https://github.com/btalal/TTalk/releases/download/v0.5.0-windows/ttalk-windows-x64.zip.sha256)
-- 📱 [Android 0.5.0](https://github.com/btalal/TTalk/releases/tag/android-v0.5.0)
+- 📱 [Android 0.5.0](https://github.com/btalal/TTalk/releases/tag/v0.5.0-android)
 
 ## Pour qui ?
 
@@ -32,7 +32,7 @@ la [version 0.5.1](https://github.com/btalal/TTalk/releases/tag/v0.5.1-windows).
 | Plateforme | État |
 |---|---|
 | Windows 10/11 x64 | ✅ Cette archive stable |
-| Android 7.0+ | ✅ [APK 0.5.0 séparé](https://github.com/btalal/TTalk/releases/tag/android-v0.5.0) |
+| Android 7.0+ | ✅ [APK 0.5.0 séparé](https://github.com/btalal/TTalk/releases/tag/v0.5.0-android) |
 | iPhone | 🟡 Préversion séparée ; essais sur appareil réel encore nécessaires |
 
 Les échanges Windows et Android de ce périmètre ont été testés sur deux PC

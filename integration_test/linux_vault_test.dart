@@ -15,6 +15,7 @@ void main() {
     'Linux keyring preserves identity, PIN gate and native navigation',
     (tester) async {
       final store = await SecureStore.create();
+      expect(await store.biometricAvailable(), isFalse);
       final identity = await IdentityKeys.generate();
       await store.saveIdentity(identity);
       await store.setupPin('839104');
