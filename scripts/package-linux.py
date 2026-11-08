@@ -46,6 +46,7 @@ def stage(bundle, root):
         ('assets/branding/ttalk.png', 'usr/share/pixmaps/com.talal.ttalk.png'),
         ('LICENSE', 'usr/share/doc/ttalk/LICENSE'),
         ('NOTICE', 'usr/share/doc/ttalk/NOTICE'),
+        ('assets/fonts/Inter-LICENSE.txt', 'usr/share/doc/ttalk/Inter-LICENSE.txt'),
         ('docs/LINUX_INSTALL.md', 'usr/share/doc/ttalk/LINUX_INSTALL.md'),
     ]:
         p = root / destination
@@ -134,6 +135,7 @@ cp -a "{payload}/." "%{{buildroot}}/"
 %doc /usr/share/doc/ttalk/LINUX_INSTALL.md
 %license /usr/share/doc/ttalk/LICENSE
 %license /usr/share/doc/ttalk/NOTICE
+%license /usr/share/doc/ttalk/Inter-LICENSE.txt
 
 %changelog
 * Sun Nov 08 2026 TTalk contributors <noreply@github.com> - {version}-1

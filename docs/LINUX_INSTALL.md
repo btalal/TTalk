@@ -1,7 +1,8 @@
 # TTalk 0.6.1 — portage Linux en validation
 
 Premiers paquets x86_64 (Intel/AMD 64 bits) : DEB construit sur Ubuntu 24.04 LTS,
-également cible de base pour Zorin OS Pro 18.1 ; RPM vérifié sous Fedora 45.
+également cible de base pour Zorin OS Pro 18.1 ; installation testée aussi sous
+Ubuntu 26.04. RPM pour Fedora 45.
 Ubuntu 22.04 et les machines ARM64 ne sont pas annoncés compatibles avec ce lot.
 Les essais automatiques en conteneur ne remplacent pas des essais sur les bureaux
 réels Fedora et Zorin (Wayland/X11, fichiers, verrouillage et échanges).
