@@ -1,22 +1,34 @@
-# 🔒 TTalk 0.6.1 — Linux x86_64
+# 🔒 TTalk 0.6.1 — Linux x86_64 et ARM64
 
 🟢 **Version finale — RPM et DEB, révision 3**
 
 ## Téléchargements
 
+### Intel and AMD x86_64
+
 - 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.x86_64.rpm)
 - 🔐 [SHA256 du RPM](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.x86_64.rpm.sha256)
 - 📦 [DEB Ubuntu 24.04/26.04 et Zorin OS Pro 18.1](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_amd64.deb)
 - 🔐 [SHA256 du DEB](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_amd64.deb.sha256)
+### ARM® aarch64
+
+- 🐧 [RPM Fedora 45 ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.aarch64.rpm)
+- 🔐 [SHA256 du RPM ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.aarch64.rpm.sha256)
+- 📦 [DEB Ubuntu 24.04/26.04 ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_arm64.deb)
+- 🔐 [SHA256 du DEB ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_arm64.deb.sha256)
+
 - 📖 [Installation et mise à jour](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/INSTALLATION.md)
 
 ## Pour qui ?
 
-Pour les utilisateurs de PC Intel/AMD 64 bits sous Fedora 45, Ubuntu 24.04/26.04
-et Zorin OS Pro 18.1. Ubuntu 22.04 et ARM64 ne sont pas couverts par ces paquets.
+Pour les utilisateurs Intel/AMD 64 bits sous Fedora 45, Ubuntu 24.04/26.04
+et Zorin OS Pro 18.1, et ARM64 sous Fedora 45 ou Ubuntu 24.04/26.04.
+Ubuntu 22.04 n’est pas couvert. Zorin est couvert uniquement en Intel/AMD.
 Aucun abonnement ni compilation locale n’est nécessaire pour installer ces RPM/DEB.
 
 ## Nouveautés
+
+- Paquets natifs ARM® aarch64 en complément des paquets Intel and AMD x86_64.
 
 - Application Flutter native Linux avec la même interface 0.6.1 que les autres plateformes.
 - Discussions, contacts, groupes, recherche locale, filtres, épinglage et archives.
@@ -42,6 +54,7 @@ Aucun abonnement ni compilation locale n’est nécessaire pour installer ces RP
 | Fedora 45 x86_64 | Installation et fonctionnement rapportés par le propriétaire ; installation/démarrage/désinstallation et rendu couleur vérifiés automatiquement |
 | Zorin OS Pro 18.1 amd64 | Installation et fonctionnement rapportés par le propriétaire ; même base Ubuntu 24.04 que le DEB construit |
 | Ubuntu 24.04 et 26.04 amd64 | Installation/démarrage/désinstallation et rendu couleur vérifiés en environnement de test |
+| Fedora 45 aarch64 ; Ubuntu 24.04/26.04 arm64 | Compilation native et contrôles automatisés ; essai sur votre matériel recommandé |
 
 Analyse Dart, 83 tests Flutter et test natif du trousseau réussis. Les tests
 incluent la persistance d’identité, le PIN, le verrouillage et la navigation.
@@ -54,16 +67,24 @@ La biométrie, le scanner QR par caméra et les notifications push ne sont pas i
 Fermer TTalk, puis installer le nouveau paquet par-dessus la version précédente,
 **sans désinstaller**, afin de conserver le coffre, les contacts et les messages.
 
-Ubuntu/Zorin :
+Intel/AMD — Ubuntu/Zorin :
 
 ```sh
 sudo apt install ./ttalk_0.6.1-3_amd64.deb
 ```
 
-Fedora :
+Intel/AMD — Fedora :
 
 ```sh
 sudo dnf install ./ttalk-0.6.1-3.fc45.x86_64.rpm
+```
+
+ARM® aarch64 — Ubuntu / Fedora :
+
+```sh
+sudo apt install ./ttalk_0.6.1-3_arm64.deb
+# ou, sur Fedora 45 ARM64 :
+sudo dnf install ./ttalk-0.6.1-3.fc45.aarch64.rpm
 ```
 
 Lancer TTalk depuis le menu, sans sudo. Le trousseau de session doit être disponible

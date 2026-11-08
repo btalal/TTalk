@@ -1,11 +1,21 @@
-# 🔒 TTalk 0.6.1 — Windows x64
+# 🔒 TTalk 0.6.1 — Windows x64 et ARM64
 
-🟢 **Version finale — Windows 10 et 11, 64 bits**
+🟢 **Version finale — Intel/AMD x86_64 et ARM64**
 
 ## Téléchargements
 
+### Intel and AMD x86_64 — Windows 10/11
+
 - [ttalk-windows-x64.zip](https://github.com/btalal/TTalk/releases/download/v0.6.1-windows/ttalk-windows-x64.zip) — extraire tout le dossier puis lancer `TTalk.exe` (voir `LISEZ-MOI.txt`)
 - [Empreinte SHA-256](https://github.com/btalal/TTalk/releases/download/v0.6.1-windows/ttalk-windows-x64.zip.sha256)
+
+### ARM® aarch64 — Windows 11 ARM64
+
+- [ttalk-windows-arm64.zip](https://github.com/btalal/TTalk/releases/download/v0.6.1-windows/ttalk-windows-arm64.zip) — extraire tout le dossier et lancer `TTalk.exe`
+- [Empreinte SHA-256 ARM64](https://github.com/btalal/TTalk/releases/download/v0.6.1-windows/ttalk-windows-arm64.zip.sha256)
+
+Choisir le ZIP correspondant à votre processeur dans **Paramètres > Système > Informations système**.
+Le paquet ARM64 contient un exécutable, un moteur Flutter et des DLL natifs ARM64.
 
 Mise à jour : fermez TTalk, remplacez l’ancien dossier par le nouveau. Vos contacts, messages et PIN sont conservés.
 Le paquet n’est pas signé Authenticode : Windows peut afficher un avertissement au premier lancement.
@@ -36,4 +46,4 @@ Signalez les problèmes dans les issues, sans publier de PIN, de clé ni de cont
 
 ## Version Linux
 
-[TTalk 0.6.1 pour Linux — RPM Fedora 45 et DEB Ubuntu/Zorin](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3), disponible en Intel/AMD 64 bits. Les paquets Linux sont distincts des téléchargements ci-dessus.
+[TTalk 0.6.1 pour Linux — RPM Fedora 45 et DEB Ubuntu/Zorin](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3), disponible en Intel and AMD x86_64 et ARM® aarch64. Les paquets Linux sont distincts des téléchargements ci-dessus.

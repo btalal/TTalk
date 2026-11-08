@@ -138,11 +138,21 @@ jobs:
           path: smoke-output/*
 
   windows:
-    runs-on: windows-11-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-11-arm
+            architecture: arm64
+            label: aarch64
+          - runner: windows-2022
+            architecture: x64
+            label: x86_64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Bootstrap pinned Flutter with native ARM64 Dart
+      - name: Bootstrap pinned Flutter with native Dart
         shell: pwsh
         run: |
           git clone --depth 1 --branch 3.47.9 https://github.com/flutter/flutter.git "$env:RUNNER_TEMP/flutter"
@@ -152,11 +162,11 @@ jobs:
       - run: flutter build windows --release
       - name: Package native ARM64 executable and validate launch
         shell: pwsh
-        run: ./scripts/package-windows.ps1 -Architecture arm64
+        run: ./scripts/package-windows.ps1 -Architecture ${{ matrix.architecture }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ttalk-windows-0.6.1-aarch64
+          name: ttalk-windows-0.6.1-${{ matrix.label }}
           path: |
-            ttalk-windows-arm64.zip
-            ttalk-windows-arm64.zip.sha256
+            ttalk-windows-${{ matrix.architecture }}.zip
+            ttalk-windows-${{ matrix.architecture }}.zip.sha256
           if-no-files-found: error
