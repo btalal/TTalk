@@ -4,11 +4,11 @@
 
 ## Téléchargements
 
-- 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk-0.6.1-3.fc45.x86_64.rpm)
-- 🔐 [SHA256 du RPM](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk-0.6.1-3.fc45.x86_64.rpm.sha256)
-- 📦 [DEB Ubuntu 24.04/26.04 et Zorin OS Pro 18.1](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk_0.6.1-3_amd64.deb)
-- 🔐 [SHA256 du DEB](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/ttalk_0.6.1-3_amd64.deb.sha256)
-- 📖 [Installation et mise à jour](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux/INSTALLATION.md)
+- 🐧 [RPM Fedora 45](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.x86_64.rpm)
+- 🔐 [SHA256 du RPM](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk-0.6.1-3.fc45.x86_64.rpm.sha256)
+- 📦 [DEB Ubuntu 24.04/26.04 et Zorin OS Pro 18.1](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_amd64.deb)
+- 🔐 [SHA256 du DEB](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/ttalk_0.6.1-3_amd64.deb.sha256)
+- 📖 [Installation et mise à jour](https://github.com/btalal/TTalk/releases/download/v0.6.1-linux-r3/INSTALLATION.md)
 
 ## Pour qui ?
 

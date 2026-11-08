@@ -23,7 +23,7 @@ et des conversations de groupe sur un relais que vous choisissez.
   <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-windows"><img src="https://img.shields.io/badge/Windows_x64-0.6.1-0F172A" alt="Windows x64 0.6.1" /></a>
   <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-android"><img src="https://img.shields.io/badge/Android-0.6.1-312E81" alt="Android 0.6.1" /></a>
   <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple"><img src="https://img.shields.io/badge/iPhone_%26_macOS-0.6.1_finale-7C3AED" alt="iPhone et macOS 0.6.1 — versions finales" /></a>
-  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux"><img src="https://img.shields.io/badge/Linux_RPM_%26_DEB-0.6.1-1793D1" alt="Linux x86_64 0.6.1 — RPM et DEB" /></a>
+  <a href="https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3"><img src="https://img.shields.io/badge/Linux_RPM_%26_DEB-0.6.1-1793D1" alt="Linux x86_64 0.6.1 — RPM et DEB" /></a>
   <img src="https://img.shields.io/badge/Flutter-3.47.9-02569B" alt="Flutter 3.47.9" />
   <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/AES--256--GCM-chiffrement-312E81" alt="Chiffrement AES-256-GCM" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-7C3AED" alt="Licence Apache-2.0" /></a>
@@ -123,8 +123,8 @@ croix dans cette case. Sources : [licence TTalk](LICENSE),
 | Android 7.0+ | Version finale 0.6.1 | [APK signé](https://github.com/btalal/TTalk/releases/tag/v0.6.1-android) : télécharger `ttalk-android.apk`. |
 | iPhone (iOS 15+) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [installation en Release via Xcode](docs/MOBILE_INSTALL.md), signature personnelle requise. |
 | macOS 12+ (Apple Silicon et Intel) | Version finale 0.6.1 | [Release Apple](https://github.com/btalal/TTalk/releases/tag/v0.6.1-apple) ; [compilation et signature Xcode](docs/MACOS_INSTALL.md). Archive CI universelle, non signée, sans notarisation. |
-| Fedora 45 x86_64 | Version finale 0.6.1, paquet révision 3 | [RPM Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; [guide Linux](docs/LINUX_INSTALL.md). |
-| Ubuntu 24.04/26.04 et Zorin OS Pro 18.1, amd64 | Version finale 0.6.1, paquet révision 3 | [DEB Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux) ; Ubuntu/Zorin utilisent le même paquet. |
+| Fedora 45 x86_64 | Version finale 0.6.1, paquet révision 3 | [RPM Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3) ; [guide Linux](docs/LINUX_INSTALL.md). |
+| Ubuntu 24.04/26.04 et Zorin OS Pro 18.1, amd64 | Version finale 0.6.1, paquet révision 3 | [DEB Linux](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3) ; Ubuntu/Zorin utilisent le même paquet. |
 
 ### Installer sur Windows
 
@@ -288,7 +288,7 @@ d’appairage ou des données personnelles dans une issue publique.
 
 ## Linux — RPM et DEB
 
-La [release Linux 0.6.1](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux)
+La [release Linux 0.6.1](https://github.com/btalal/TTalk/releases/tag/v0.6.1-linux-r3)
 contient un RPM pour Fedora 45 et un DEB pour Ubuntu 24.04/26.04 et Zorin OS Pro 18.1,
 en Intel/AMD 64 bits. Installation et fonctionnement confirmés par le propriétaire
 sous Fedora 45 et Zorin OS Pro 18.1 le 8 novembre 2026 ; contrôles automatisés sur
