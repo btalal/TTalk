@@ -14,7 +14,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: linux-packages-${{ github.ref }}
+  group: linux-packages-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 jobs:
   build:
@@ -98,15 +98,17 @@ jobs:
           docker run --rm -v "$PWD:/src" -w /src -e FORMAT -e TTALK_SMOKE_OUTPUT=/src/smoke-output "$IMAGE" bash -euc '
             if [ "$FORMAT" = deb ]; then
               apt-get update
-              DEBIAN_FRONTEND=noninteractive apt-get install -y /src/dist/linux/*.deb xvfb xauth xdotool dbus-x11 libgl1-mesa-dri libegl1 imagemagick
+              DEBIAN_FRONTEND=noninteractive apt-get install -y /src/dist/linux/*.deb xvfb xauth xdotool dbus-x11 libgl1-mesa-dri libegl1 imagemagick util-linux passwd
               dpkg-query -W ttalk
             else
-              dnf -y install /src/dist/linux/*.rpm xorg-x11-server-Xvfb xorg-x11-xauth xdotool dbus-daemon mesa-dri-drivers ImageMagick
+              dnf -y install /src/dist/linux/*.rpm xorg-x11-server-Xvfb xorg-x11-xauth xdotool dbus-daemon mesa-dri-drivers ImageMagick shadow-utils util-linux
               rpm -q ttalk
             fi
             cd /src/dist/linux
             sha256sum -c *.$FORMAT.sha256
-            dbus-run-session -- xvfb-run -a bash /src/scripts/linux-smoke.sh
+            useradd --create-home --uid 2000 ttalk-ci
+            chown -R ttalk-ci:ttalk-ci /src/smoke-output
+            runuser -u ttalk-ci -- dbus-run-session -- xvfb-run -a bash /src/scripts/linux-smoke.sh
             if [ "$FORMAT" = deb ]; then apt-get remove -y ttalk; else dnf remove -y ttalk; fi
             test ! -e /usr/bin/ttalk
           '
