@@ -1,0 +1,162 @@
+name: Native ARM64 desktop packages
+on:
+  push:
+    branches: ['feature/desktop-arm64']
+  pull_request:
+    branches: ['main/ttalk']
+    paths:
+      - 'linux/**'
+      - 'packaging/linux/**'
+      - 'scripts/*linux*'
+      - 'integration_test/linux_vault_test.dart'
+      - '.github/workflows/arm64-packages.yml'
+      - 'windows/**'
+      - 'scripts/package-windows.ps1'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: arm64-packages-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native build and keyring test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libstdc++-12-dev dpkg-dev patchelf fonts-noto-color-emoji desktop-file-utils xvfb xauth dbus-x11 gnome-keyring libgl1-mesa-dri libegl1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: npm ci --prefix server
+      - run: npm test --prefix server
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub
+      - run: desktop-file-validate packaging/linux/com.talal.ttalk.desktop
+      - run: flutter build linux --release
+      - name: Exercise real Secret Service and native UI
+        run: |
+          dbus-run-session -- bash -euc '
+            export XDG_DATA_HOME=$(mktemp -d)
+            export XDG_CONFIG_HOME=$(mktemp -d)
+            export XDG_RUNTIME_DIR=$(mktemp -d)
+            chmod 700 "$XDG_RUNTIME_DIR"
+            printf "%s" ci-ephemeral-keyring | gnome-keyring-daemon --unlock --components=secrets
+            xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 GDK_BACKEND=x11 flutter test integration_test/linux_vault_test.dart -d linux
+          '
+      - name: Build Debian package on Ubuntu 24.04
+        run: python3 scripts/package-linux.py deb --architecture arm64
+      - name: Build RPM metadata on Fedora 45
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src fedora:45 bash -euc '
+            dnf -y install python3 rpm-build patchelf gtk3 libsecret
+            python3 scripts/package-linux.py rpm --architecture arm64
+          '
+      - name: Build a separate native emoji rendering probe
+        run: |
+          flutter build linux --release --target test_driver/linux_emoji_probe.dart
+          cp -a build/linux/arm64/release/bundle build/emoji-probe
+          find build/emoji-probe/lib -name '*_plugin.so' -exec patchelf --set-rpath '$ORIGIN' {} +
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64-emoji-probe
+          path: build/emoji-probe/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ttalk-linux-0.6.1-aarch64
+          path: dist/linux/*
+          if-no-files-found: error
+  install:
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu:24.04
+            name: ubuntu-24.04-arm
+            format: deb
+          - image: ubuntu:26.04
+            name: ubuntu-26.04
+            format: deb
+          - image: fedora:45
+            name: fedora-45
+            format: rpm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ttalk-linux-0.6.1-aarch64
+          path: dist/linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-arm64-emoji-probe
+          path: emoji-probe
+      - name: Install and launch actual package in clean runtime
+        env:
+          IMAGE: ${{ matrix.image }}
+          FORMAT: ${{ matrix.format }}
+        run: |
+          mkdir -p smoke-output
+          # Secret Service uses locked memory; grant this only to the test container.
+          docker run --rm --cap-add IPC_LOCK -v "$PWD:/src" -w /src -e FORMAT -e TTALK_SMOKE_OUTPUT=/src/smoke-output "$IMAGE" bash -euc '
+            if [ "$FORMAT" = deb ]; then
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y /src/dist/linux/*.deb xvfb xauth xdotool dbus-x11 libgl1-mesa-dri libegl1 imagemagick util-linux passwd
+              dpkg-query -W ttalk
+            else
+              dnf -y install /src/dist/linux/*.rpm xorg-x11-server-Xvfb xorg-x11-xauth xdotool dbus-daemon mesa-dri-drivers ImageMagick shadow-utils util-linux
+              rpm -q ttalk
+            fi
+            cd /src/dist/linux
+            sha256sum -c *.$FORMAT.sha256
+            chmod +x /src/emoji-probe/ttalk
+            useradd --create-home --uid 2000 ttalk-ci
+            chown -R ttalk-ci:ttalk-ci /src/smoke-output
+            runuser -u ttalk-ci -- dbus-run-session -- xvfb-run -a bash /src/scripts/linux-smoke.sh
+            runuser -u ttalk-ci -- env LIBGL_ALWAYS_SOFTWARE=1 GDK_BACKEND=x11 TTALK_PROBE_OUTPUT=/src/smoke-output dbus-run-session -- xvfb-run -a timeout 30 /src/emoji-probe/ttalk
+            if [ "$FORMAT" = deb ]; then apt-get remove -y ttalk; else dnf remove -y ttalk; fi
+            test ! -e /usr/bin/ttalk
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-arm64-smoke-${{ matrix.name }}
+          path: smoke-output/*
+
+  windows:
+    runs-on: windows-11-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          architecture: arm64
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build windows --release
+      - name: Package native ARM64 executable and validate launch
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -Architecture arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ttalk-windows-0.6.1-aarch64
+          path: |
+            ttalk-windows-arm64.zip
+            ttalk-windows-arm64.zip.sha256
+          if-no-files-found: error

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package the native x86_64 Flutter bundle; run on Linux, never as a release signer."""
+"""Package the native x86_64 or aarch64 Flutter bundle; run on Linux, never as a release signer."""
 import argparse
 import hashlib
 import os
@@ -17,14 +17,14 @@ def run(*args, **kwargs):
     return subprocess.run([str(a) for a in args], check=True, **kwargs)
 
 
-def validate_bundle(bundle):
+def validate_bundle(bundle, architecture):
     for name in ['ttalk', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so', 'data/icudtl.dat']:
         p = bundle / name
         if not p.is_file():
             raise ValueError(f'Missing bundle member: {name}')
     elf = (bundle / 'ttalk').read_bytes()[:20]
-    if elf[:6] != b'\x7fELF\x02\x01' or struct.unpack('<H', elf[18:20])[0] != 62:
-        raise ValueError('Expected a Linux x86_64 executable')
+    if elf[:6] != b'\x7fELF\x02\x01' or struct.unpack('<H', elf[18:20])[0] != {'x64': 62, 'arm64': 183}[architecture]:
+        raise ValueError(f'Expected a Linux {architecture} executable')
     if not os.access(bundle / 'ttalk', os.X_OK):
         raise ValueError('Executable permission missing')
     for p in bundle.rglob('*'):
@@ -72,7 +72,8 @@ def stage(bundle, root):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('format', choices=['deb', 'rpm'])
-    parser.add_argument('--bundle', default='build/linux/x64/release/bundle')
+    parser.add_argument('--architecture', choices=['x64', 'arm64'], default='x64')
+    parser.add_argument('--bundle')
     parser.add_argument('--output', default='dist/linux')
     args = parser.parse_args()
     os.chdir(ROOT)
@@ -83,19 +84,22 @@ def main():
     revision = (ROOT / 'packaging/linux/revision').read_text().strip()
     if not revision.isdigit() or int(revision) < 1:
         raise ValueError('Invalid package revision')
-    bundle, output = Path(args.bundle).resolve(), Path(args.output).resolve()
-    validate_bundle(bundle)
+    deb_arch = {'x64': 'amd64', 'arm64': 'arm64'}[args.architecture]
+    rpm_arch = {'x64': 'x86_64', 'arm64': 'aarch64'}[args.architecture]
+    bundle = Path(args.bundle or f'build/linux/{args.architecture}/release/bundle').resolve()
+    output = Path(args.output).resolve()
+    validate_bundle(bundle, args.architecture)
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='ttalk-package-') as temporary:
         tmp = Path(temporary)
         payload = tmp / 'payload'
         stage(bundle, payload)
         if args.format == 'deb':
-            if run('dpkg', '--print-architecture', capture_output=True, text=True).stdout.strip() != 'amd64':
-                raise ValueError('Build this DEB on an amd64 distribution')
+            if run('dpkg', '--print-architecture', capture_output=True, text=True).stdout.strip() != deb_arch:
+                raise ValueError(f'Build this DEB on a {deb_arch} distribution')
             work = tmp / 'debian-build'
             (work / 'debian').mkdir(parents=True)
-            (work / 'debian/control').write_text('Source: ttalk\nSection: net\nPriority: optional\nMaintainer: TTalk contributors <noreply@github.com>\n\nPackage: ttalk\nArchitecture: amd64\nDescription: Encrypted messenger\n')
+            (work / 'debian/control').write_text(f'Source: ttalk\nSection: net\nPriority: optional\nMaintainer: TTalk contributors <noreply@github.com>\n\nPackage: ttalk\nArchitecture: {deb_arch}\nDescription: Encrypted messenger\n')
             binaries = [p for p in (payload / 'usr/lib/ttalk').rglob('*') if p.is_file() and p.read_bytes()[:4] == b'\x7fELF']
             dependencies = run('dpkg-shlibdeps', '--ignore-missing-info', '-O', '-l' + str(payload / 'usr/lib/ttalk/lib'), *['-e' + str(p) for p in binaries], cwd=work, capture_output=True, text=True).stdout.strip().removeprefix('shlibs:Depends=')
             if not dependencies or 'libc6' not in dependencies:
@@ -103,8 +107,8 @@ def main():
             control = payload / 'DEBIAN'
             control.mkdir()
             size = sum(p.stat().st_size for p in payload.rglob('*') if p.is_file()) // 1024
-            (control / 'control').write_text(f'Package: ttalk\nVersion: {version}-{revision}\nArchitecture: amd64\nMaintainer: TTalk contributors <noreply@github.com>\nSection: net\nPriority: optional\nHomepage: https://github.com/btalal/TTalk\nInstalled-Size: {size}\nDepends: {dependencies}, gnome-keyring, dbus-user-session, xdg-utils, xdg-desktop-portal, xdg-desktop-portal-gtk, fonts-noto-color-emoji\nDescription: Encrypted messenger with a relay of your choice\n Native Flutter application. Local vault requires an unlocked Secret Service keyring.\n')
-            package = output / f'ttalk_{version}-{revision}_amd64.deb'
+            (control / 'control').write_text(f'Package: ttalk\nVersion: {version}-{revision}\nArchitecture: {deb_arch}\nMaintainer: TTalk contributors <noreply@github.com>\nSection: net\nPriority: optional\nHomepage: https://github.com/btalal/TTalk\nInstalled-Size: {size}\nDepends: {dependencies}, gnome-keyring, dbus-user-session, xdg-utils, xdg-desktop-portal, xdg-desktop-portal-gtk, fonts-noto-color-emoji\nDescription: Encrypted messenger with a relay of your choice\n Native Flutter application. Local vault requires an unlocked Secret Service keyring.\n')
+            package = output / f'ttalk_{version}-{revision}_{deb_arch}.deb'
             run('dpkg-deb', '--root-owner-group', '--build', payload, package)
             run('dpkg-deb', '--info', package)
         else:
@@ -119,7 +123,7 @@ Release: {revision}%{{?dist}}
 Summary: Encrypted messenger with a relay of your choice
 License: Apache-2.0
 URL: https://github.com/btalal/TTalk
-ExclusiveArch: x86_64
+ExclusiveArch: {rpm_arch}
 Requires: gtk3, libsecret, gnome-keyring, dbus, xdg-utils, xdg-desktop-portal, xdg-desktop-portal-gtk, google-noto-color-emoji-fonts
 
 %description
@@ -147,7 +151,7 @@ cp -a "{payload}/." "%{{buildroot}}/"
 - Initial Linux packages.
 ''')
             run('rpmbuild', '-bb', '--define', '_topdir ' + str(top), spec)
-            built = list((top / 'RPMS/x86_64').glob('ttalk-*.rpm'))
+            built = list((top / f'RPMS/{rpm_arch}').glob('ttalk-*.rpm'))
             if len(built) != 1:
                 raise ValueError('Expected one RPM')
             package = output / built[0].name
