@@ -26,7 +26,7 @@ dependencies:
   crypto: ^3.0.3
   file_picker: ^10.1.6
   path_provider: ^2.1.4
-  open_filex: ^4.5.0
+  open_filex: ^5.0.0
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.5.0
   biometric_storage: ^5.0.1
