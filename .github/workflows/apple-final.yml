@@ -20,7 +20,7 @@ jobs:
       - name: Prevent replacing historical 0.5.1 assets with newer code
         run: |
           python3 -c "from pathlib import Path; assert 'version: 0.5.1+' in Path('pubspec.yaml').read_text(), 'Use the matching 0.5.1 source ref; newer packages use final-packages.yml'"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
